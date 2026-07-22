@@ -1,0 +1,93 @@
+package system
+
+import (
+	"context"
+	"errors"
+	"path/filepath"
+
+	"github.com/gofrs/uuid/v5"
+	"github.com/gookit/color"
+	"github.com/mo7amed4522/tayara_api/config"
+	"github.com/mo7amed4522/tayara_api/global"
+	"github.com/mo7amed4522/tayara_api/model/system/request"
+	"github.com/mo7amed4522/tayara_api/utils"
+	"gorm.io/driver/sqlserver"
+	"gorm.io/gorm"
+)
+
+type MssqlInitHandler struct{}
+
+func NewMssqlInitHandler() *MssqlInitHandler {
+	return &MssqlInitHandler{}
+}
+
+// WriteConfig Write back configuration for mssql
+func (h MssqlInitHandler) WriteConfig(ctx context.Context) error {
+	c, ok := ctx.Value("config").(config.Mssql)
+	if !ok {
+		return errors.New("mssql config invalid")
+	}
+	global.GVA_CONFIG.System.DbType = "mssql"
+	global.GVA_CONFIG.Mssql = c
+	global.GVA_CONFIG.JWT.SigningKey = uuid.Must(uuid.NewV4()).String()
+	cs := utils.StructToMap(global.GVA_CONFIG)
+	for k, v := range cs {
+		global.GVA_VP.Set(k, v)
+	}
+	global.GVA_ACTIVE_DBNAME = &c.Dbname
+	return global.GVA_VP.WriteConfig()
+}
+
+// EnsureDB Create database and initialize mssql
+func (h MssqlInitHandler) EnsureDB(ctx context.Context, conf *request.InitDB) (next context.Context, err error) {
+	if s, ok := ctx.Value("dbtype").(string); !ok || s != "mssql" {
+		return ctx, ErrDBTypeMismatch
+	}
+
+	c := conf.ToMssqlConfig()
+	next = context.WithValue(ctx, "config", c)
+	if c.Dbname == "" {
+		return ctx, nil
+	} // If there is no database name, skip the initialization data
+
+	dsn := conf.MssqlEmptyDsn()
+
+	mssqlConfig := sqlserver.Config{
+		DSN:               dsn, // DSN data source name
+		DefaultStringSize: 191, // default length of string type fields
+	}
+
+	var db *gorm.DB
+
+	if db, err = gorm.Open(sqlserver.New(mssqlConfig), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true}); err != nil {
+		return nil, err
+	}
+
+	global.GVA_CONFIG.AutoCode.Root, _ = filepath.Abs("..")
+	next = context.WithValue(next, "db", db)
+	return next, err
+}
+
+func (h MssqlInitHandler) InitTables(ctx context.Context, inits initSlice) error {
+	return createTables(ctx, inits)
+}
+
+func (h MssqlInitHandler) InitData(ctx context.Context, inits initSlice) error {
+	next, cancel := context.WithCancel(ctx)
+	defer func(c func()) { c() }(cancel)
+	for _, init := range inits {
+		if init.DataInserted(next) {
+			color.Info.Printf(InitDataExist, Mssql)
+			continue
+		}
+		if n, err := init.InitializeData(next); err != nil {
+			color.Info.Printf(InitDataFailed, Mssql, err)
+			return err
+		} else {
+			next = n
+			color.Info.Printf(InitDataSuccess, Mssql)
+		}
+	}
+	color.Info.Printf(InitSuccess, Mssql)
+	return nil
+}
