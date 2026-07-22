@@ -1,0 +1,62 @@
+package request
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/url"
+)
+
+func HttpRequest(
+	urlStr string,
+	method string,
+	headers map[string]string,
+	params map[string]string,
+	data any) (*http.Response, error) {
+	// Create URL
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add query parameters
+	query := u.Query()
+	for k, v := range params {
+		query.Set(k, v)
+	}
+	u.RawQuery = query.Encode()
+
+	// Encode the data as JSON
+	buf := new(bytes.Buffer)
+	if data != nil {
+		b, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+		buf = bytes.NewBuffer(b)
+	}
+
+	// Create Request
+	req, err := http.NewRequest(method, u.String(), buf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	if data != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	// Send Request
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return a response for the caller to process.
+	return resp, nil
+}

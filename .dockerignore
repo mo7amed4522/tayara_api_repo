@@ -1,0 +1,12 @@
+.git
+.gitignore
+.cursor
+log
+uploads
+server
+server.exe
+*.log
+*.tmp
+Dockerfile
+docker-compose*.yml
+docker-compose*.yaml
