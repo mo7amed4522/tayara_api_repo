@@ -1,100 +1,100 @@
 # jwt configuration
 jwt:
-    signing-key: tayar
-    expires-time: 7d  # 2 hours in seconds - FIXED (was 7)
-    buffer-time: 5h    # 5 minutes in seconds - FIXED (was "b1")
-    issuer: tayara-api  # FIXED (was "issuer-here")
+    signing-key: tayar                    # JWT signing key
+    expires-time: 7d                      # Token expiration: 7 days
+    buffer-time: 5h                       # Refresh buffer: 5 hours
+    issuer: tayara-api                    # Token issuer identifier
 
 # zap logger configuration
 zap:
-    level: info
-    format: console
-    prefix: "[tayara-api]"  # FIXED (was "[prefix-here]")
-    director: log
-    show-line: true
-    encode-level: LowercaseColorLevelEncoder
-    stacktrace-key: stacktrace
-    log-in-console: true
+    level: info                           # Log level (info, debug, warn, error)
+    format: console                       # Output format (console or json)
+    prefix: "[tayara-api]"                # Log message prefix
+    director: log                         # Log directory
+    show-line: true                       # Show file and line number
+    encode-level: LowercaseColorLevelEncoder # Level encoding style
+    stacktrace-key: stacktrace            # Key for stacktrace in logs
+    log-in-console: true                  # Output logs to console
 
 # redis configuration
 redis:
-    db: 0
-    addr: localhost:6379  # FIXED (was "addr-here:6379")
-    password: ""
+    db: 0                                 # Redis database index
+    addr: localhost:6379                  # Redis server address
+    password: ""                          # Redis password (empty if none)
 
 # mongo configuration
 mongo:
-    coll: tayara  # FIXED (was "coll-here")
-    options: ""  # FIXED (was "options-here")
-    database: tayara  # FIXED (was "database-here")
-    username: admin  # FIXED (was "username-here")
-    password: tayara_2026  # FIXED (was "password-here")
-    min-pool-size: 0
-    max-pool-size: 100
-    socket-timeout-ms: 0
-    connect-timeout-ms: 0
-    is-zap: false
+    coll: tayara                          # Default MongoDB collection
+    options: ""                           # Additional connection options
+    database: tayara                      # MongoDB database name
+    username: admin                       # MongoDB username
+    password: tayara_2026                 # MongoDB password
+    min-pool-size: 0                      # Minimum connection pool size
+    max-pool-size: 100                    # Maximum connection pool size
+    socket-timeout-ms: 0                  # Socket timeout in ms (0 = no timeout)
+    connect-timeout-ms: 0                 # Connection timeout in ms
+    is-zap: false                         # Use zap for Mongo logs
     hosts:
-        - host: "localhost"  # FIXED (was "")
-          port: "27017"      # FIXED (was "")
+        - host: "localhost"               # MongoDB host
+          port: "27017"                   # MongoDB port
 
 # email configuration
 email:
-    to: admin@tayara.com  # FIXED (was "to-here")
-    port: 465
-    from: noreply@tayara.com  # FIXED (was "from-here")
-    host: smtp.163.com
-    is-ssl: true
-    secret: your-email-password  # FIXED (was "secret-here")
-    nickname: Tayara Team  # FIXED (was "nickname-here")
+    to: admin@tayara.com                  # Default recipient address
+    port: 465                             # SMTP port (SSL)
+    from: noreply@tayara.com              # Sender address
+    host: smtp.163.com                    # SMTP server host
+    is-ssl: true                          # Use SSL connection
+    secret: your-email-password           # SMTP authentication password
+    nickname: Tayara Team                 # Display name for sender
 
 # system configuration
 system:
-    env: local
-    addr: 8888
-    db-type: mysql
-    oss-type: local
-    use-redis: true
-    use-mongo: false
-    use-multipoint: false
-    iplimit-count: 15000
-    iplimit-time: 3600
+    env: local                            # Environment (local, dev, prod)
+    addr: 8888                            # Server listening port
+    db-type: mysql                        # Primary database type
+    oss-type: local                       # Object storage type (local, qiniu, etc.)
+    use-redis: true                       # Enable Redis
+    use-mongo: false                      # Enable MongoDB
+    use-multipoint: false                 # Enable multi-point login
+    iplimit-count: 15000                  # IP rate limit request count
+    iplimit-time: 3600                    # IP rate limit window (seconds)
 
 # captcha configuration
 captcha:
-    key-long: 6
-    img-width: 240
-    img-height: 80
-    open-captcha: 0
-    open-captcha-timeout: 3600
+    key-long: 6                           # Captcha key length
+    img-width: 240                        # Captcha image width
+    img-height: 80                        # Captcha image height
+    open-captcha: 0                       # Captcha on/off (0 = off)
+    open-captcha-timeout: 3600            # Captcha timeout (seconds)
 
 # mysql connect configuration
 mysql:
-    path: localhost
-    port: "3307"
-    config: charset=utf8mb4&parseTime=True&loc=Local
-    db-name: tayara
-    username: root
-    password: tayara_2026
-    max-idle-conns: 10
-    max-open-conns: 100
-    log-mode: error
-    log-zap: false
+    path: localhost                       # MySQL host
+    port: "3307"                          # MySQL port
+    config: charset=utf8mb4&parseTime=True&loc=Local # Connection parameters
+    db-name: tayara                       # Database name
+    username: root                        # MySQL username
+    password: tayara_2026                 # MySQL password
+    max-idle-conns: 10                    # Max idle connections
+    max-open-conns: 100                   # Max open connections
+    log-mode: error                       # GORM log level
+    log-zap: false                        # Use zap for GORM logs
 
 # pgsql connect configuration
 pgsql:
-    path: localhost  # FIXED (was "path-here")
-    port: "5432"     # FIXED (was "port-here")
-    config: sslmode=disable  # FIXED (was "config-here")
-    db-name: tayara  # FIXED (was "db-name-here")
-    username: postgres  # FIXED (was "username-here")
-    password: postgres  # FIXED (was "password-here")
+    path: localhost                       # PostgreSQL host
+    port: "5432"                          # PostgreSQL port
+    config: sslmode=disable               # Connection config
+    db-name: tayara                       # Database name
+    username: postgres                    # PostgreSQL username
+    password: postgres                    # PostgreSQL password
     max-idle-conns: 10
     max-open-conns: 100
     log-mode: "error"
     log-zap: false
 
-db-list:
+db-list:                                 # Additional databases list (empty entry disabled)
     - disable: true
       type: ""
       alias-name: ""
@@ -109,15 +109,15 @@ db-list:
       log-mode: ""
       log-zap: false
 
-# local configuration
+# local storage configuration (used when oss-type = local)
 local:
-    path: uploads  # FIXED (was "uploads/file-here")
-    store-path: uploads  # FIXED (was "uploads/file-here")
+    path: uploads                         # Upload directory path
+    store-path: uploads                   # Stored files path
 
 # autocode configuration
 autocode:
-    transfer-restart: true
-    root: /Users/mo7/projects/tayara-api  # FIXED (was "root-here")
+    transfer-restart: true                # Restart server after code generation
+    root: /Users/mo7/projects/tayara-api  # Project root path
     server: /server
     server-plug: /plugin/%s
     server-api: /api/v1/%s
@@ -131,113 +131,108 @@ autocode:
     web-form: /view
     web-table: /view
 
-# qiniu configuration
+# qiniu cloud storage configuration
 qiniu:
-    zone: ZoneHuaDong
-    bucket: tayara-bucket  # FIXED (was "bucket-here")
-    img-path: "/images"
-    use-https: false
-    access-key: your-qiniu-access-key  # FIXED (was "access-key-here")
-    secret-key: your-qiniu-secret-key  # FIXED (was "secret-key-here")
-    use-cdn-domains: false
+    zone: ZoneHuaDong                     # Storage zone
+    bucket: tayara-bucket                 # Bucket name
+    img-path: "/images"                   # Image path prefix
+    use-https: false                      # Use HTTPS
+    access-key: your-qiniu-access-key     # Access key
+    secret-key: your-qiniu-secret-key     # Secret key
+    use-cdn-domains: false                # Use CDN domains
 
 # aliyun oss configuration
 aliyun-oss:
-    endpoint: oss-cn-hangzhou.aliyuncs.com  # FIXED (was "endpoint-here")
-    access-key-id: your-aliyun-access-key  # FIXED (was "access-key-id-here")
-    access-key-secret: your-aliyun-secret-key  # FIXED (was "yourAccessKeySecret")
-    bucket-name: tayara-bucket  # FIXED (was "bucket-name-here")
-    bucket-url: https://tayara-bucket.oss-cn-hangzhou.aliyuncs.com  # FIXED (was "bucket-url-here")
-    base-path: /uploads
+    endpoint: oss-cn-hangzhou.aliyuncs.com # OSS endpoint
+    access-key-id: your-aliyun-access-key  # Access key ID
+    access-key-secret: your-aliyun-secret-key # Access key secret
+    bucket-name: tayara-bucket             # Bucket name
+    bucket-url: https://tayara-bucket.oss-cn-hangzhou.aliyuncs.com # Bucket URL
+    base-path: /uploads                    # Base path for uploads
 
 # tencent cos configuration
 tencent-cos:
-    bucket: tayara-10005608  # FIXED (was "xxxxx-10005608")
-    region: ap-shanghai
-    secret-id: your-tencent-secret-id  # FIXED (was "secret-id-here")
-    secret-key: your-tencent-secret-key  # FIXED (was "secret-key-here")
-    base-url: https://tayara-10005608.cos.ap-shanghai.myqcloud.com  # FIXED (was "base-url-here")
-    path-prefix: /uploads
+    bucket: tayara-10005608                # Bucket name
+    region: ap-shanghai                    # Region
+    secret-id: your-tencent-secret-id      # Secret ID
+    secret-key: your-tencent-secret-key    # Secret key
+    base-url: https://tayara-10005608.cos.ap-shanghai.myqcloud.com # Base URL
+    path-prefix: /uploads                  # Path prefix
 
 # aws s3 configuration
 aws-s3:
-    bucket: tayara-bucket  # FIXED (was "bucket-here")
-    region: us-east-1  # FIXED (was "region-here")
-    endpoint: s3.amazonaws.com  # FIXED (was "endpoint-here")
-    s3-force-path-style: false
-    disable-ssl: false
-    secret-id: your-aws-access-key  # FIXED (was "secret-id-here")
-    secret-key: your-aws-secret-key  # FIXED (was "secret-key-here")
-    base-url: https://tayara-bucket.s3.amazonaws.com  # FIXED (was "base-url-here")
+    bucket: tayara-bucket                  # S3 bucket name
+    region: us-east-1                      # AWS region
+    endpoint: s3.amazonaws.com             # S3 endpoint
+    s3-force-path-style: false             # Force path-style URLs
+    disable-ssl: false                     # Disable SSL
+    secret-id: your-aws-access-key         # AWS access key
+    secret-key: your-aws-secret-key        # AWS secret key
+    base-url: https://tayara-bucket.s3.amazonaws.com # Base URL
     path-prefix: /uploads
 
 # huawei obs configuration
 hua-wei-obs:
     path: /uploads
-    bucket: tayara-bucket  # FIXED (was "bucket-here")
-    endpoint: obs.cn-north-1.myhuaweicloud.com  # FIXED (was "endpoint-here")
-    access-key: your-huawei-access-key  # FIXED (was "access-key-here")
-    secret-key: your-huawei-secret-key  # FIXED (was "secret-key-here")
+    bucket: tayara-bucket                  # Bucket name
+    endpoint: obs.cn-north-1.myhuaweicloud.com # OBS endpoint
+    access-key: your-huawei-access-key     # Access key
+    secret-key: your-huawei-secret-key     # Secret key
 
 # stripe payment configuration
 stripe:
-    secret-key: sk_test_your_secret_key
-    publishable-key: pk_test_your_publishable_key
-    webhook-secret: whsec_your_webhook_secret
-    currency: AED
-    capture-method: manual
-    auto-capture: false
-    payment-hold-hours: 2
+    secret-key: sk_test_your_secret_key           # Stripe secret key (test)
+    publishable-key: pk_test_your_publishable_key # Stripe publishable key (test)
+    webhook-secret: whsec_your_webhook_secret     # Webhook signing secret
+    currency: AED                                  # Default currency (UAE Dirham)
+    capture-method: manual                         # Payment capture method
+    auto-capture: false                            # Auto-capture payments
+    payment-hold-hours: 2                          # Payment hold period in hours
 
 # excel configuration
 excel:
-    dir: ./resource/excel
+    dir: ./resource/excel                 # Directory for Excel files
 
 # timer task db clear table
 Timer:
-    start: true
-    spec: "@daily"
+    start: true                           # Enable timer
+    spec: "@daily"                        # Cron expression (daily)
     detail:
-        - tableName: logs  # FIXED (was "table-name-here")
-          compareField: created_at  # FIXED (was "compare-field-here")
-          interval: 30  # FIXED (was "interval-here") - keep logs for 30 days
-        - tableName: sessions  # FIXED (was "table-name-here")
-          compareField: updated_at  # FIXED (was "compare-field-here")
-          interval: 7  # FIXED (was "interval-here") - keep sessions for 7 days
+        - tableName: logs                 # Table to clean
+          compareField: created_at        # Field to compare
+          interval: 30                    # Keep records for 30 days
+        - tableName: sessions             # Table to clean
+          compareField: updated_at        # Field to compare
+          interval: 7                     # Keep records for 7 days
 
-# Cross-domain configuration
+# Cross-domain (CORS) configuration
 cors:
-  mode: whitelist
+  mode: whitelist                        # CORS mode: whitelist
   whitelist:
-    # Port 3000 (original)
-    - allow-origin: http://localhost:3000
+    - allow-origin: http://localhost:3000 # Allowed origin
       allow-headers: content-type, X-token, A-token, S-token
       allow-methods: GET, POST, PUT, DELETE, OPTIONS
       expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
       allow-credentials: true
     
-    # Port 3001
     - allow-origin: http://localhost:3001
       allow-headers: content-type, X-token, A-token, S-token
       allow-methods: GET, POST, PUT, DELETE, OPTIONS
       expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
       allow-credentials: true
     
-    # Port 3050
     - allow-origin: http://localhost:3050
       allow-headers: content-type, X-token, A-token, S-token
       allow-methods: GET, POST, PUT, DELETE, OPTIONS
       expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
       allow-credentials: true
     
-    # Port 8080
     - allow-origin: http://localhost:8080
       allow-headers: content-type, X-token, A-token, S-token
       allow-methods: GET, POST, PUT, DELETE, OPTIONS
       expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
       allow-credentials: true
     
-    # Port 8000
     - allow-origin: http://localhost:8000
       allow-headers: content-type, X-token, A-token, S-token
       allow-methods: GET, POST, PUT, DELETE, OPTIONS
@@ -246,15 +241,15 @@ cors:
 
 # Firebase Authentication
 firebase:
-    enabled: true
-    project-id: taiyara-676dc
-    credentials-file: ./firebase/tayara-service-account.json
-    api-key: AIzaSyDXaN5soOLsIHd5L98G3uG1V5jmSJgjeSU
-    auth-domain: taiyara-676dc.firebaseapp.com
-    storage-bucket: taiyara-676dc.firebasestorage.app
-    messaging-sender-id: "271442722424"
-    app-id: "1:271442722424:web:c9e878c8f06f8ba12f378d"
-    providers:
+    enabled: true                         # Enable Firebase Auth
+    project-id: taiyara-676dc             # Firebase project ID
+    credentials-file: ./firebase/tayara-service-account.json # Service account file
+    api-key: AIzaSyDXaN5soOLsIHd5L98G3uG1V5jmSJgjeSU # Web API key
+    auth-domain: taiyara-676dc.firebaseapp.com # Auth domain
+    storage-bucket: taiyara-676dc.firebasestorage.app # Storage bucket
+    messaging-sender-id: "271442722424"   # Sender ID
+    app-id: "1:271442722424:web:c9e878c8f06f8ba12f378d" # App ID
+    providers:                            # Enabled sign-in providers
         google: true
         apple: true
         facebook: true

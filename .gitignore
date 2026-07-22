@@ -1,0 +1,8 @@
+.cursor
+/log/
+config.yaml
+config.docker.yaml
+/uploads/*
+./tayara_api
+./tayara_api/*
+.tayara_api

@@ -1,0 +1,62 @@
+package system
+
+import (
+	"github.com/mo7amed4522/tayara_api/config"
+	"github.com/mo7amed4522/tayara_api/global"
+	"github.com/mo7amed4522/tayara_api/model/system"
+	"github.com/mo7amed4522/tayara_api/utils"
+	"go.uber.org/zap"
+)
+
+//@author: [mo7amed4522](https://github.com/mo7amed4522)
+//@function: GetSystemConfig
+//@description: Read configuration file
+//@return: conf config.Server, err error
+
+type SystemConfigService struct{}
+
+var SystemConfigServiceApp = new(SystemConfigService)
+
+func (systemConfigService *SystemConfigService) GetSystemConfig() (conf config.Server, err error) {
+	return global.GVA_CONFIG, nil
+}
+
+// @description   set system config,
+//@author: [mo7amed4522](https://github.com/mo7amed4522)
+//@function: SetSystemConfig
+//@description: Set configuration file
+//@param: system model.System
+//@return: err error
+
+func (systemConfigService *SystemConfigService) SetSystemConfig(system system.System) (err error) {
+	cs := utils.StructToMap(system.Config)
+	for k, v := range cs {
+		global.GVA_VP.Set(k, v)
+	}
+	err = global.GVA_VP.WriteConfig()
+	return err
+}
+
+//@author: [SliverHorn](https://github.com/SliverHorn)
+//@function: GetServerInfo
+//@description: Get server information
+//@return: server *utils.Server, err error
+
+func (systemConfigService *SystemConfigService) GetServerInfo() (server *utils.Server, err error) {
+	var s utils.Server
+	s.Os = utils.InitOS()
+	if s.Cpu, err = utils.InitCPU(); err != nil {
+		global.GVA_LOG.Error("func utils.InitCPU() Failed", zap.String("err", err.Error()))
+		return &s, err
+	}
+	if s.Ram, err = utils.InitRAM(); err != nil {
+		global.GVA_LOG.Error("func utils.InitRAM() Failed", zap.String("err", err.Error()))
+		return &s, err
+	}
+	if s.Disk, err = utils.InitDisk(); err != nil {
+		global.GVA_LOG.Error("func utils.InitDisk() Failed", zap.String("err", err.Error()))
+		return &s, err
+	}
+
+	return &s, nil
+}

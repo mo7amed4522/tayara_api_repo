@@ -1,0 +1,152 @@
+package initialize
+
+import (
+	"context"
+	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/mo7amed4522/tayara_api/global"
+	"github.com/mo7amed4522/tayara_api/initialize/internal"
+	"github.com/mo7amed4522/tayara_api/utils"
+	"github.com/pkg/errors"
+	"github.com/qiniu/qmgo"
+	"github.com/qiniu/qmgo/options"
+	"go.mongodb.org/mongo-driver/bson"
+	option "go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var Mongo = new(mongo)
+
+type (
+	mongo struct{}
+	Index struct {
+		V    any      `bson:"v"`
+		Ns   any      `bson:"ns"`
+		Key  []bson.E `bson:"key"`
+		Name string   `bson:"name"`
+	}
+)
+
+func (m *mongo) Indexes(ctx context.Context) error {
+	// table name: index list column: "table name": [][]string{{"index1", "index2"}}
+	indexMap := map[string][][]string{}
+	for collection, indexes := range indexMap {
+		err := m.CreateIndexes(ctx, collection, indexes)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *mongo) Initialization() error {
+	var opts []options.ClientOptions
+	if global.GVA_CONFIG.Mongo.IsZap {
+		opts = internal.Mongo.GetClientOptions()
+	}
+	ctx := context.Background()
+	client, err := qmgo.Open(ctx, &qmgo.Config{
+		Uri:              global.GVA_CONFIG.Mongo.Uri(),
+		Coll:             global.GVA_CONFIG.Mongo.Coll,
+		Database:         global.GVA_CONFIG.Mongo.Database,
+		MinPoolSize:      &global.GVA_CONFIG.Mongo.MinPoolSize,
+		MaxPoolSize:      &global.GVA_CONFIG.Mongo.MaxPoolSize,
+		SocketTimeoutMS:  &global.GVA_CONFIG.Mongo.SocketTimeoutMs,
+		ConnectTimeoutMS: &global.GVA_CONFIG.Mongo.ConnectTimeoutMs,
+		Auth: &qmgo.Credential{
+			Username:   global.GVA_CONFIG.Mongo.Username,
+			Password:   global.GVA_CONFIG.Mongo.Password,
+			AuthSource: global.GVA_CONFIG.Mongo.AuthSource,
+		},
+	}, opts...)
+	if err != nil {
+		return errors.Wrap(err, "failed to connect to mongodb database!")
+	}
+	global.GVA_MONGO = client
+	err = m.Indexes(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *mongo) CreateIndexes(ctx context.Context, name string, indexes [][]string) error {
+	collection, err := global.GVA_MONGO.Database.Collection(name).CloneCollection()
+	if err != nil {
+		return errors.Wrapf(err, "failed to get table object for [%s]!", name)
+	}
+	list, err := collection.Indexes().List(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get index object for [%s]!", name)
+	}
+	var entities []Index
+	err = list.All(ctx, &entities)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get index list for [%s]!", name)
+	}
+	length := len(indexes)
+	indexMap1 := make(map[string][]string, length)
+	for i := 0; i < length; i++ {
+		sort.Strings(indexes[i]) // sort the index key, when using bson.M to search, bson will automatically sort the key alphabetically
+		length1 := len(indexes[i])
+		keys := make([]string, 0, length1)
+		for j := 0; j < length1; j++ {
+			if indexes[i][i][0] == '-' {
+				keys = append(keys, indexes[i][j], "-1")
+				continue
+			}
+			keys = append(keys, indexes[i][j], "1")
+		}
+		key := strings.Join(keys, "_")
+		_, o1 := indexMap1[key]
+		if o1 {
+			return errors.Errorf("index [%s] duplicated!", key)
+		}
+		indexMap1[key] = indexes[i]
+	}
+	length = len(entities)
+	indexMap2 := make(map[string]map[string]string, length)
+	for i := 0; i < length; i++ {
+		v1, o1 := indexMap2[entities[i].Name]
+		if !o1 {
+			keyLength := len(entities[i].Key)
+			v1 = make(map[string]string, keyLength)
+			for j := 0; j < keyLength; j++ {
+				v2, o2 := v1[entities[i].Key[j].Key]
+				if !o2 {
+					v1 = make(map[string]string)
+				}
+				v2 = entities[i].Key[j].Key
+				v1[entities[i].Key[j].Key] = v2
+				indexMap2[entities[i].Name] = v1
+			}
+		}
+	}
+	for k1, v1 := range indexMap1 {
+		_, o2 := indexMap2[k1]
+		if o2 {
+			continue
+		} // index exists
+		if len(fmt.Sprintf("%s.%s.$%s", collection.Name(), name, v1)) > 127 {
+			err = global.GVA_MONGO.Database.Collection(name).CreateOneIndex(ctx, options.IndexModel{
+				Key:          v1,
+				IndexOptions: option.Index().SetName(utils.MD5V([]byte(k1))),
+				// IndexOptions: option.Index().SetName(utils.MD5V([]byte(k1))).SetExpireAfterSeconds(86400), // SetExpireAfterSeconds(86400) set the index expiration time, 86400 = 1 day
+			})
+			if err != nil {
+				return errors.Wrapf(err, "failed to create index [%s]!", k1)
+			}
+			return nil
+		}
+		err = global.GVA_MONGO.Database.Collection(name).CreateOneIndex(ctx, options.IndexModel{
+			Key:          v1,
+			IndexOptions: option.Index().SetExpireAfterSeconds(86400),
+			// IndexOptions: option.Index().SetName(utils.MD5V([]byte(k1))).SetExpireAfterSeconds(86400), // SetExpireAfterSeconds(86400) set the index expiration time(seconds), 86400 = 1 day
+		})
+		if err != nil {
+			return errors.Wrapf(err, "failed to create index [%s]!", k1)
+		}
+	}
+	return nil
+}

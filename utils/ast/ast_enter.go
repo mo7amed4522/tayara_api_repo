@@ -1,0 +1,182 @@
+package ast
+
+import (
+	"bytes"
+	"go/ast"
+	"go/format"
+	"go/parser"
+	"go/token"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+)
+
+type Visitor struct {
+	ImportCode  string
+	StructName  string
+	PackageName string
+	GroupName   string
+}
+
+func (vi *Visitor) Visit(node ast.Node) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.GenDecl:
+		// Check if the import context package exists.
+		// Notice: No consideration for the case where no import package exists
+		if n.Tok == token.IMPORT && vi.ImportCode != "" {
+			vi.addImport(n)
+			// No need to traverse the subtrees again
+			return nil
+		}
+		if n.Tok == token.TYPE && vi.StructName != "" && vi.PackageName != "" && vi.GroupName != "" {
+			vi.addStruct(n)
+			return nil
+		}
+	case *ast.FuncDecl:
+		if n.Name.Name == "Routers" {
+			vi.addFuncBodyVar(n)
+			return nil
+		}
+
+	}
+	return vi
+}
+
+func (vi *Visitor) addStruct(genDecl *ast.GenDecl) ast.Visitor {
+	for i := range genDecl.Specs {
+		switch n := genDecl.Specs[i].(type) {
+		case *ast.TypeSpec:
+			if strings.Contains(n.Name.Name, "Group") {
+				switch t := n.Type.(type) {
+				case *ast.StructType:
+					f := &ast.Field{
+						Names: []*ast.Ident{
+							{
+								Name: vi.StructName,
+								Obj: &ast.Object{
+									Kind: ast.Var,
+									Name: vi.StructName,
+								},
+							},
+						},
+						Type: &ast.SelectorExpr{
+							X: &ast.Ident{
+								Name: vi.PackageName,
+							},
+							Sel: &ast.Ident{
+								Name: vi.GroupName,
+							},
+						},
+					}
+					t.Fields.List = append(t.Fields.List, f)
+				}
+			}
+		}
+	}
+	return vi
+}
+
+func (vi *Visitor) addImport(genDecl *ast.GenDecl) ast.Visitor {
+	// Whether import has been imported
+	hasImported := false
+	for _, v := range genDecl.Specs {
+		importSpec := v.(*ast.ImportSpec)
+		// If it already contains
+		if importSpec.Path.Value == strconv.Quote(vi.ImportCode) {
+			hasImported = true
+		}
+	}
+	if !hasImported {
+		genDecl.Specs = append(genDecl.Specs, &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(vi.ImportCode),
+			},
+		})
+	}
+	return vi
+}
+
+func (vi *Visitor) addFuncBodyVar(funDecl *ast.FuncDecl) ast.Visitor {
+	hasVar := false
+	for _, v := range funDecl.Body.List {
+		switch varSpec := v.(type) {
+		case *ast.AssignStmt:
+			for i := range varSpec.Lhs {
+				switch nn := varSpec.Lhs[i].(type) {
+				case *ast.Ident:
+					if nn.Name == vi.PackageName+"Router" {
+						hasVar = true
+					}
+				}
+			}
+		}
+	}
+	if !hasVar {
+		assignStmt := &ast.AssignStmt{
+			Lhs: []ast.Expr{
+				&ast.Ident{
+					Name: vi.PackageName + "Router",
+					Obj: &ast.Object{
+						Kind: ast.Var,
+						Name: vi.PackageName + "Router",
+					},
+				},
+			},
+			Tok: token.DEFINE,
+			Rhs: []ast.Expr{
+				&ast.SelectorExpr{
+					X: &ast.SelectorExpr{
+						X: &ast.Ident{
+							Name: "router",
+						},
+						Sel: &ast.Ident{
+							Name: "RouterGroupApp",
+						},
+					},
+					Sel: &ast.Ident{
+						Name: cases.Title(language.English).String(vi.PackageName),
+					},
+				},
+			},
+		}
+		funDecl.Body.List = append(funDecl.Body.List, funDecl.Body.List[1])
+		index := 1
+		copy(funDecl.Body.List[index+1:], funDecl.Body.List[index:])
+		funDecl.Body.List[index] = assignStmt
+	}
+	return vi
+}
+
+func ImportReference(filepath, importCode, structName, packageName, groupName string) error {
+	fSet := token.NewFileSet()
+	fParser, err := parser.ParseFile(fSet, filepath, nil, parser.ParseComments)
+	if err != nil {
+		return err
+	}
+	importCode = strings.TrimSpace(importCode)
+	v := &Visitor{
+		ImportCode:  importCode,
+		StructName:  structName,
+		PackageName: packageName,
+		GroupName:   groupName,
+	}
+	if importCode == "" {
+		ast.Print(fSet, fParser)
+	}
+
+	ast.Walk(v, fParser)
+
+	var output []byte
+	buffer := bytes.NewBuffer(output)
+	err = format.Node(buffer, fSet, fParser)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Write back data
+	return os.WriteFile(filepath, buffer.Bytes(), 0o600)
+}
