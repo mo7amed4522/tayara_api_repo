@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mo7amed4522/tayara_api/global"
 	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
+	"github.com/mo7amed4522/tayara_api/model/dxapi"
+	dxapiReq "github.com/mo7amed4522/tayara_api/model/dxapi/request"
 	"github.com/mo7amed4522/tayara_api/model/system"
 	systemReq "github.com/mo7amed4522/tayara_api/model/system/request"
 )
@@ -177,4 +179,17 @@ func GetBxUserIDFast(c *gin.Context) uint {
 		return userID.(uint)
 	}
 	return 0 // If it does not exist, return 0
+}
+func DxLoginToken(user dxapi.Login) (token string, claims bxapiReq.CustomClaims, err error) {
+	j := NewDxJWT() // 使用专门的 BxJWT
+	claims = j.CreateClaims(dxapiReq.BaseClaims{
+		GetAgentId:         user.GetAgentId(),
+		GetAgentname:       user.GetAgentname(),
+		GetResponsibleName: user.GetResponsibleName(),
+	})
+	token, err = j.CreateToken(claims)
+	if err != nil {
+		return
+	}
+	return
 }
