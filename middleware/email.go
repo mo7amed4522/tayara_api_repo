@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var userService = service.ServiceGroupApp.SystemServiceGroup.UserService
+var adminService = service.ServiceGroupApp.SystemServiceGroup.SysAdminProfileServices
 
 func ErrorToEmail() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -26,7 +26,7 @@ func ErrorToEmail() gin.HandlerFunc {
 			username = claims.Username
 		} else {
 			id, _ := strconv.Atoi(c.Request.Header.Get("x-user-id"))
-			user, err := userService.FindUserById(id)
+			user, err := adminService.FindUserById(id)
 			if err != nil {
 				username = "Unknown"
 			}

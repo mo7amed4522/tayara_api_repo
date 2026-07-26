@@ -6,4 +6,5 @@ type ServiceGroup struct {
 	AutoCodeService
 	SystemConfigService
 	OperationRecordService
+	SysAdminProfileServices
 }
