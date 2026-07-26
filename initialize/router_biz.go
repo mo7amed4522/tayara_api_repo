@@ -3,6 +3,7 @@ package initialize
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/mo7amed4522/tayara_api/middleware"
+	"github.com/mo7amed4522/tayara_api/router"
 )
 
 func holder(routers ...*gin.RouterGroup) {
@@ -20,5 +21,8 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	managePrivate.Use(middleware.ManageJWTAuth())
 	systemPrivate := publicGroup.Group("")
 	systemPrivate.Use(middleware.SystemJWTAuth())
+
+	// admin
+	router.RouterGroupApp.System.InitSysAdminProfileRouter(publicGroup, systemPrivate)
 
 }

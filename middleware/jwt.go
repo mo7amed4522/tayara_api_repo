@@ -50,8 +50,8 @@ func JWTAuth() gin.HandlerFunc {
 
 		// The logged-in user has been disabled by the administrator, need to invalidate the jwt of the user, this is relatively performance-intensive, if needed, please open it yourself
 		// The logic of the user being deleted needs to be optimized, this is relatively performance-intensive, if needed, please open it yourself
-
-		if user, err := userService.FindUserByID(claims.BaseClaims.ID); err != nil || user.Enable == 2 {
+		id, _ := strconv.Atoi(c.Request.Header.Get("x-user-id"))
+		if _, err := adminService.FindUserById(id); err != nil {
 			_ = jwtService.JsonInBlacklist(system.JwtBlacklist{Jwt: token})
 			response.FailWithDetailed(gin.H{"reload": true}, err.Error(), c)
 			c.Abort()

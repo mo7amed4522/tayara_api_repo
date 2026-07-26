@@ -1,0 +1,21 @@
+package system
+
+import (
+	"github.com/gin-gonic/gin"
+)
+
+type SysAdminProfileRouter struct{}
+
+func (sysAdminProfileRouter SysAdminProfileRouter) InitSysAdminProfileRouter(publicGroup, privateGroup *gin.RouterGroup) {
+
+	public := publicGroup.Group("api/v1/system")
+	private := privateGroup.Group("api/v1/system")
+
+	{
+		public.POST("register", sysAdminProfileApi.Register)
+		public.POST("login", sysAdminProfileApi.Login)
+	}
+	{
+		private.POST("changePassword", sysAdminProfileApi.ChangePassword)
+	}
+}

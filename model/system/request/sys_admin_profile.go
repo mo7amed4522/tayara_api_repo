@@ -29,6 +29,7 @@ type SysProfileUpdateReq struct {
 }
 
 type SysChangePasswordReq struct {
+	ID          uint   `json:"id" form:"id"`
 	OldPassword string `json:"oldPassword" form:"oldPassword"`
 	NewPassword string `json:"newPassword" form:"newPassword"`
 }
