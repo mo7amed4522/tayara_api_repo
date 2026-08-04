@@ -254,3 +254,32 @@ firebase:
         apple: true
         facebook: true
         phone: true
+
+# Travel marketplace business defaults (seeded into base_system_setting at init; runtime value wins)
+travel:
+    default-currency: AED                 # Default/major currency
+    supported-currencies:
+        - AED
+        - USD
+    commission:                           # Percentages are basis points: 1000 == 10%
+        basic-plan-percent: 1000          # Basic plan default commission (10%)
+        premium-plan-percent: 1500        # Premium plan default commission (15%)
+        allow-manual-override: true       # Admin may override commission per booking (audited)
+    sla:
+        agent-response-hours: 2           # Hours an agent has to respond to a booking request
+        user-payment-hours: 2             # Hours a user has to pay after price confirmation
+        warning-threshold-hours: 2        # Hours before a breach an alert fires
+        auto-alert-on-breach: true        # Emit reminder on SLA breach
+    payment:
+        hold-duration-hours: 2            # Stripe authorization hold window
+        auto-capture: false               # Auto-capture authorization once hold expires
+        auto-refund-before-capture: false # Cancel+refund before capture (config toggle)
+        partial-refund-enabled: true      # Allow partial refunds
+    cancellation:
+        auto-cancel-price-pending-hours: 13 # Auto-cancel sitting price-pending bookings
+        auto-cancel-kyc-pending-hours: 48   # Auto-cancel bookings stuck in KYC/docs
+        allow-admin-force-cancel: true      # Admin may force-cancel any booking
+    payout:
+        manual-only: true                 # MVP: payouts are a manual admin action
+        require-admin-verification: true  # Admin must verify before release
+        require-confirmation-file: true   # Agent confirmation file required for eligibility

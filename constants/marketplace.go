@@ -1,0 +1,112 @@
+package constants
+
+// Marketplace enums (Phase 0). Companion to reason.go — these cover the travel-marketplace domain
+// that reason.go does not already define. Single source of truth for their values.
+
+// KYC status axis (user identity verification, distinct from per-traveler DocumentStatus)
+const (
+	KYCStatusNotSubmitted = "not_submitted"
+	KYCStatusPending      = "pending"
+	KYCStatusApproved     = "approved"
+	KYCStatusRejected     = "rejected"
+)
+
+// Document role within a booking (booking_documents.doc_role)
+const (
+	DocRoleKYCFile           = "kyc_file"
+	DocRoleAgentConfirmation = "agent_confirmation"
+	DocRoleTravelerDoc       = "traveler_doc"
+	DocRoleIssuedTicket      = "issued_ticket"
+)
+
+// Document requirement phase (package_document_requirements.required_after)
+const (
+	RequireAfterBooking = "booking"
+	RequireAfterPayment = "payment"
+)
+
+// Package availability_type
+const (
+	AvailabilityOpenCalendar = "open_calendar"
+	AvailabilityFixedDates   = "fixed_dates"
+)
+
+// Package add-on types + pricing model
+const (
+	AddonTypeVisaIssueHelp   = "visa_issue_help"
+	AddonTypeTourGuide       = "tour_guide"
+	AddonTypeTravelInsurance = "travel_insurance"
+	AddonTypePhotographer    = "photographer"
+)
+const (
+	AddonPriceModelFixed       = "fixed"        // tour guide / photographer
+	AddonPriceModelPerTraveler = "per_traveler" // visa help / insurance
+)
+
+// Ad placement and redirect targets
+const (
+	AdPlacementHomeTopBanner    = "home_top_banner"
+	AdPlacementExploreTopBanner = "explore_top_banner"
+)
+const (
+	AdRedirectPackagesByDestination = "packages_by_destination"
+	AdRedirectAgentsByDestination   = "agents_by_destination"
+	AdRedirectSingleAgentPackages   = "single_agent_packages"
+)
+
+// Notification event types (notifications.event_type / notification_templates)
+const (
+	NotifEventBookingRequested = "booking_request"
+	NotifEventAgentReviewing   = "agent_reviewing"
+	NotifEventPriceConfirmed   = "price_confirmed"
+	NotifEventOfferExpiring    = "offer_expiring"
+	NotifEventAgentRejected    = "agent_rejected"
+	NotifEventPaymentSuccess   = "payment_success"
+	NotifEventSLATimeout       = "sla_timeout"
+	NotifEventCancellation     = "cancellation"
+	NotifEventPayout           = "payout"
+	NotifEventRefund           = "refund"
+)
+
+// Notification recipient type
+const (
+	NotifRecipientUser  = "user"
+	NotifRecipientAgent = "agent"
+	NotifRecipientAdmin = "admin"
+)
+
+// Notification channel
+const (
+	NotifChannelPush  = "push"
+	NotifChannelEmail = "email"
+)
+
+// SLA enforcement types (sla_events.sla_type)
+const (
+	SLATypeAgentResponse = "agent_response" // agent must respond to a request within SLA hours
+	SLATypeUserPayment   = "user_payment"   // user must pay within the pay window after price confirmation
+)
+
+// SLA auto-action taken on breach
+const (
+	SLAAutoActionAutoCancel  = "auto_cancel"
+	SLAAutoActionOfferExpiry = "offer_expiry"
+	SLAAutoActionReminder    = "reminder"
+)
+
+// Currency codes (default AED; supported AED/USD)
+const (
+	CurrencyAED = "AED"
+	CurrencyUSD = "USD"
+)
+
+// Code prefixes used by the utils code generator (PRD-named sequence prefixes)
+const (
+	CodePrefixBooking      = "BK-"
+	CodePrefixCustomTrip   = "CT-"
+	CodePrefixPackage      = "PK-"
+	CodePrefixAgent        = "AG-"
+	CodePrefixUser         = "US-"
+	CodePrefixNotification = "NT-"
+	CodePrefixAd           = "AD-"
+)
