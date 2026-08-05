@@ -111,12 +111,29 @@ func (d DocServices) IssueBooking(ctx context.Context, agentID uint, bookingID u
 	return d.transition(ctx, bookingID, constants.BookingStatusIssuedReady, constants.TimelineActorAgent, agentID, "tickets issued")
 }
 
-// CompleteBooking advances the booking to completed via BookingConfirmed.
+// CompleteBooking advances the booking to completed. Two legal routes exist per the state
+// machine: processing -> booking_confirmed -> completed, or issued_ready -> completed directly.
+// This picks the route that matches the booking's current state.
 func (d DocServices) CompleteBooking(ctx context.Context, agentID uint, bookingID uint) error {
-	if err := d.transition(ctx, bookingID, constants.BookingStatusBookingConfirmed, constants.TimelineActorAgent, agentID, "booking confirmed"); err != nil {
-		return err
+	if global.GVA_DB == nil {
+		return errors.New("db not init")
 	}
-	return d.transition(ctx, bookingID, constants.BookingStatusCompleted, constants.TimelineActorAgent, agentID, "booking completed")
+	var bk booking.Booking
+	if err := global.GVA_DB.First(&bk, bookingID).Error; err != nil {
+		return errors.New("booking not found")
+	}
+	switch bk.BookingStatus {
+	case constants.BookingStatusIssuedReady:
+		// direct legal edge issued_ready -> completed
+		return d.transition(ctx, bookingID, constants.BookingStatusCompleted, constants.TimelineActorAgent, agentID, "booking completed")
+	case constants.BookingStatusProcessing:
+		if err := d.transition(ctx, bookingID, constants.BookingStatusBookingConfirmed, constants.TimelineActorAgent, agentID, "booking confirmed"); err != nil {
+			return err
+		}
+		return d.transition(ctx, bookingID, constants.BookingStatusCompleted, constants.TimelineActorAgent, agentID, "booking completed")
+	default:
+		return errors.New("booking is not in a completable state")
+	}
 }
 
 // AdminReviewKYC sets the KYC identity axis; approval is required before processing.
