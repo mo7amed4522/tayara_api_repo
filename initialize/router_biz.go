@@ -35,4 +35,7 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// payment (user opens payment + Stripe webhook; admin captures/refunds; agent payout views)
 	router.RouterGroupApp.Payment.InitPaymentRouter(publicGroup, managePrivate, systemPrivate)
 
+	// engage (reviews, ads, notifications, wishlist/shares/coupons)
+	router.RouterGroupApp.Engage.InitEngageRouter(publicGroup, systemPrivate)
+
 }

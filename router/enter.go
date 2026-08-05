@@ -5,6 +5,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/router/bxapi"
 	"github.com/mo7amed4522/tayara_api/router/catalog"
 	"github.com/mo7amed4522/tayara_api/router/dxapi"
+	"github.com/mo7amed4522/tayara_api/router/engage"
 	"github.com/mo7amed4522/tayara_api/router/payment"
 	"github.com/mo7amed4522/tayara_api/router/system"
 )
@@ -18,4 +19,5 @@ type RouterGroup struct {
 	Catalog catalog.RouterGroup
 	Booking booking.RouterGroup
 	Payment payment.RouterGroup
+	Engage  engage.RouterGroup
 }

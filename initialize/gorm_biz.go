@@ -52,6 +52,13 @@ func bizModel() error {
 		&booking.DocumentAccessLog{},
 		// engage
 		&engage.Notification{},
+		&engage.NotificationTemplate{},
+		&engage.Review{},
+		&engage.AdCreative{},
+		&engage.AdClick{},
+		&engage.Wishlist{},
+		&engage.Share{},
+		&engage.Coupon{},
 		// payment
 		&paymentModel.PaymentTransaction{},
 		&paymentModel.Refund{},

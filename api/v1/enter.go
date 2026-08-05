@@ -5,6 +5,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/api/v1/bxapi"
 	"github.com/mo7amed4522/tayara_api/api/v1/catalog"
 	"github.com/mo7amed4522/tayara_api/api/v1/dxapi"
+	"github.com/mo7amed4522/tayara_api/api/v1/engage"
 	"github.com/mo7amed4522/tayara_api/api/v1/payment"
 	"github.com/mo7amed4522/tayara_api/api/v1/system"
 )
@@ -18,4 +19,5 @@ type ApiGroup struct {
 	CatalogApiGroup catalog.ApiGroup
 	BookingApiGroup booking.ApiGroup
 	PaymentApiGroup payment.ApiGroup
+	EngageApiGroup  engage.ApiGroup
 }

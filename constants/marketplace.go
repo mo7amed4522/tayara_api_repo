@@ -138,6 +138,13 @@ const (
 	PaymentEventFailed     = "failed"
 )
 
+// Coupon lifecycle statuses (display-scope MVP).
+const (
+	CouponStatusActive  = "active"
+	CouponStatusUsed    = "used"
+	CouponStatusExpired = "expired"
+)
+
 // Discount floor (PRD locks a minimum discount on packages). Basis points, 300 == 3%.
 const (
 	DiscountMinPercentBps = 300
