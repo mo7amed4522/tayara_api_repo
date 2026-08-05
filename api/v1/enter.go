@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/mo7amed4522/tayara_api/api/v1/analytics"
 	"github.com/mo7amed4522/tayara_api/api/v1/booking"
 	"github.com/mo7amed4522/tayara_api/api/v1/bxapi"
 	"github.com/mo7amed4522/tayara_api/api/v1/catalog"
@@ -13,11 +14,12 @@ import (
 var ApiGroupApp = new(ApiGroup)
 
 type ApiGroup struct {
-	SystemApiGroup system.ApiGroup
-	BxApiGroup     bxapi.ApiGroup
-	ManageApiGroup dxapi.ApiGroup
-	CatalogApiGroup catalog.ApiGroup
-	BookingApiGroup booking.ApiGroup
-	PaymentApiGroup payment.ApiGroup
-	EngageApiGroup  engage.ApiGroup
+	SystemApiGroup   system.ApiGroup
+	BxApiGroup       bxapi.ApiGroup
+	ManageApiGroup   dxapi.ApiGroup
+	CatalogApiGroup  catalog.ApiGroup
+	BookingApiGroup  booking.ApiGroup
+	PaymentApiGroup  payment.ApiGroup
+	EngageApiGroup   engage.ApiGroup
+	AnalyticsApiGroup analytics.ApiGroup
 }

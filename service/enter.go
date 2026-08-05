@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/mo7amed4522/tayara_api/service/analytics"
 	"github.com/mo7amed4522/tayara_api/service/booking"
 	"github.com/mo7amed4522/tayara_api/service/bxapi"
 	"github.com/mo7amed4522/tayara_api/service/catalog"
@@ -13,11 +14,12 @@ import (
 var ServiceGroupApp = new(ServiceGroup)
 
 type ServiceGroup struct {
-	SystemServiceGroup system.ServiceGroup
-	BxApiServiceGroup  bxapi.ServiceGroup
-	ManageServiceGroup dxapi.ServiceGroup
-	CatalogServiceGroup catalog.ServiceGroup
-	BookingServiceGroup booking.ServiceGroup
-	EngageServiceGroup  engage.ServiceGroup
-	PaymentServiceGroup payment.ServiceGroup
+	SystemServiceGroup   system.ServiceGroup
+	BxApiServiceGroup    bxapi.ServiceGroup
+	ManageServiceGroup   dxapi.ServiceGroup
+	CatalogServiceGroup  catalog.ServiceGroup
+	BookingServiceGroup  booking.ServiceGroup
+	EngageServiceGroup   engage.ServiceGroup
+	PaymentServiceGroup  payment.ServiceGroup
+	AnalyticsServiceGroup analytics.ServiceGroup
 }
