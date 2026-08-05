@@ -10,6 +10,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
 	bookingModel "github.com/mo7amed4522/tayara_api/model/booking"
+	"github.com/mo7amed4522/tayara_api/model/bxapi"
 	paymentModel "github.com/mo7amed4522/tayara_api/model/payment"
 	paymentMongo "github.com/mo7amed4522/tayara_api/model/payment/mongo"
 	"github.com/mo7amed4522/tayara_api/model/payment/request"
@@ -19,6 +20,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/service/payment/providers"
 	"github.com/mo7amed4522/tayara_api/utils"
 	"github.com/mo7amed4522/tayara_api/utils/stripe"
+	"gorm.io/gorm"
 )
 
 type PaymentServices struct{}
@@ -199,6 +201,9 @@ func (p *PaymentServices) Capture(ctx context.Context, adminID, bookingID uint) 
 			"payment_status": constants.PaymentStatusCaptured, "stripe_fee": feeAmount,
 			"commission_amount": commissionAmount, "agent_share": agentShare, "captured_at": &now,
 		}).Error
+	// reflect the captured amount on the paying user's lifetime spend (identity aggregate)
+	_ = global.GVA_DB.Model(&bxapi.BxsUserProfile{}).Where("id = ?", tx.UserID).
+		UpdateColumn("total_spend", gorm.Expr("total_spend + ?", net)).Error
 
 	engage.NotificationServices{}.Emit(constants.NotifEventPriceConfirmed, constants.NotifRecipientUser,
 		tx.UserID, constants.NotifChannelPush, "Payment received", "Your payment was captured")

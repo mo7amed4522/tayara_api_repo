@@ -25,6 +25,10 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// admin
 	router.RouterGroupApp.System.InitSysAdminProfileRouter(publicGroup, systemPrivate)
 
+	// identity: agent (dx) registration + admin approval; user (bx) registration + block
+	router.RouterGroupApp.Manage.InitAgentRouter(publicGroup, managePrivate, systemPrivate)
+	router.RouterGroupApp.BxApi.InitUserRouter(publicGroup, bxPrivate, systemPrivate)
+
 	// catalog (packages by agent, moderation by admin, browsing by public/buyer)
 	router.RouterGroupApp.Catalog.InitCatalogRouter(publicGroup, managePrivate, systemPrivate)
 	router.RouterGroupApp.Catalog.InitCustomTripRouter(managePrivate)

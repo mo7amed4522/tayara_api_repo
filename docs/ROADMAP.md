@@ -94,3 +94,44 @@ Identity layer already in the repo and reused/extended: `system.SysAdminProfile`
   commission override), `go vet`/tests, README/run notes.
 
 Each phase is a self-contained slice; proceed to the next only when the previous phase's exit criteria pass.
+
+---
+
+# Gap plan (post-Phase-8 audit, Phases 9–12)
+
+Audit of the PRD schema inventory vs the build above. See README/chat for the full diff; the
+missing pieces that remain are grouped into four self-contained phases.
+
+**Phase 9 — Identity & RBAC (biggest gap: dxapi + bxapi are empty shells)**
+- Agent registration (public) → admin approval flow: approve / reject / suspend / activate, set
+  per-agent commission % + SLA hours at approval; `agent_documents` upload/verify; `agent_notes`;
+  `dx_agent_plan` CRUD. Models exist; services/APIs do not.
+- User (`bxapi`) registration/login/profile + admin block/unblock; `total_spend` update on capture.
+- RBAC: wire the existing System/Manage/BxDomain JWT middleware into a route-authority matrix so
+  admin vs agent vs user scoping is enforced centrally, not ad-hoc per service.
+- **Exit:** agents/users can register, admins approve, and every guarded route enforces its role.
+
+**Phase 10 — Financial audit completeness (missing tables)**
+- `disputes` (Resolve Dispute modal: open → resolved, admin + reason).
+- `commission_records` per booking (plan snapshot, override % + reason + by-admin, audited) so the
+  commission history is queryable, not just columns.
+- `setting_change_history` (audit trail on every system-settings edit).
+- `package_categories` lookup (honeymoon/adventure) and `custom_trip_requirement_profiles`
+  (dynamic per-country required documents for the custom-trip builder).
+- **Exit:** all four tables exist with CRUD + they feed existing aggregates.
+
+**Phase 11 — Engagement depth**
+- Coupon apply-to-booking: validate code/validity, apply discount at payment, mark used.
+- Notification provider dispatchers (FCM push + SMTP email) behind the existing Emit interface;
+  mark sent/failed on delivery.
+- "Secure Price Now" reservation-hold semantics (optional hold window before price confirmation).
+- Admin document-audit read endpoints (who viewed/downloaded which document).
+- **Exit:** coupons affect pricing, notifications actually deliver, holds + admin audit available.
+
+**Phase 12 — Polish & hardening**
+- Regenerate Swagger (install `swag`), normalize API error codes/responses.
+- Seed full demo dataset; integration tests (concurrent capture/refund under the red lock).
+- Deploy/run notes for MySQL + Redis + Mongo in production.
+- **Exit:** docs fresh, error contract consistent, concurrency proven, production-ready notes.
+
+Each phase is a self-contained slice; proceed to the next only when the previous phase's exit criteria pass.

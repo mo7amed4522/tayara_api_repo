@@ -145,6 +145,14 @@ const (
 	CouponStatusExpired = "expired"
 )
 
+// RBAC authority ids carried in the JWT claims (AuthorityId). These map to the domain guard
+// groups (system/admin, manage/agent, bx/user) and drive route-authority checks centrally.
+const (
+	AuthoritySystem = 1 // platform admin (super admin)
+	AuthorityAgent  = 2 // travel agency dashboard
+	AuthorityUser   = 3 // end-user mobile app
+)
+
 // Discount floor (PRD locks a minimum discount on packages). Basis points, 300 == 3%.
 const (
 	DiscountMinPercentBps = 300
