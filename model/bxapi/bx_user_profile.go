@@ -30,6 +30,8 @@ type BxsUserProfile struct {
 	KYCStatus        string     `json:"kycStatus" form:"kycStatus" gorm:"size:32;index;default:pending;comment:KYC status"`
 	TotalSpend       int64      `json:"totalSpend" form:"totalSpend" gorm:"default:0;comment:Total spend in minor units"`
 	Status           string     `json:"status" form:"status" gorm:"size:32;index;default:active;comment:Client status"`
+	BlockReason      string     `json:"blockReason" form:"blockReason" gorm:"size:500;comment:Block reason"`
+	LastLoginAt      *time.Time `json:"lastLoginAt" form:"lastLoginAt" gorm:"comment:Last login at"`
 	FirebaseUID      string     `json:"firebaseUid" gorm:"size:128;index;comment:Firebase auth UID"`                                // Firebase UID
 	AuthProvider     string     `json:"authProvider" gorm:"size:32;index;comment:Auth provider: email,google,apple,facebook,phone"` // Auth provider
 	global.GVA_MODEL

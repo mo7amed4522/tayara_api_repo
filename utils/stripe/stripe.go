@@ -89,6 +89,67 @@ func CreatePaymentIntent(bookingID uint, bookingCode string, amount int64, curre
 	return toPaymentIntentView(intent), nil
 }
 
+// CreatePaymentIntentWithMethods creates a PaymentIntent restricted to the given client
+// card/wallet methods (card, apple_pay, google_pay). Card numbers never touch our server —
+// Stripe.js/Elements tokenise the payment method client-side; we only receive method ids.
+func CreatePaymentIntentWithMethods(bookingID uint, bookingCode string, amount int64, currency string, methods []string) (*PaymentIntentView, error) {
+	if !Enabled() {
+		return nil, errors.New("stripe is not configured")
+	}
+	if amount <= 0 {
+		return nil, errors.New("payment amount must be greater than zero")
+	}
+	configure()
+	if currency == "" {
+		currency = defaultCurrency()
+	}
+	params := &stripe.PaymentIntentParams{
+		Amount:             stripe.Int64(amount),
+		Currency:           stripe.String(strings.ToLower(currency)),
+		CaptureMethod:      stripe.String(captureMethod()),
+		PaymentMethodTypes: paymentMethodTypes(methods),
+		Metadata: map[string]string{
+			"booking_id":   strconv.FormatUint(uint64(bookingID), 10),
+			"booking_code": bookingCode,
+		},
+	}
+	intent, err := paymentintent.New(params)
+	if err != nil {
+		return nil, err
+	}
+	return toPaymentIntentView(intent), nil
+}
+
+// paymentMethodTypes maps our logical methods to Stripe PaymentMethodType string values.
+// card/visa/mastercard -> "card"; apple_pay -> "apple_pay"; google_pay -> "google_pay".
+func paymentMethodTypes(methods []string) []*string {
+	if len(methods) == 0 {
+		return nil
+	}
+	seen := map[string]bool{}
+	var out []*string
+	for _, m := range methods {
+		switch strings.ToLower(strings.TrimSpace(m)) {
+		case "card", "visa", "mastercard":
+			if !seen["card"] {
+				seen["card"] = true
+				out = append(out, stripe.String(string(stripe.PaymentMethodTypeCard)))
+			}
+		case "apple_pay":
+			if !seen["apple_pay"] {
+				seen["apple_pay"] = true
+				out = append(out, stripe.String("apple_pay"))
+			}
+		case "google_pay":
+			if !seen["google_pay"] {
+				seen["google_pay"] = true
+				out = append(out, stripe.String("google_pay"))
+			}
+		}
+	}
+	return out
+}
+
 func GetPaymentIntent(paymentIntentID string) (*PaymentIntentView, error) {
 	if !Enabled() {
 		return nil, errors.New("stripe is not configured")

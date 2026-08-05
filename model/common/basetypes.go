@@ -4,9 +4,23 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 type JSONMap map[string]interface{}
+
+// GormDataType lets AutoMigrate map JSONMap to a JSON column on both MySQL and embedded
+// drivers (sqlite) instead of failing with "unsupported data type".
+func (JSONMap) GormDataType() string {
+	return "json"
+}
+
+// GormDBDataType refines the column type per dialect (kept for MySQL JSON support).
+func (JSONMap) GormDBDataType(_ *gorm.DB, _ *schema.Field) string {
+	return "json"
+}
 
 func (m JSONMap) Value() (driver.Value, error) {
 	if m == nil {

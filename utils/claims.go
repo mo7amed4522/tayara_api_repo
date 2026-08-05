@@ -85,6 +85,16 @@ func GetUserID(c *gin.Context) uint {
 	}
 }
 
+// GetAgentID Get the authenticated agent id from the Manage (dx) token context.
+func GetAgentID(c *gin.Context) uint {
+	if v, ok := c.Get("manageUserID"); ok {
+		if id, ok := v.(uint); ok {
+			return id
+		}
+	}
+	return 0
+}
+
 // GetUserAuthorityId Get the user role id from the Gin's Context after parsing with jwt
 func GetUserAuthorityId(c *gin.Context) uint {
 	if claims, exists := c.Get("claims"); !exists {

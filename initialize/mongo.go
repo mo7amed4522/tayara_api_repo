@@ -30,7 +30,10 @@ type (
 
 func (m *mongo) Indexes(ctx context.Context) error {
 	// table name: index list column: "table name": [][]string{{"index1", "index2"}}
-	indexMap := map[string][][]string{}
+	indexMap := map[string][][]string{
+		"payment_events": {{"payment_id"}, {"type"}, {"payment_id", "at"}},
+		"payment_states": {{"_id"}},
+	}
 	for collection, indexes := range indexMap {
 		err := m.CreateIndexes(ctx, collection, indexes)
 		if err != nil {

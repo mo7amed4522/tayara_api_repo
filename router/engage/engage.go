@@ -1,0 +1,41 @@
+package engage
+
+import "github.com/gin-gonic/gin"
+
+type EngageRouter struct{}
+
+// InitEngageRouter registers the content & engagement endpoints across the guard groups.
+func (r EngageRouter) InitEngageRouter(publicGroup, systemGroup *gin.RouterGroup) {
+	public := publicGroup.Group("api/v1/engage")
+	system := systemGroup.Group("api/v1/engage")
+
+	// user-facing (public): reviews, ads, wishlist, shares, coupons, notifications
+	{
+		public.POST("reviews", reviewApi.CreateReview)
+		public.GET("reviews", reviewApi.ListReviews)
+		public.GET("ads", adApi.ActiveAds)
+		public.POST("ads/impression", adApi.RecordImpression)
+		public.POST("ads/click", adApi.RecordClick)
+		public.POST("wishlist", userApi.ToggleWishlist)
+		public.GET("wishlist", userApi.ListWishlist)
+		public.POST("share", userApi.RecordShare)
+		public.GET("coupons", userApi.ListCoupons)
+		public.GET("notifications", notifApi.ListMyNotifications)
+	}
+	// admin-facing
+	{
+		system.GET("admin/reviews", reviewApi.AdminListReviews)
+		system.PUT("admin/reviews/status", reviewApi.SetStatus)
+		system.POST("ads", adApi.CreateAd)
+		system.PUT("ads", adApi.UpdateAd)
+		system.PUT("ads/status", adApi.SetStatus)
+		system.DELETE("ads", adApi.DeleteAd)
+		system.GET("admin/ads", adApi.ListAds)
+		system.GET("admin/notifications", notifApi.ListNotifications)
+		system.POST("admin/notifications/resend", notifApi.Resend)
+		system.POST("admin/notification-templates", notifApi.UpsertTemplate)
+		system.DELETE("admin/notification-templates", notifApi.DeleteTemplate)
+		system.POST("admin/coupons", userApi.CreateCoupon)
+		system.GET("admin/coupons", userApi.AdminListCoupons)
+	}
+}

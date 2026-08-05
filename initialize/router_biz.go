@@ -25,4 +25,27 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// admin
 	router.RouterGroupApp.System.InitSysAdminProfileRouter(publicGroup, systemPrivate)
 
+	// identity: agent (dx) registration + admin approval; user (bx) registration + block
+	router.RouterGroupApp.Manage.InitAgentRouter(publicGroup, managePrivate, systemPrivate)
+	router.RouterGroupApp.BxApi.InitUserRouter(publicGroup, bxPrivate, systemPrivate)
+
+	// catalog (packages by agent, moderation by admin, browsing by public/buyer)
+	router.RouterGroupApp.Catalog.InitCatalogRouter(publicGroup, managePrivate, systemPrivate)
+	router.RouterGroupApp.Catalog.InitCustomTripRouter(managePrivate)
+
+	// booking lifecycle (user requests, agent reviews/offers, admin monitors/force-cancels)
+	router.RouterGroupApp.Booking.InitBookingRouter(publicGroup, managePrivate, systemPrivate)
+
+	// payment (user opens payment + Stripe webhook; admin captures/refunds; agent payout views)
+	router.RouterGroupApp.Payment.InitPaymentRouter(publicGroup, managePrivate, systemPrivate)
+
+	// engage (reviews, ads, notifications, wishlist/shares/coupons)
+	router.RouterGroupApp.Engage.InitEngageRouter(publicGroup, systemPrivate)
+
+	// analytics (admin aggregate cards + agent dashboard card)
+	router.RouterGroupApp.Analytics.InitAnalyticsRouter(managePrivate, systemPrivate)
+
+	// base lookups (package categories + settings change history)
+	router.RouterGroupApp.Base.InitLookupRouter(publicGroup, systemPrivate)
+
 }
