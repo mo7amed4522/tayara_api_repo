@@ -9,4 +9,5 @@ type RouterGroup struct {
 
 var (
 	paymentApi = api.ApiGroupApp.PaymentApiGroup.PaymentApi
+	payoutApi  = api.ApiGroupApp.PaymentApiGroup.PayoutApi
 )

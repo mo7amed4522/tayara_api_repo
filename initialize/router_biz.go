@@ -32,7 +32,7 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// booking lifecycle (user requests, agent reviews/offers, admin monitors/force-cancels)
 	router.RouterGroupApp.Booking.InitBookingRouter(publicGroup, managePrivate, systemPrivate)
 
-	// payment (user opens payment + Stripe webhook; admin captures/refunds)
-	router.RouterGroupApp.Payment.InitPaymentRouter(publicGroup, systemPrivate)
+	// payment (user opens payment + Stripe webhook; admin captures/refunds; agent payout views)
+	router.RouterGroupApp.Payment.InitPaymentRouter(publicGroup, managePrivate, systemPrivate)
 
 }

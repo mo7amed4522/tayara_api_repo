@@ -55,6 +55,7 @@ func bizModel() error {
 		// payment
 		&paymentModel.PaymentTransaction{},
 		&paymentModel.Refund{},
+		&paymentModel.Payout{},
 		// system
 		&system.SysAdminProfile{},
 		&system.JwtBlacklist{},
