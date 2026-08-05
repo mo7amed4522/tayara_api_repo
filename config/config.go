@@ -49,6 +49,8 @@ type Server struct {
 	Firebase Firebase `mapstructure:"firebase" json:"firebase" yaml:"firebase"`
 	// Travel marketplace business defaults (seed the runtime system_settings table)
 	Travel Travel `mapstructure:"travel" json:"travel" yaml:"travel"`
+	// Payment orchestrator config (BNPL providers + enabled payment methods)
+	Payment Payment `mapstructure:"payment" json:"payment" yaml:"payment"`
 }
 type OrderPay struct {
 	PayHost string `mapstructure:"payHost" json:"payHost" yaml:"payHost"`

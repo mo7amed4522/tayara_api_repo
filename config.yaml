@@ -181,13 +181,32 @@ hua-wei-obs:
 
 # stripe payment configuration
 stripe:
-    secret-key: sk_test_your_secret_key           # Stripe secret key (test)
-    publishable-key: pk_test_your_publishable_key # Stripe publishable key (test)
-    webhook-secret: whsec_your_webhook_secret     # Webhook signing secret
-    currency: AED                                  # Default currency (UAE Dirham)
-    capture-method: manual                         # Payment capture method
-    auto-capture: false                            # Auto-capture payments
-    payment-hold-hours: 2                          # Payment hold period in hours
+    secret-key: ${STRIPE_SECRET_KEY:-sk_test_your_secret_key}                 # Stripe secret key (from env, never committed)
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY:-pk_test_your_publishable_key}  # Stripe publishable key (from env)
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:-whsec_your_webhook_secret}       # Webhook signing secret (from env)
+    currency: AED                                    # Default currency (UAE Dirham)
+    capture-method: manual                           # Payment capture method
+    auto-capture: false                              # Auto-capture payments
+    payment-hold-hours: 2                            # Payment hold period in hours
+    # Active Stripe payment methods: visa, mastercard, apple_pay, google_pay
+    payment-methods: [card, apple_pay, google_pay]
+    fee-bps: 250                                     # Platform Stripe fee, basis points (2.5%)
+
+# payment (orchestrator): BNPL Buy-Now-Pay-Later providers + the methods offered to clients
+payment:
+    enabled-methods: [card, apple_pay, google_pay, tabby, tamara]
+    tabby:
+        enabled: true
+        base-url: ${TABBY_BASE_URL:-https://api.tabby.ai}       # sandbox: https://api.tabby.ai
+        secret-key: ${TABBY_SECRET_KEY:-pk_test_your_tabby_key} # secret (from env)
+        webhook-secret: ${TABBY_WEBHOOK_SECRET:-}
+        currency: AED
+    tamara:
+        enabled: true
+        base-url: ${TAMARA_BASE_URL:-https://api.tamara.co}     # sandbox: https://api-sandbox.tamara.co
+        secret-key: ${TAMARA_SECRET_KEY:-pk_test_your_tamara_key}
+        webhook-secret: ${TAMARA_WEBHOOK_SECRET:-}
+        currency: AED
 
 # excel configuration
 excel:

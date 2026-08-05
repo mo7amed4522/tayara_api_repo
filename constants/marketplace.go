@@ -100,6 +100,49 @@ const (
 	CurrencyUSD = "USD"
 )
 
+// Payment status also includes a pre-authorization pending state (added here; see reason.go for the rest).
+const (
+	PaymentStatusPending = "pending"
+)
+
+// Payment providers and methods (Stripe cards/wallets + Tabby/Tamara BNPL).
+const (
+	PaymentProviderStripe = "stripe"
+	PaymentProviderTabby  = "tabby"
+	PaymentProviderTamara = "tamara"
+)
+const (
+	PaymentMethodCard      = "card"
+	PaymentMethodApplePay  = "apple_pay"
+	PaymentMethodGooglePay = "google_pay"
+	PaymentMethodTabby     = "tabby"
+	PaymentMethodTamara    = "tamara"
+)
+
+// Payment lifecycle statuses (Mongo state + MySQL payment_transactions.status).
+const (
+	PaymentLifecycleCreated           = "created"
+	PaymentLifecycleAuthorized        = "authorized"
+	PaymentLifecycleCaptured          = "captured"
+	PaymentLifecyclePartiallyRefunded = "partially_refunded"
+	PaymentLifecycleRefunded          = "refunded"
+	PaymentLifecycleFailed            = "failed"
+)
+
+// Payment lifecycle event types recorded in the Mongo ledger.
+const (
+	PaymentEventCreated    = "created"
+	PaymentEventAuthorized = "authorized"
+	PaymentEventCaptured   = "captured"
+	PaymentEventRefunded   = "refunded"
+	PaymentEventFailed     = "failed"
+)
+
+// Discount floor (PRD locks a minimum discount on packages). Basis points, 300 == 3%.
+const (
+	DiscountMinPercentBps = 300
+)
+
 // Code prefixes used by the utils code generator (PRD-named sequence prefixes)
 const (
 	CodePrefixBooking      = "BK-"
@@ -109,4 +152,5 @@ const (
 	CodePrefixUser         = "US-"
 	CodePrefixNotification = "NT-"
 	CodePrefixAd           = "AD-"
+	CodePrefixPayment      = "PAY-"
 )

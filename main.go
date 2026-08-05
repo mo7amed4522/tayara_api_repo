@@ -32,6 +32,11 @@ func main() {
 	utils.Init()
 	initialize.Redis()
 	initialize.DBList()
+	// MongoDB (qmgo) powers the payment ledger. Non-fatal: the app still boots if Mongo is
+	// not configured, but payment lifecycle relies on it, so it must be up in production.
+	if err := initialize.Mongo.Initialization(); err != nil {
+		global.GVA_LOG.Error("mongodb initialization failed", zap.Error(err))
+	}
 	if global.GVA_DB != nil {
 		initialize.RegisterTables() // Initialize tables
 		initialize.InitializeData() // Initialize data
