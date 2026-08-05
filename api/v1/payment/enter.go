@@ -6,6 +6,7 @@ import "github.com/mo7amed4522/tayara_api/service"
 type ApiGroup struct {
 	PaymentApi
 	PayoutApi
+	CommissionApi
 }
 
 // paymentService reaches the payment services via the group var.

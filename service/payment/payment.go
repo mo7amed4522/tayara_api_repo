@@ -204,6 +204,11 @@ func (p *PaymentServices) Capture(ctx context.Context, adminID, bookingID uint) 
 	// reflect the captured amount on the paying user's lifetime spend (identity aggregate)
 	_ = global.GVA_DB.Model(&bxapi.BxsUserProfile{}).Where("id = ?", tx.UserID).
 		UpdateColumn("total_spend", gorm.Expr("total_spend + ?", net)).Error
+	// audit-complete commission snapshot (financial record per booking)
+	tx.FeeAmount = feeAmount
+	tx.CommissionAmount = commissionAmount
+	tx.AgentShare = agentShare
+	_ = p.createCommissionRecord(tx, constants.CommissionPlanCustom)
 
 	engage.NotificationServices{}.Emit(constants.NotifEventPriceConfirmed, constants.NotifRecipientUser,
 		tx.UserID, constants.NotifChannelPush, "Payment received", "Your payment was captured")

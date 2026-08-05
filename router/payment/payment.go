@@ -11,6 +11,7 @@ type PaymentRouter struct{}
 func (r PaymentRouter) InitPaymentRouter(publicGroup, manageGroup, systemGroup *gin.RouterGroup) {
 	public := publicGroup.Group("api/v1/payment")
 	manage := manageGroup.Group("api/v1/payment/payouts")
+	manageCommission := manageGroup.Group("api/v1/payment/commission")
 	system := systemGroup.Group("api/v1/payment")
 
 	{
@@ -20,6 +21,7 @@ func (r PaymentRouter) InitPaymentRouter(publicGroup, manageGroup, systemGroup *
 	{
 		manage.GET("manage", payoutApi.ListAgentPayouts)
 		manage.GET("earnings", payoutApi.AgentEarnings)
+		manageCommission.GET("manage", commissionApi.AgentList)
 	}
 	{
 		system.POST("capture", paymentApi.Capture)
@@ -27,5 +29,7 @@ func (r PaymentRouter) InitPaymentRouter(publicGroup, manageGroup, systemGroup *
 		system.POST("payouts/prepare", payoutApi.PreparePayouts)
 		system.POST("payouts/pay", payoutApi.PayAgent)
 		system.GET("payouts", payoutApi.ListAdminPayouts)
+		system.POST("commission/override", commissionApi.Override)
+		system.GET("commission", commissionApi.List)
 	}
 }

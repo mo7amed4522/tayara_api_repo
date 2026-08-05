@@ -4,4 +4,5 @@ package booking
 type ServiceGroup struct {
 	BookingServices
 	DocServices
+	DisputeServices
 }

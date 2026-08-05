@@ -14,5 +14,7 @@ func (r CustomTripRouter) InitCustomTripRouter(manageGroup *gin.RouterGroup) {
 		manage.DELETE("templates", customTripApi.DeleteTemplate)
 		manage.GET("templates", customTripApi.ListOwnTemplates)
 		manage.GET("templates/detail", customTripApi.GetOwnTemplate)
+		manage.POST("templates/requirements", requirementApi.SetProfiles)
+		manage.GET("templates/requirements", requirementApi.GetProfiles)
 	}
 }

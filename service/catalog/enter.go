@@ -5,4 +5,5 @@ package catalog
 type ServiceGroup struct {
 	PackageServices
 	CustomTripServices
+	RequirementServices
 }

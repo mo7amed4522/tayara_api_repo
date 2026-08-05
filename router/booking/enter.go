@@ -10,4 +10,5 @@ type RouterGroup struct {
 var (
 	bookingApi = api.ApiGroupApp.BookingApiGroup.BookingApi
 	docApi     = api.ApiGroupApp.BookingApiGroup.DocApi
+	disputeApi = api.ApiGroupApp.BookingApiGroup.DisputeApi
 )

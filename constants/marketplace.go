@@ -153,6 +153,32 @@ const (
 	AuthorityUser   = 3 // end-user mobile app
 )
 
+// Dispute lifecycle statuses (booking disputes).
+const (
+	DisputeStatusOpen     = "open"
+	DisputeStatusResolved = "resolved"
+	DisputeStatusClosed   = "closed"
+)
+
+// Commission record plan-type snapshot (commission_records.plan_type).
+const (
+	CommissionPlanBasic   = "basic"
+	CommissionPlanPremium = "premium"
+	CommissionPlanCustom  = "custom"
+)
+
+// Commission record lifecycle status.
+const (
+	CommissionStatusCaptured = "captured"
+	CommissionStatusPaid     = "paid"
+)
+
+// Requirement profile phases for custom-trip documents.
+const (
+	RequireProfileBefore = "before"
+	RequireProfileAfter  = "after"
+)
+
 // Discount floor (PRD locks a minimum discount on packages). Basis points, 300 == 3%.
 const (
 	DiscountMinPercentBps = 300

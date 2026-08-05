@@ -21,6 +21,8 @@ func bizModel() error {
 		&base.Nationality{},
 		&base.DocumentType{},
 		&base.SystemSetting{},
+		&base.PackageCategory{},
+		&base.SettingChangeHistory{},
 		// user
 		&bxapi.BxDict{},
 		&bxapi.BxsUserProfile{},
@@ -35,6 +37,7 @@ func bizModel() error {
 		&catalog.PackageView{},
 		&catalog.CustomTripTemplate{},
 		&catalog.CustomTripTemplateCountry{},
+		&catalog.CustomTripRequirementProfile{},
 		// agent
 		&dxapi.DxAgentProfile{},
 		&dxapi.AgentPlan{},
@@ -50,6 +53,7 @@ func bizModel() error {
 		&booking.SLAEvent{},
 		&booking.CustomTripRequest{},
 		&booking.DocumentAccessLog{},
+		&booking.Dispute{},
 		// engage
 		&engage.Notification{},
 		&engage.NotificationTemplate{},
@@ -63,6 +67,7 @@ func bizModel() error {
 		&paymentModel.PaymentTransaction{},
 		&paymentModel.Refund{},
 		&paymentModel.Payout{},
+		&paymentModel.CommissionRecord{},
 		// system
 		&system.SysAdminProfile{},
 		&system.JwtBlacklist{},

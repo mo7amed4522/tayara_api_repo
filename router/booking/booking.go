@@ -18,6 +18,8 @@ func (r BookingRouter) InitBookingRouter(publicGroup, manageGroup, systemGroup *
 		user.POST("cancel", bookingApi.CancelBooking)
 		user.POST("documents", docApi.SubmitDocuments)
 		user.GET("documents", docApi.GetUserDocuments)
+		user.POST("disputes", disputeApi.Create)
+		user.GET("disputes", disputeApi.ListForBooking)
 	}
 	{
 		manage.GET("", bookingApi.ListAgentBookings)
@@ -36,5 +38,7 @@ func (r BookingRouter) InitBookingRouter(publicGroup, manageGroup, systemGroup *
 		system.GET("", bookingApi.ListAllBookings)
 		system.POST("force-cancel", bookingApi.ForceCancel)
 		system.POST("kyc", docApi.AdminReviewKYC)
+		system.GET("disputes", disputeApi.List)
+		system.POST("disputes/resolve", disputeApi.Resolve)
 	}
 }

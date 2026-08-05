@@ -6,6 +6,7 @@ import "github.com/mo7amed4522/tayara_api/service"
 type ApiGroup struct {
 	BookingApi
 	DocApi
+	DisputeApi
 }
 
 // bookingService reaches the booking services via the group var.

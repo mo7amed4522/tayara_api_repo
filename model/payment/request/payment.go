@@ -1,5 +1,9 @@
 package request
 
+import (
+	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
+)
+
 // CreatePaymentReq opens a payment for a booking with a chosen method.
 type CreatePaymentReq struct {
 	BookingID     uint   `json:"bookingId" binding:"required"`
@@ -17,4 +21,18 @@ type RefundReq struct {
 	RefundType string `json:"refundType" binding:"required"` // full|partial
 	Amount     int64  `json:"amount"`                        // minor units; required (<= captured) for partial
 	Reason     string `json:"reason" binding:"required"`
+}
+
+// CommissionOverrideReq admin overrides commission % on a captured booking (reason required).
+type CommissionOverrideReq struct {
+	BookingID         uint  `json:"bookingId" binding:"required"`
+	CommissionPercent int64 `json:"commissionPercent" binding:"required"`
+	Reason            string `json:"reason" binding:"required"`
+}
+
+// CommissionPageReq paginated commission-record listing with optional booking/agent filter.
+type CommissionPageReq struct {
+	commonReq.PageInfo
+	BookingID uint `json:"bookingId" form:"bookingId"`
+	AgentID   uint `json:"agentId" form:"agentId"`
 }

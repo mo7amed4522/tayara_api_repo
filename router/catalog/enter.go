@@ -9,6 +9,7 @@ type RouterGroup struct {
 }
 
 var (
-	catalogApi    = api.ApiGroupApp.CatalogApiGroup.CatalogApi
-	customTripApi = api.ApiGroupApp.CatalogApiGroup.CustomTripApi
+	catalogApi     = api.ApiGroupApp.CatalogApiGroup.CatalogApi
+	customTripApi  = api.ApiGroupApp.CatalogApiGroup.CustomTripApi
+	requirementApi = api.ApiGroupApp.CatalogApiGroup.RequirementApi
 )
