@@ -21,7 +21,7 @@ type SysAdminProfileApi struct{}
 // @Summary Register system admin (requires X-Admin-Key header)
 // @Produce application/json
 // @Param X-Admin-Key header string true "Super-admin secret key"
-// @Param data body sysReq.SysRegisterReq true "register"
+// @Param data body req.SysRegisterReq true "register"
 // @Success 200 {object} response.Response
 // @Router /api/v1/system/register [post]
 func (SysAdminProfileApi) Register(c *gin.Context) {
@@ -70,7 +70,7 @@ func (SysAdminProfileApi) Register(c *gin.Context) {
 // @Tags SystemAuth
 // @Summary System login
 // @Produce application/json
-// @Param data body sysReq.SysLoginReq true "login"
+// @Param data body req.SysLoginReq true "login"
 // @Success 200 {object} response.Response
 // @Router /api/v1/system/login [post]
 func (sysAdminProfileApi SysAdminProfileApi) Login(c *gin.Context) {
@@ -92,7 +92,7 @@ func (sysAdminProfileApi SysAdminProfileApi) Login(c *gin.Context) {
 // @Summary Change system password
 // @Security ApiKeyAuth
 // @Produce application/json
-// @Param data body sysReq.SysChangePasswordReq true "password"
+// @Param data body req.SysChangePasswordReq true "password"
 // @Success 200 {object} response.Response
 // @Router /api/v1/system/change-password [post]
 func (sysAdminProfileApi SysAdminProfileApi) ChangePassword(c *gin.Context) {
