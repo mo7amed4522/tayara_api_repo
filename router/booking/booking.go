@@ -33,6 +33,8 @@ func (r BookingRouter) InitBookingRouter(publicGroup, manageGroup, systemGroup *
 		manage.POST("process", docApi.MarkProcessing)
 		manage.POST("issue", docApi.IssueBooking)
 		manage.POST("complete", docApi.CompleteBooking)
+		manage.POST("hold", bookingApi.SetHold)
+		manage.GET("hold/status", bookingApi.HoldStatus)
 	}
 	{
 		system.GET("", bookingApi.ListAllBookings)
@@ -40,5 +42,6 @@ func (r BookingRouter) InitBookingRouter(publicGroup, manageGroup, systemGroup *
 		system.POST("kyc", docApi.AdminReviewKYC)
 		system.GET("disputes", disputeApi.List)
 		system.POST("disputes/resolve", disputeApi.Resolve)
+		system.GET("documents/audit", docApi.DocumentAudit)
 	}
 }

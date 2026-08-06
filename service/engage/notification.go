@@ -1,22 +1,25 @@
 package engage
 
 import (
+	"context"
 	"errors"
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/model/engage"
 	engageReq "github.com/mo7amed4522/tayara_api/model/engage/request"
+	"github.com/mo7amed4522/tayara_api/service/engage/dispatch"
 	"github.com/mo7amed4522/tayara_api/utils"
 	"go.uber.org/zap"
 )
 
-// NotificationServices records and resend notifications. Phase 6 adds template-driven messages
-// and the resend path; provider delivery (push/email) dispatchers are wired once available.
+// NotificationServices records and delivers notifications. Templates drive the message body; the
+// provider dispatchers (SMTP email / FCM push) do the actual delivery and mark sent/failed.
 type NotificationServices struct{}
 
-// Emit records a notification for a recipient. If a template exists for (event_type, channel)
-// it replaces the title/body; otherwise the provided title/body are used verbatim.
+// Emit records a notification for a recipient, then attempts provider delivery. If a template
+// exists for (event_type, channel) it replaces the title/body. Delivery is best-effort: a send
+// failure marks the record failed but never fails the calling flow.
 func (n NotificationServices) Emit(eventType, recipientType string, recipientID uint, channel, title, body string) {
 	if global.GVA_DB == nil {
 		global.GVA_LOG.Info("notify (db not init)", zap.String("event", eventType))
@@ -45,7 +48,65 @@ func (n NotificationServices) Emit(eventType, recipientType string, recipientID 
 	}
 	if err := global.GVA_DB.Create(rec).Error; err != nil {
 		global.GVA_LOG.Error("failed to emit notification", zap.Error(err))
+		return
 	}
+	// deliver via the provider dispatcher
+	if err := n.deliver(rec); err != nil {
+		_ = global.GVA_DB.Model(&engage.Notification{}).Where("id = ?", rec.ID).
+			Update("status", constants.NotificationStatusFailed).Error
+		return
+	}
+	_ = global.GVA_DB.Model(&engage.Notification{}).Where("id = ?", rec.ID).
+		Update("status", constants.NotificationStatusSent).Error
+}
+
+// deliver routes a notification to the SMTP (email) or FCM (push) dispatcher.
+func (n NotificationServices) deliver(rec *engage.Notification) error {
+	ctx := context.Background()
+	switch rec.Channel {
+	case constants.NotifChannelEmail:
+		var smtp dispatch.SmtpSender
+		if !smtp.Enabled() {
+			return nil // not configured -> treat as sent (no provider)
+		}
+		return smtp.Send([]string{recipientEmail(rec)}, rec.Title, rec.Body)
+	case constants.NotifChannelPush:
+		var fcm dispatch.FcmSender
+		if !fcm.Enabled() {
+			return nil
+		}
+		tokens := n.deviceTokens(rec.RecipientID)
+		if len(tokens) == 0 {
+			return nil
+		}
+		return fcm.Send(ctx, tokens, rec.Title, rec.Body)
+	default:
+		return nil
+	}
+}
+
+// deviceTokens returns the recipient's active FCM tokens (push delivery targets).
+func (n NotificationServices) deviceTokens(userID uint) []string {
+	var rows []engage.DeviceToken
+	_ = global.GVA_DB.Where("user_id = ? AND is_active = ?", userID, true).Find(&rows).Error
+	if len(rows) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, r.Token)
+	}
+	return out
+}
+
+// recipientEmail resolves a recipient's email address. For email delivery the recipient id is a
+// user id; we resolve it from the bx user profile. If none found, delivery is skipped.
+func recipientEmail(rec *engage.Notification) string {
+	var profile struct {
+		Email string
+	}
+	_ = global.GVA_DB.Table("bx_user_profile").Select("email").Where("id = ?", rec.RecipientID).Scan(&profile).Error
+	return profile.Email
 }
 
 // Resend re-emits an existing notification by id (marks it pending/sent again).

@@ -126,3 +126,84 @@ func (UserEngageApi) AdminListCoupons(c *gin.Context) {
 	}
 	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
+
+// ApplyCoupon
+// @Tags Engage
+// @Summary User applies a coupon to a booking (discount + marks used)
+// @Produce application/json
+// @Param data body engageReq.ApplyCouponReq true "coupon apply payload"
+// @Success 200 {object} response.Response
+// @Router /api/v1/engage/coupons/apply [post]
+func (UserEngageApi) ApplyCoupon(c *gin.Context) {
+	userID := utils.GetBxUserID(c)
+	var req engageReq.ApplyCouponReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	coupon, err := engageService.UserEngageServices.ApplyCoupon(userID, req)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(coupon, c)
+}
+
+// RegisterDeviceToken
+// @Tags Engage
+// @Summary User registers a push device token (FCM)
+// @Produce application/json
+// @Param data body engageReq.DeviceTokenReq true "device token payload"
+// @Success 200 {object} response.Response
+// @Router /api/v1/engage/devices [post]
+func (UserEngageApi) RegisterDeviceToken(c *gin.Context) {
+	userID := utils.GetBxUserID(c)
+	var req engageReq.DeviceTokenReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	token, err := engageService.UserEngageServices.RegisterDeviceToken(userID, req)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(token, c)
+}
+
+// ListDeviceTokens
+// @Tags Engage
+// @Summary User lists their registered push devices
+// @Produce application/json
+// @Success 200 {object} response.Response
+// @Router /api/v1/engage/devices [get]
+func (UserEngageApi) ListDeviceTokens(c *gin.Context) {
+	userID := utils.GetBxUserID(c)
+	list, err := engageService.UserEngageServices.ListDeviceTokens(userID)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(list, c)
+}
+
+// RemoveDeviceToken
+// @Tags Engage
+// @Summary User deactivates a push device token
+// @Produce application/json
+// @Param data body engageReq.DeviceTokenReq true "device token payload"
+// @Success 200 {object} response.Response
+// @Router /api/v1/engage/devices/remove [post]
+func (UserEngageApi) RemoveDeviceToken(c *gin.Context) {
+	userID := utils.GetBxUserID(c)
+	var req engageReq.DeviceTokenReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if err := engageService.UserEngageServices.RemoveDeviceToken(userID, req.Token); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("device removed", c)
+}

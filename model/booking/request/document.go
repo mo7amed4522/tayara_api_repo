@@ -1,5 +1,9 @@
 package request
 
+import (
+	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
+)
+
 // TravelerDocReq one document entry submitted for a traveler.
 type TravelerDocReq struct {
 	TravelerID     uint   `json:"travelerId"`
@@ -35,4 +39,12 @@ type KYCReviewReq struct {
 	BookingID uint   `json:"bookingId" binding:"required"`
 	Approve   bool   `json:"approve"` // true = approved, false = rejected
 	Note      string `json:"note"`
+}
+
+// DocumentAuditReq paginated document-access audit filter (admin).
+type DocumentAuditReq struct {
+	commonReq.PageInfo
+	BookingID uint   `json:"bookingId" form:"bookingId"`
+	ActorID   uint   `json:"actorId" form:"actorId"`
+	ActorType string `json:"actorType" form:"actorType"`
 }

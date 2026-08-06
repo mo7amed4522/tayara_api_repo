@@ -23,6 +23,10 @@ func Timer() {
 			if err := svc.ProcessOverdueSLA(); err != nil {
 				global.GVA_LOG.Warn("booking SLA sweep failed", zap.Error(err))
 			}
+			// release reservation holds that outlived their pay window
+			if err := svc.ReleaseExpiredHolds(); err != nil {
+				global.GVA_LOG.Warn("hold release sweep failed", zap.Error(err))
+			}
 		}
 	}()
 	// Ad scheduler: flip scheduled -> active at start_datetime and active -> expired at end.

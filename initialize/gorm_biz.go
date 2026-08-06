@@ -63,6 +63,7 @@ func bizModel() error {
 		&engage.Wishlist{},
 		&engage.Share{},
 		&engage.Coupon{},
+		&engage.DeviceToken{},
 		// payment
 		&paymentModel.PaymentTransaction{},
 		&paymentModel.Refund{},

@@ -105,3 +105,15 @@ type NotificationPageReq struct {
 	commonReq.PageInfo
 	Status string `json:"status" form:"status"`
 }
+
+// DeviceTokenReq user registers a push device token (FCM).
+type DeviceTokenReq struct {
+	Token    string `json:"token" binding:"required"`
+	Platform string `json:"platform"` // ios|android|web
+}
+
+// ApplyCouponReq apply a coupon to a booking by code; the value is subtracted as a discount.
+type ApplyCouponReq struct {
+	BookingID uint   `json:"bookingId" binding:"required"`
+	Code      string `json:"code" binding:"required"`
+}

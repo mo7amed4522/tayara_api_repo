@@ -5,22 +5,30 @@ import "github.com/gin-gonic/gin"
 type EngageRouter struct{}
 
 // InitEngageRouter registers the content & engagement endpoints across the guard groups.
-func (r EngageRouter) InitEngageRouter(publicGroup, systemGroup *gin.RouterGroup) {
+func (r EngageRouter) InitEngageRouter(publicGroup, bxGroup, systemGroup *gin.RouterGroup) {
 	public := publicGroup.Group("api/v1/engage")
+	bx := bxGroup.Group("api/v1/engage")
 	system := systemGroup.Group("api/v1/engage")
 
-	// user-facing (public): reviews, ads, wishlist, shares, coupons, notifications
+	// public (browse)
 	{
-		public.POST("reviews", reviewApi.CreateReview)
 		public.GET("reviews", reviewApi.ListReviews)
 		public.GET("ads", adApi.ActiveAds)
 		public.POST("ads/impression", adApi.RecordImpression)
 		public.POST("ads/click", adApi.RecordClick)
-		public.POST("wishlist", userApi.ToggleWishlist)
-		public.GET("wishlist", userApi.ListWishlist)
-		public.POST("share", userApi.RecordShare)
-		public.GET("coupons", userApi.ListCoupons)
-		public.GET("notifications", notifApi.ListMyNotifications)
+	}
+	// authenticated buyer (bx token): reviews, wishlist, shares, coupons, notifications, devices
+	{
+		bx.POST("reviews", reviewApi.CreateReview)
+		bx.POST("wishlist", userApi.ToggleWishlist)
+		bx.GET("wishlist", userApi.ListWishlist)
+		bx.POST("share", userApi.RecordShare)
+		bx.GET("coupons", userApi.ListCoupons)
+		bx.POST("coupons/apply", userApi.ApplyCoupon)
+		bx.GET("notifications", notifApi.ListMyNotifications)
+		bx.POST("devices", userApi.RegisterDeviceToken)
+		bx.GET("devices", userApi.ListDeviceTokens)
+		bx.POST("devices/remove", userApi.RemoveDeviceToken)
 	}
 	// admin-facing
 	{
