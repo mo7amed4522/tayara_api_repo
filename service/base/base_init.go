@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/model/base"
@@ -102,6 +103,7 @@ func seedSystemSettings(db *gorm.DB) error {
 	t := global.GVA_CONFIG.Travel
 	settings := []base.SystemSetting{
 		systemSetting("currency", "default_currency", t.DefaultCurrency, "Default/major currency"),
+		systemSetting("currency", "supported_currencies", strings.Join(t.SupportedCurrencies, ","), "Supported currencies (comma-separated)"),
 		systemSetting("commission", "basic_plan_percent", strconv.FormatInt(t.Commission.BasicPlanPercent, 10), "Basic plan commission (basis points)"),
 		systemSetting("commission", "premium_plan_percent", strconv.FormatInt(t.Commission.PremiumPlanPercent, 10), "Premium plan commission (basis points)"),
 		systemSetting("commission", "allow_manual_override", strconv.FormatBool(t.Commission.AllowManualOverride), "Admin may override commission per booking"),

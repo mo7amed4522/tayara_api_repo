@@ -11,6 +11,20 @@ type CasbinInReceive struct {
 	CasbinInfos []CasbinInfo `json:"casbinInfos"`
 }
 
+// CasbinSyncReq admin replaces the full route matrix for an authority (role).
+type CasbinSyncReq struct {
+	AuthorityID uint         `json:"authorityId" binding:"required"`
+	Policies    []CasbinInfo `json:"policies"`
+}
+
+// CasbinUpdateReq admin updates a single route rule (path+method) for all authorities using it.
+type CasbinUpdateReq struct {
+	OldPath   string `json:"oldPath" binding:"required"`
+	NewPath   string `json:"newPath" binding:"required"`
+	OldMethod string `json:"oldMethod" binding:"required"`
+	NewMethod string `json:"newMethod" binding:"required"`
+}
+
 func DefaultCasbin() []CasbinInfo {
 	return []CasbinInfo{
 		{Path: "/menu/getMenu", Method: "POST"},

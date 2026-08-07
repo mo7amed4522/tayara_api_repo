@@ -136,11 +136,20 @@ func GetUserName(c *gin.Context) string {
 }
 
 func LoginToken(user system.Login) (token string, claims systemReq.CustomClaims, err error) {
+	return LoginTokenWithAuthority(user, 0)
+}
+
+// LoginTokenWithAuthority mints the JWT with the actor's RBAC authority id stamped into the
+// claims (1=system admin, 2=agent, 3=end-user). The casbin enforcer keys permissions off this
+// id (sub = authorityId), so every login should pass its role constant. Callers that don't care
+// about enforcement may use LoginToken (authority 0).
+func LoginTokenWithAuthority(user system.Login, authorityID uint) (token string, claims systemReq.CustomClaims, err error) {
 	j := &JWT{SigningKey: []byte(global.GVA_CONFIG.JWT.SigningKey)} // Unique signature
 	claims = j.CreateClaims(systemReq.BaseClaims{
-		ID:       user.GetUserId(),
-		NickName: user.GetNickname(),
-		Username: user.GetUsername(),
+		ID:          user.GetUserId(),
+		NickName:    user.GetNickname(),
+		Username:    user.GetUsername(),
+		AuthorityId: authorityID,
 	})
 	token, err = j.CreateToken(claims)
 	if err != nil {

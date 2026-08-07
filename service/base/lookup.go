@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
@@ -166,7 +167,10 @@ func seedDefaultsForSection(section string) map[string]string {
 	t := global.GVA_CONFIG.Travel
 	switch section {
 	case constants.SettingSectionCurrency:
-		return map[string]string{constants.SettingKeyDefaultCurrency: t.DefaultCurrency}
+		return map[string]string{
+			constants.SettingKeyDefaultCurrency:     t.DefaultCurrency,
+			constants.SettingKeySupportedCurrencies: strings.Join(t.SupportedCurrencies, ","),
+		}
 	case constants.SettingSectionCommission:
 		return map[string]string{
 			"basic_plan_percent":                 strconv.FormatInt(t.Commission.BasicPlanPercent, 10),

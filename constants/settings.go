@@ -13,9 +13,10 @@ const (
 
 // Well-known setting keys read by business logic. Values are stored as strings and typed on read.
 const (
-	SettingKeyDefaultCurrency    = "default_currency"
-	SettingKeyBasicPlanPercent   = "basic_plan_percent"
-	SettingKeyStripeFeePercent   = "stripe_fee_percent" // basis points; 230 == 2.3%
-	SettingKeyAgentResponseHours = "agent_response_hours"
-	SettingKeyUserPaymentHours   = "user_payment_hours"
+	SettingKeyDefaultCurrency     = "default_currency"
+	SettingKeySupportedCurrencies = "supported_currencies" // comma-separated, e.g. "AED,USD"
+	SettingKeyBasicPlanPercent    = "basic_plan_percent"
+	SettingKeyStripeFeePercent    = "stripe_fee_percent" // basis points; 230 == 2.3%
+	SettingKeyAgentResponseHours  = "agent_response_hours"
+	SettingKeyUserPaymentHours    = "user_payment_hours"
 )

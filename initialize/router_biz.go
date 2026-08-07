@@ -24,6 +24,7 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 
 	// admin
 	router.RouterGroupApp.System.InitSysAdminProfileRouter(publicGroup, systemPrivate)
+	router.RouterGroupApp.System.InitCasbinRouter(systemPrivate)
 
 	// identity: agent (dx) registration + admin approval; user (bx) registration + block
 	router.RouterGroupApp.Manage.InitAgentRouter(publicGroup, managePrivate, systemPrivate)

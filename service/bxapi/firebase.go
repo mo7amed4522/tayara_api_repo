@@ -52,7 +52,7 @@ func (s *UserServices) FirebaseLogin(ctx context.Context, req bxapiReq.FirebaseL
 		return nil, errors.New("account is blocked")
 	}
 	// issue the Bx JWT (X-token) for the mobile app
-	jwtToken, claims, err := utils.LoginToken(&user)
+	jwtToken, claims, err := utils.LoginTokenWithAuthority(&user, constants.AuthorityUser)
 	if err != nil {
 		return nil, err
 	}
