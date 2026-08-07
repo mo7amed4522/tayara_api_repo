@@ -16,73 +16,16 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/bxapi/ads": {
+        "/api/v1/agent/admin": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiAds"
+                    "Agent"
                 ],
-                "summary": "Get active app ads",
+                "summary": "Admin lists agents (paginated, filterable by status)",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "agent_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "entity_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "package_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
                     {
                         "type": "integer",
                         "description": "page number",
@@ -97,22 +40,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "name": "placement",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "type",
                         "in": "query"
                     }
                 ],
@@ -126,28 +54,23 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/ads/click": {
+        "/api/v1/agent/admin/approve": {
             "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiAds"
+                    "Agent"
                 ],
-                "summary": "Track ad click",
+                "summary": "Admin approves a pending agent (sets commission % + SLA)",
                 "parameters": [
                     {
-                        "description": "ad click",
+                        "description": "approve payload",
                         "name": "data",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.BxAdClickReq"
+                            "$ref": "#/definitions/request.AgentApproveReq"
                         }
                     }
                 ],
@@ -161,126 +84,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/agents": {
+        "/api/v1/agent/admin/detail": {
             "get": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiAgents"
+                    "Agent"
                 ],
-                "summary": "Get active agents",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "agent_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "entity_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "package_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "placement",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "type",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/agents/{id}": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiAgents"
-                ],
-                "summary": "Get active agent detail",
+                "summary": "Admin gets an agent's full detail (documents + notes)",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "agent id",
                         "name": "id",
-                        "in": "path",
+                        "in": "query",
                         "required": true
                     }
                 ],
@@ -294,28 +112,23 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/auth/change-password": {
+        "/api/v1/agent/admin/note": {
             "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiAuth"
+                    "Agent"
                 ],
-                "summary": "Change user password",
+                "summary": "Admin adds an internal note on an agent",
                 "parameters": [
                     {
-                        "description": "password",
+                        "description": "note payload",
                         "name": "data",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.BxChangePasswordReq"
+                            "$ref": "#/definitions/request.AgentNoteReq"
                         }
                     }
                 ],
@@ -329,15 +142,105 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/auth/login": {
+        "/api/v1/agent/admin/reject": {
             "post": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiAuth"
+                    "Agent"
                 ],
-                "summary": "Login user",
+                "summary": "Admin rejects a pending agent with a reason",
+                "parameters": [
+                    {
+                        "description": "reject payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AgentRejectReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/agent/admin/suspend": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent"
+                ],
+                "summary": "Admin suspends or reactivates an agent",
+                "parameters": [
+                    {
+                        "description": "suspend payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AgentSuspendReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/agent/change-password": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent"
+                ],
+                "summary": "Agent changes their own password",
+                "parameters": [
+                    {
+                        "description": "password change",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ChangeAgentPasswordReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/agent/login": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agent"
+                ],
+                "summary": "Agent login (returns A-token)",
                 "parameters": [
                     {
                         "description": "login",
@@ -345,7 +248,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.BxLoginReq"
+                            "$ref": "#/definitions/request.AgentLoginReq"
                         }
                     }
                 ],
@@ -359,77 +262,15 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/auth/logout": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiAuth"
-                ],
-                "summary": "Logout user",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/auth/profile": {
+        "/api/v1/agent/profile": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiAuth"
+                    "Agent"
                 ],
-                "summary": "Get user profile",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiAuth"
-                ],
-                "summary": "Update user profile",
-                "parameters": [
-                    {
-                        "description": "profile",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxProfileUpdateReq"
-                        }
-                    }
-                ],
+                "summary": "Agent gets their own profile",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -440,23 +281,23 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/auth/register": {
+        "/api/v1/agent/register": {
             "post": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiAuth"
+                    "Agent"
                 ],
-                "summary": "Register user",
+                "summary": "Public agent (travel agency) registration",
                 "parameters": [
                     {
-                        "description": "register",
+                        "description": "agent payload",
                         "name": "data",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.BxRegisterReq"
+                            "$ref": "#/definitions/request.AgentRegisterReq"
                         }
                     }
                 ],
@@ -470,106 +311,15 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/bookings": {
+        "/api/v1/analytics/admin/agents": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiBookings"
+                    "Analytics"
                 ],
-                "summary": "Get current user bookings",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "agent_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "entity_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "package_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "placement",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "type",
-                        "in": "query"
-                    }
-                ],
+                "summary": "Admin Agents dashboard card",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -580,99 +330,15 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/bookings/custom-trip": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Create custom trip booking",
-                "parameters": [
-                    {
-                        "description": "custom trip booking",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxCustomTripBookingReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/package": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Create package booking",
-                "parameters": [
-                    {
-                        "description": "package booking",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxPackageBookingReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}": {
+        "/api/v1/analytics/admin/business": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiBookings"
+                    "Analytics"
                 ],
-                "summary": "Get current user booking detail",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "Admin Business dashboard card (GMV, commission, payouts, refunds, net profit)",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -683,155 +349,53 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/bookings/{id}/accept-offer": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Accept booking price offer",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "offer",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxOfferAcceptReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/cancel": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Cancel current user booking",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "cancel reason",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxBookingCancelReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/confirm-email": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Confirm booking delivery email",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "email",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxBookingEmailReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/documents": {
+        "/api/v1/analytics/admin/users": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiDocuments"
+                    "Analytics"
                 ],
-                "summary": "Get booking document checklist",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                "summary": "Admin Users dashboard card",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     }
+                }
+            }
+        },
+        "/api/v1/analytics/agent": {
+            "get": {
+                "produces": [
+                    "application/json"
                 ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Agent dashboard card (revenue, bookings, views, avg confirmation time)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/base/categories": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Public list of active package categories",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -842,594 +406,21 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "consumes": [
-                    "multipart/form-data"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiDocuments"
+                    "Base"
                 ],
-                "summary": "Submit traveler document",
+                "summary": "Admin creates/updates a package category",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "traveler id",
-                        "name": "traveler_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "document type",
-                        "name": "document_type",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "document file",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/documents/submit": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiDocuments"
-                ],
-                "summary": "Submit completed traveler details and documents for review",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "optional email confirmation",
+                        "description": "category payload",
                         "name": "data",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.BxSubmitDocumentsReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/offers": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Get current user booking offers",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/payment-intent": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Create Stripe payment intent for booking",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/payment-success": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Confirm Stripe booking payment",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "payment",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxPaymentSuccessReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/reject-offer": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Reject booking price offer",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "offer reject",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxOfferRejectReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/timeline": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiBookings"
-                ],
-                "summary": "Get current user booking timeline",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/bookings/{id}/travelers": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiTravelers"
-                ],
-                "summary": "Get booking travelers",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiTravelers"
-                ],
-                "summary": "Save booking travelers",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "booking id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "travelers",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxBookingTravelerReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/dicts": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiDicts"
-                ],
-                "summary": "Get customer lookup values",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "agent_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "entity_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "package_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "placement",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "type",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/favorites": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiInteractions"
-                ],
-                "summary": "Get current user favorites",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "agent_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "entity_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "package_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "placement",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "type",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiInteractions"
-                ],
-                "summary": "Add favorite",
-                "parameters": [
-                    {
-                        "description": "favorite",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.BxFavoriteReq"
+                            "$ref": "#/definitions/request.PackageCategoryReq"
                         }
                     }
                 ],
@@ -1443,26 +434,89 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiInteractions"
+                    "Base"
                 ],
-                "summary": "Remove favorite",
+                "summary": "Admin deletes a package category",
                 "parameters": [
                     {
-                        "description": "favorite",
+                        "type": "integer",
+                        "description": "Primary Key ID",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/base/settings/history": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Admin views the system-settings change history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "key",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "section",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Admin records a system-settings edit (audit trail)",
+                "parameters": [
+                    {
+                        "description": "change payload",
                         "name": "data",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.BxFavoriteReq"
+                            "$ref": "#/definitions/request.SettingChangeReq"
                         }
                     }
                 ],
@@ -1476,73 +530,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/packages": {
+        "/api/v1/booking": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiPackages"
+                    "Booking"
                 ],
-                "summary": "Get active packages",
+                "summary": "User lists their own bookings (paginated)",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "agent_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "entity_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "package_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
                     {
                         "type": "integer",
                         "description": "page number",
@@ -1553,154 +550,6 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Page size",
                         "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "placement",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "type",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/packages/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiPackages"
-                ],
-                "summary": "Get active package detail",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "package id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/bxapi/reviews": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "BxApiReviews"
-                ],
-                "summary": "Get active reviews",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "agent_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "entity_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "package_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "placement",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
                         "in": "query"
                     },
                     {
@@ -1724,26 +573,21 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiReviews"
+                    "Booking"
                 ],
-                "summary": "Create booking review",
+                "summary": "User creates a booking (package or custom trip)",
                 "parameters": [
                     {
-                        "description": "review",
+                        "description": "booking payload",
                         "name": "data",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.BxReviewReq"
+                            "$ref": "#/definitions/request.CreateBookingReq"
                         }
                     }
                 ],
@@ -1757,73 +601,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/reviews/mine": {
+        "/api/v1/booking/admin": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiReviews"
+                    "Booking"
                 ],
-                "summary": "Get current user reviews",
+                "summary": "Admin lists all bookings",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "name": "agent_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "city",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "entity_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "package_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
                     {
                         "type": "integer",
                         "description": "page number",
@@ -1834,16 +621,6 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Page size",
                         "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "placement",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
                         "in": "query"
                     },
                     {
@@ -1867,28 +644,66 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/shares": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
+        "/api/v1/booking/admin/disputes": {
+            "get": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiInteractions"
+                    "Booking"
                 ],
-                "summary": "Track share",
+                "summary": "Admin lists disputes (filterable by booking/status)",
                 "parameters": [
                     {
-                        "description": "share",
+                        "type": "integer",
+                        "name": "bookingId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/admin/disputes/resolve": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Admin resolves/closes a dispute",
+                "parameters": [
+                    {
+                        "description": "resolve payload",
                         "name": "data",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.BxShareReq"
+                            "$ref": "#/definitions/request.ResolveDisputeReq"
                         }
                     }
                 ],
@@ -1902,15 +717,2706 @@ const docTemplate = `{
                 }
             }
         },
-        "/bxapi/stripe/webhook": {
+        "/api/v1/booking/admin/documents/audit": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Admin views the document-access audit trail",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "actorId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "actorType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "bookingId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/admin/force-cancel": {
             "post": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "BxApiStripe"
+                    "Booking"
                 ],
-                "summary": "Stripe webhook receiver",
+                "summary": "Admin force-cancels a booking",
+                "parameters": [
+                    {
+                        "description": "cancel payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CancelBookingReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/admin/kyc": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Admin approves or rejects user KYC",
+                "parameters": [
+                    {
+                        "description": "kyc review payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.KYCReviewReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/cancel": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "User cancels their own booking (before confirmation)",
+                "parameters": [
+                    {
+                        "description": "cancel payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CancelBookingReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/detail": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "User gets one of their own bookings (with detail)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/disputes": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "User/agent lists disputes for their own booking",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "User or agent opens a dispute on a booking",
+                "parameters": [
+                    {
+                        "description": "dispute payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateDisputeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/documents": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "User lists their own traveler documents (audited)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "User submits (or resubmits) traveler documents",
+                "parameters": [
+                    {
+                        "description": "documents payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SubmitDocumentsReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent lists their bookings (paginated)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/complete": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent completes a booking (booking_confirmed -\u003e completed)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/detail": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent gets one of their bookings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/documents": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent lists traveler + booking documents for one of their bookings (audited)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/documents/review": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent approves a traveler document or requests a correction",
+                "parameters": [
+                    {
+                        "description": "review payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ApproveDocumentReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/documents/upload": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent uploads a booking-level document (confirmation / issued ticket)",
+                "parameters": [
+                    {
+                        "description": "document payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.BookingDocumentReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/hold": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent/admin opens/extends a reservation hold (pay window) on a booking",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "hold hours",
+                        "name": "hours",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/hold/status": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Check whether a booking's reservation hold is live",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/issue": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent issues tickets / confirmation (issued_ready)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/offer": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent submits the final price offer",
+                "parameters": [
+                    {
+                        "description": "offer payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SubmitOfferReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/process": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent marks a booking processing (docs OK + KYC approved)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/reject": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent rejects/modifies a booking with alternative dates",
+                "parameters": [
+                    {
+                        "description": "reject payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.RejectBookingReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/booking/manage/review": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Agent starts reviewing a booking",
+                "parameters": [
+                    {
+                        "description": "booking id + note",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CancelBookingReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/admin/packages": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Admin lists all packages (moderation)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/admin/packages/status": {
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Admin moderates a package (approve/hide/flag/disable)",
+                "parameters": [
+                    {
+                        "description": "status action",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.PackageAdminStatusReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/packages": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent lists their own packages (paginated)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent updates one of their own packages",
+                "parameters": [
+                    {
+                        "description": "package payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.PackageReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent creates a package (draft)",
+                "parameters": [
+                    {
+                        "description": "package payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.PackageReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent deletes one of their own packages",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "package id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/packages/detail": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent gets one of their own packages (with children)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "package id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/packages/submit": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent submits a draft package for approval",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "package id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/public/packages": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Public list of active packages",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/public/packages/detail": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Public detail of an active package",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "package id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/templates": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent lists their own custom-trip templates",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent updates one of their own templates",
+                "parameters": [
+                    {
+                        "description": "template payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CustomTripTemplateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent creates a custom-trip builder template",
+                "parameters": [
+                    {
+                        "description": "template payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CustomTripTemplateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent deletes one of their own templates",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "template id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/templates/detail": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent gets one of their own templates",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "template id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/templates/requirements": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent gets custom-trip requirement profiles for a template+country",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "countryId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "templateId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Agent sets custom-trip requirement profiles for a template+country",
+                "parameters": [
+                    {
+                        "description": "profiles payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SetRequirementProfilesReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/admin/ads": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin lists ads with CTR (filterable by placement/status)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "placement",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/admin/coupons": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin lists all coupons",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin creates a coupon",
+                "parameters": [
+                    {
+                        "description": "coupon payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CouponReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/admin/notification-templates": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin creates/updates a notification template",
+                "parameters": [
+                    {
+                        "description": "template payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NotificationTemplateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin deletes a notification template",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Primary Key ID",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/admin/notifications": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin lists notification log (all recipients, filterable)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/admin/notifications/resend": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin resends a notification",
+                "parameters": [
+                    {
+                        "description": "notification id",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.GetById"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/admin/reviews": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Review"
+                ],
+                "summary": "Admin lists all reviews (incl. disabled) for moderation",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "agentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "packageId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/admin/reviews/status": {
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Review"
+                ],
+                "summary": "Admin moderates a review status (active/disabled)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Primary Key ID",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "target status",
+                        "name": "status",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/ads": {
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin updates an ad creative",
+                "parameters": [
+                    {
+                        "description": "ad payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AdCreativeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin creates an ad creative (draft)",
+                "parameters": [
+                    {
+                        "description": "ad payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AdCreativeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin deletes an ad (draft/disabled only)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Primary Key ID",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/ads/status": {
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin activates/disables an ad",
+                "parameters": [
+                    {
+                        "description": "status action",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AdSetStatusReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/coupons": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User lists their coupons",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/coupons/apply": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User applies a coupon to a booking (discount + marks used)",
+                "parameters": [
+                    {
+                        "description": "coupon apply payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ApplyCouponReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/devices": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User lists their registered push devices",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User registers a push device token (FCM)",
+                "parameters": [
+                    {
+                        "description": "device token payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.DeviceTokenReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/devices/remove": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User deactivates a push device token",
+                "parameters": [
+                    {
+                        "description": "device token payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.DeviceTokenReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/notifications": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User lists their own notifications",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/public/ads": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Public list of currently-active ads for a placement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "placement",
+                        "name": "placement",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/public/ads/click": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Public records an ad click",
+                "parameters": [
+                    {
+                        "description": "click payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AdClickReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/public/ads/impression": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Public records an ad impression",
+                "parameters": [
+                    {
+                        "description": "ad id",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.GetById"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/public/reviews": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Review"
+                ],
+                "summary": "Public list of active reviews (filterable)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "agentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "packageId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/reviews": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User reviews a completed booking (rating + text)",
+                "parameters": [
+                    {
+                        "description": "review payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ReviewReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/share": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User records a share of a package",
+                "parameters": [
+                    {
+                        "description": "share payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ShareReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/engage/wishlist": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User lists their saved packages",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User adds/removes a package from their wishlist",
+                "parameters": [
+                    {
+                        "description": "wishlist payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.WishlistToggleReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "User opens a payment for a booking (returns client secret / BNPL session)",
+                "parameters": [
+                    {
+                        "description": "payment payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreatePaymentReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/capture": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Admin/system captures an authorized payment",
+                "parameters": [
+                    {
+                        "description": "capture payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CaptureReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/commission": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Admin lists commission records (filterable)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "agentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "bookingId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/commission/manage": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Agent lists their own commission records",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "agentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "bookingId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/commission/override": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Admin overrides commission % on a captured booking (reason required, audited)",
+                "parameters": [
+                    {
+                        "description": "override payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CommissionOverrideReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/payouts": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Admin lists all payouts (paginated)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "agentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/payouts/earnings": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Agent views their earnings dashboard",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/payouts/manage": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Agent lists their own payouts (paginated)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "agentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/payouts/pay": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Admin pays a pending payout for an eligible booking",
+                "parameters": [
+                    {
+                        "description": "payout payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.PayAgentReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/payouts/prepare": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Admin scans bookings and prepares payout records (eligible -\u003e pending)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/refund": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Admin refunds a captured payment (full/partial)",
+                "parameters": [
+                    {
+                        "description": "refund payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.RefundReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payment/webhook/stripe": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Stripe webhook (payment authorization events)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system/change-password": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SystemAuth"
+                ],
+                "summary": "Change system password",
+                "parameters": [
+                    {
+                        "description": "password",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SysChangePasswordReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system/login": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SystemAuth"
+                ],
+                "summary": "System login",
+                "parameters": [
+                    {
+                        "description": "login",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SysLoginReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system/register": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SystemAuth"
+                ],
+                "summary": "Register system admin (requires X-Admin-Key header)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Super-admin secret key",
+                        "name": "X-Admin-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "register",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SysRegisterReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/admin": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Admin lists users (paginated, filterable by status)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/admin/block": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Admin blocks/unblocks a user",
+                "parameters": [
+                    {
+                        "description": "block payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserBlockReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/change-password": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "User changes their own password",
+                "parameters": [
+                    {
+                        "description": "password change",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ChangeUserPasswordReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/login": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "User login (returns X-token)",
+                "parameters": [
+                    {
+                        "description": "login",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserLoginReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/profile": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "User gets their own profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/register": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Public end-user registration",
+                "parameters": [
+                    {
+                        "description": "user payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserRegisterReq"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2138,12 +3644,6 @@ const docTemplate = `{
                 "summary": "Use id to query announcement",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Primary Key ID",
-                        "name": "ID",
-                        "in": "query"
-                    },
-                    {
                         "type": "string",
                         "description": "Content",
                         "name": "content",
@@ -2260,18 +3760,6 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
                         "type": "integer",
                         "description": "page number",
                         "name": "page",
@@ -2286,12 +3774,6 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "name": "startCreatedAt",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "1 Enable 2 Disable",
-                        "name": "status",
                         "in": "query"
                     }
                 ],
@@ -2339,18 +3821,6 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
                         "type": "integer",
                         "description": "page number",
                         "name": "page",
@@ -2365,12 +3835,6 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "name": "startCreatedAt",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "1 Enable 2 Disable",
-                        "name": "status",
                         "in": "query"
                     }
                 ],
@@ -2448,1816 +3912,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/manage/agents/register": {
-            "post": {
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageAgents"
-                ],
-                "summary": "Public agent registration",
-                "parameters": [
-                    {
-                        "description": "agent registration",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgRegisterReq"
-                        }
-                    },
-                    {
-                        "type": "file",
-                        "description": "registration documents",
-                        "name": "documents",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/auth/change-password": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageAuth"
-                ],
-                "summary": "Change agent password",
-                "parameters": [
-                    {
-                        "description": "password",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgChangePasswordReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/auth/login": {
-            "post": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageAuth"
-                ],
-                "summary": "Agent login",
-                "parameters": [
-                    {
-                        "description": "login",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgLoginReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/auth/logout": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageAuth"
-                ],
-                "summary": "Agent logout",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/auth/profile": {
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageAuth"
-                ],
-                "summary": "Update agent profile",
-                "parameters": [
-                    {
-                        "description": "profile",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgProfileUpdateReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/balance": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageEarnings"
-                ],
-                "summary": "Agent balance",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "List agent bookings",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "payment_status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/submit-offer": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Submit final booking price offer",
-                "parameters": [
-                    {
-                        "description": "offer",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgBookingOfferReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Get agent booking detail",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}/confirmation-file": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Upload booking confirmation file",
-                "parameters": [
-                    {
-                        "type": "file",
-                        "description": "confirmation file",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "notes",
-                        "name": "notes",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}/documents": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Get booking traveler documents",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}/documents/approve": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Approve booking documents",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}/documents/request-correction": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Request document correction",
-                "parameters": [
-                    {
-                        "description": "correction",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgDocumentCorrectionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}/issued-ready": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Mark booking issued ready",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}/processing": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Mark booking processing",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}/reject": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Reject booking request",
-                "parameters": [
-                    {
-                        "description": "action",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgBookingActionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/bookings/{id}/reviewing": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageBookings"
-                ],
-                "summary": "Mark booking as reviewing",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/custom-trips/config": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageCustomTrips"
-                ],
-                "summary": "Get custom trip config",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageCustomTrips"
-                ],
-                "summary": "Update custom trip config",
-                "parameters": [
-                    {
-                        "description": "config",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgCustomTripConfigReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/custom-trips/requests": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageCustomTrips"
-                ],
-                "summary": "List custom trip requests",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "payment_status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/custom-trips/requests/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageCustomTrips"
-                ],
-                "summary": "Get custom trip request",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/custom-trips/requests/{id}/offer": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageCustomTrips"
-                ],
-                "summary": "Submit custom trip offer",
-                "parameters": [
-                    {
-                        "description": "offer",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgCustomTripOfferReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/dashboard/summary": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageDashboard"
-                ],
-                "summary": "Agent dashboard summary",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/earnings": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageEarnings"
-                ],
-                "summary": "Agent earnings summary",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "payment_status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/notifications": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageNotifications"
-                ],
-                "summary": "Agent notifications",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "payment_status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/packages": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManagePackages"
-                ],
-                "summary": "List agent packages",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "booking_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "country",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "endTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keywords",
-                        "name": "keyword",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Operator ID",
-                        "name": "operateId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "package_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "payment_status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "startTime",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManagePackages"
-                ],
-                "summary": "Create agent package",
-                "parameters": [
-                    {
-                        "description": "package",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgPackageReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/packages/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManagePackages"
-                ],
-                "summary": "Get agent package detail",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManagePackages"
-                ],
-                "summary": "Update agent package",
-                "parameters": [
-                    {
-                        "description": "package",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgPackageReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManagePackages"
-                ],
-                "summary": "Delete draft package",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/packages/{id}/disable": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManagePackages"
-                ],
-                "summary": "Disable package",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/packages/{id}/duplicate": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManagePackages"
-                ],
-                "summary": "Duplicate package",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/packages/{id}/submit": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManagePackages"
-                ],
-                "summary": "Submit package for approval",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/profile": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageAuth"
-                ],
-                "summary": "Get agent profile",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/manage/settings": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageSettings"
-                ],
-                "summary": "Get agent settings",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ManageSettings"
-                ],
-                "summary": "Update agent settings",
-                "parameters": [
-                    {
-                        "description": "settings",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.AgSettingsReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/agents/activate": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAgents"
-                ],
-                "summary": "Activate agent",
-                "parameters": [
-                    {
-                        "description": "activation",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysAgentDecisionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/agents/approve": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAgents"
-                ],
-                "summary": "Approve agent",
-                "parameters": [
-                    {
-                        "description": "approval",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysAgentDecisionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/agents/reject": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAgents"
-                ],
-                "summary": "Reject agent",
-                "parameters": [
-                    {
-                        "description": "rejection",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysAgentDecisionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/agents/suspend": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAgents"
-                ],
-                "summary": "Suspend agent",
-                "parameters": [
-                    {
-                        "description": "suspension",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysAgentDecisionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/auth/change-password": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAuth"
-                ],
-                "summary": "Change system password",
-                "parameters": [
-                    {
-                        "description": "password",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysChangePasswordReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/auth/login": {
-            "post": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAuth"
-                ],
-                "summary": "System login",
-                "parameters": [
-                    {
-                        "description": "login",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysLoginReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/auth/logout": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAuth"
-                ],
-                "summary": "System logout",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/auth/profile": {
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAuth"
-                ],
-                "summary": "Update system profile",
-                "parameters": [
-                    {
-                        "description": "profile",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysProfileUpdateReq"
-                        }
-                    },
-                    {
-                        "type": "file",
-                        "description": "profile image",
-                        "name": "headerImgFile",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/auth/register": {
-            "post": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemAuth"
-                ],
-                "summary": "Register system user",
-                "parameters": [
-                    {
-                        "description": "register",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysRegisterReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/bookings/status-override": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemBookings"
-                ],
-                "summary": "Override booking status",
-                "parameters": [
-                    {
-                        "description": "booking action",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysBookingActionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/dashboard/summary": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemDashboard"
-                ],
-                "summary": "Admin dashboard summary",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/packages/approve": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemPackages"
-                ],
-                "summary": "Approve package",
-                "parameters": [
-                    {
-                        "description": "package moderation",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysPackageModerationReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/payments/capture": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemPayments"
-                ],
-                "summary": "Capture authorized Stripe payment",
-                "parameters": [
-                    {
-                        "description": "payment capture",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysPaymentActionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/payments/refund": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemPayments"
-                ],
-                "summary": "Refund or cancel Stripe payment",
-                "parameters": [
-                    {
-                        "description": "payment refund",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysPaymentActionReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/system/settings": {
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "SystemSettings"
-                ],
-                "summary": "Update system setting",
-                "parameters": [
-                    {
-                        "description": "setting",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.SysSettingUpdateReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -4268,10 +3922,6 @@ const docTemplate = `{
         "model.Info": {
             "type": "object",
             "properties": {
-                "ID": {
-                    "description": "Primary Key ID",
-                    "type": "integer"
-                },
                 "attachments": {
                     "description": "Attachments",
                     "type": "array",
@@ -4301,165 +3951,22 @@ const docTemplate = `{
                 }
             }
         },
-        "request.AgBookingActionReq": {
+        "request.ActivityReq": {
             "type": "object",
             "properties": {
-                "booking_id": {
-                    "type": "integer"
-                },
-                "notes": {
-                    "type": "string"
-                },
-                "reason": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.AgBookingOfferReq": {
-            "type": "object",
-            "properties": {
-                "booking_id": {
-                    "type": "integer"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "final_amount": {
-                    "type": "integer"
-                },
-                "notes": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.AgChangePasswordReq": {
-            "type": "object",
-            "properties": {
-                "new_password": {
-                    "type": "string"
-                },
-                "old_password": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.AgCustomTripConfigReq": {
-            "type": "object",
-            "properties": {
-                "activities": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "additions": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "cities": {
-                    "$ref": "#/definitions/common.JSONMap"
-                },
-                "countries": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "duration_max_days": {
-                    "type": "integer"
-                },
-                "duration_min_days": {
-                    "type": "integer"
-                },
-                "hotel_levels": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "transport": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "request.AgCustomTripOfferReq": {
-            "type": "object",
-            "properties": {
-                "available_end_date": {
-                    "type": "string"
-                },
-                "available_start_date": {
-                    "type": "string"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "custom_trip_request_id": {
-                    "type": "integer"
-                },
-                "final_amount": {
-                    "type": "integer"
-                },
-                "notes": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.AgDocumentCorrectionReq": {
-            "type": "object",
-            "properties": {
-                "booking_id": {
-                    "type": "integer"
-                },
-                "document_id": {
-                    "type": "integer"
-                },
-                "document_type": {
-                    "type": "string"
-                },
-                "rejection_reason": {
-                    "type": "string"
-                },
-                "traveler_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "request.AgLoginReq": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.AgPackageActivityReq": {
-            "type": "object",
-            "properties": {
-                "estimated_amount": {
+                "estimatedCost": {
                     "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "image_url": {
+                "imageURL": {
                     "type": "string"
                 },
-                "included": {
+                "includeInPackage": {
                     "type": "boolean"
                 },
-                "sort_order": {
+                "sortOrder": {
                     "type": "integer"
                 },
                 "title": {
@@ -4467,147 +3974,754 @@ const docTemplate = `{
                 }
             }
         },
-        "request.AgPackageAdditionReq": {
+        "request.AdClickReq": {
             "type": "object",
+            "required": [
+                "adId"
+            ],
             "properties": {
-                "addition_type": {
-                    "type": "string"
-                },
-                "estimated_amount": {
+                "adId": {
                     "type": "integer"
                 },
+                "sourcePage": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.AdCreativeReq": {
+            "type": "object",
+            "required": [
+                "bannerImageURL",
+                "placement"
+            ],
+            "properties": {
+                "bannerImageURL": {
+                    "type": "string"
+                },
+                "ctaLabel": {
+                    "type": "string"
+                },
+                "displayOrder": {
+                    "type": "integer"
+                },
+                "endDatetime": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "0 on create",
+                    "type": "integer"
+                },
+                "overlaySubtitle": {
+                    "type": "string"
+                },
+                "overlayTitle": {
+                    "type": "string"
+                },
+                "placement": {
+                    "type": "string"
+                },
+                "redirectType": {
+                    "type": "string"
+                },
+                "startDatetime": {
+                    "type": "string"
+                },
+                "targetAgentId": {
+                    "type": "integer"
+                },
+                "targetCountryId": {
+                    "type": "integer"
+                },
+                "targetPackageId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.AdSetStatusReq": {
+            "type": "object",
+            "required": [
+                "id",
+                "status"
+            ],
+            "properties": {
                 "id": {
                     "type": "integer"
                 },
-                "included": {
+                "status": {
+                    "description": "active | disabled",
+                    "type": "string"
+                }
+            }
+        },
+        "request.AddonReq": {
+            "type": "object",
+            "properties": {
+                "active": {
                     "type": "boolean"
                 },
-                "price_per_traveler": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "request.AgPackageAvailabilityReq": {
-            "type": "object",
-            "properties": {
-                "availability_type": {
+                "addonType": {
                     "type": "string"
                 },
-                "end_date": {
-                    "type": "string"
+                "estimatedPrice": {
+                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "max_slots": {
-                    "type": "integer"
-                },
-                "start_date": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.AgPackageGalleryReq": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "sort_order": {
-                    "type": "integer"
-                }
-            }
-        },
-        "request.AgPackageHotelReq": {
-            "type": "object",
-            "properties": {
-                "estimated_amount": {
-                    "type": "integer"
-                },
-                "hotel_name": {
-                    "type": "string"
-                },
-                "hotel_stars": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "included": {
+                "includeInPackage": {
                     "type": "boolean"
                 },
-                "roomType": {
+                "priceModel": {
                     "type": "string"
                 }
             }
         },
-        "request.AgPackageReq": {
+        "request.AgentApproveReq": {
             "type": "object",
+            "required": [
+                "agentId"
+            ],
             "properties": {
-                "activities": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/request.AgPackageActivityReq"
-                    }
+                "agentId": {
+                    "type": "integer"
                 },
-                "additions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/request.AgPackageAdditionReq"
-                    }
+                "commissionPercent": {
+                    "description": "basis points; 0 = default from plan",
+                    "type": "integer"
                 },
-                "availability": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/request.AgPackageAvailabilityReq"
-                    }
-                },
-                "category": {
+                "slaHours": {
+                    "description": "0 = keep default",
+                    "type": "integer"
+                }
+            }
+        },
+        "request.AgentLoginReq": {
+            "type": "object",
+            "required": [
+                "businessEmail",
+                "password"
+            ],
+            "properties": {
+                "businessEmail": {
                     "type": "string"
                 },
-                "city": {
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.AgentNoteReq": {
+            "type": "object",
+            "required": [
+                "agentId",
+                "noteText"
+            ],
+            "properties": {
+                "agentId": {
+                    "type": "integer"
+                },
+                "noteText": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.AgentRegisterReq": {
+            "type": "object",
+            "required": [
+                "businessEmail",
+                "companyName",
+                "password",
+                "responsibleName"
+            ],
+            "properties": {
+                "businessEmail": {
+                    "type": "string"
+                },
+                "companyAddress": {
+                    "type": "string"
+                },
+                "companyName": {
                     "type": "string"
                 },
                 "country": {
                     "type": "string"
                 },
-                "cover_image_url": {
+                "licenseNumber": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phoneCountryCode": {
+                    "type": "string"
+                },
+                "planId": {
+                    "type": "integer"
+                },
+                "responsibleName": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.AgentRejectReq": {
+            "type": "object",
+            "required": [
+                "agentId"
+            ],
+            "properties": {
+                "agentId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.AgentSuspendReq": {
+            "type": "object",
+            "required": [
+                "agentId"
+            ],
+            "properties": {
+                "agentId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ApplyCouponReq": {
+            "type": "object",
+            "required": [
+                "bookingId",
+                "code"
+            ],
+            "properties": {
+                "bookingId": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ApproveDocumentReq": {
+            "type": "object",
+            "required": [
+                "documentId"
+            ],
+            "properties": {
+                "approve": {
+                    "description": "true = approve, false = request correction",
+                    "type": "boolean"
+                },
+                "documentId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.AvailabilityReq": {
+            "type": "object",
+            "properties": {
+                "endDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isFixedGroup": {
+                    "type": "boolean"
+                },
+                "maxSeats": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "description": "layout 2006-01-02",
+                    "type": "string"
+                }
+            }
+        },
+        "request.BookingDocumentReq": {
+            "type": "object",
+            "required": [
+                "bookingId",
+                "docRole",
+                "fileUrl"
+            ],
+            "properties": {
+                "bookingId": {
+                    "type": "integer"
+                },
+                "docRole": {
+                    "description": "agent_confirmation|issued_ticket|kyc_file",
+                    "type": "string"
+                },
+                "fileUrl": {
+                    "type": "string"
+                },
+                "originalName": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CancelBookingReq": {
+            "type": "object",
+            "properties": {
+                "bookingId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CaptureReq": {
+            "type": "object",
+            "required": [
+                "bookingId"
+            ],
+            "properties": {
+                "bookingId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.ChangeAgentPasswordReq": {
+            "type": "object",
+            "required": [
+                "newPassword",
+                "oldPassword"
+            ],
+            "properties": {
+                "newPassword": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "oldPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ChangeUserPasswordReq": {
+            "type": "object",
+            "required": [
+                "newPassword",
+                "oldPassword"
+            ],
+            "properties": {
+                "newPassword": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "oldPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CommissionOverrideReq": {
+            "type": "object",
+            "required": [
+                "bookingId",
+                "commissionPercent",
+                "reason"
+            ],
+            "properties": {
+                "bookingId": {
+                    "type": "integer"
+                },
+                "commissionPercent": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CouponReq": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                },
+                "validFrom": {
+                    "type": "string"
+                },
+                "validTo": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.CreateBookingReq": {
+            "type": "object",
+            "properties": {
+                "customTripRequestId": {
+                    "type": "integer"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "hotelChoiceId": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "packageId": {
+                    "type": "integer"
+                },
+                "selectedActivities": {
+                    "$ref": "#/definitions/common.JSONMap"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "travelerCount": {
+                    "type": "integer"
+                },
+                "travelers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.TravelerReq"
+                    }
+                },
+                "type": {
+                    "description": "package | custom_trip",
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateDisputeReq": {
+            "type": "object",
+            "required": [
+                "bookingId",
+                "details"
+            ],
+            "properties": {
+                "bookingId": {
+                    "type": "integer"
+                },
+                "details": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreatePaymentReq": {
+            "type": "object",
+            "required": [
+                "bookingId",
+                "paymentMethod"
+            ],
+            "properties": {
+                "bookingId": {
+                    "type": "integer"
+                },
+                "paymentMethod": {
+                    "description": "card|apple_pay|google_pay|tabby|tamara",
+                    "type": "string"
+                }
+            }
+        },
+        "request.CustomTripTemplateReq": {
+            "type": "object",
+            "properties": {
+                "activities": {
+                    "$ref": "#/definitions/common.JSONMap"
+                },
+                "destinationCountryIDs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "durationMaxDays": {
+                    "type": "integer"
+                },
+                "durationMinDays": {
+                    "type": "integer"
+                },
+                "hotelLevels": {
+                    "$ref": "#/definitions/common.JSONMap"
+                },
+                "id": {
+                    "description": "0 on create",
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pricingLogicHidden": {
+                    "type": "boolean"
+                },
+                "transportTypes": {
+                    "$ref": "#/definitions/common.JSONMap"
+                },
+                "visaAddonsEnabled": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "request.DeviceTokenReq": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "platform": {
+                    "description": "ios|android|web",
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.DocumentRequirementReq": {
+            "type": "object",
+            "properties": {
+                "documentTypeId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isLocked": {
+                    "type": "boolean"
+                },
+                "isOptional": {
+                    "type": "boolean"
+                },
+                "isRequired": {
+                    "type": "boolean"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "requiredAfter": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.GetById": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Primary Key ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "request.HotelReq": {
+            "type": "object",
+            "properties": {
+                "hotelStars": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "includeInPackage": {
+                    "type": "boolean"
+                },
+                "nights": {
+                    "type": "integer"
+                },
+                "optionName": {
+                    "type": "string"
+                },
+                "pricePerNightEst": {
+                    "type": "integer"
+                },
+                "roomType": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.KYCReviewReq": {
+            "type": "object",
+            "required": [
+                "bookingId"
+            ],
+            "properties": {
+                "approve": {
+                    "description": "true = approved, false = rejected",
+                    "type": "boolean"
+                },
+                "bookingId": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.NotificationTemplateReq": {
+            "type": "object",
+            "required": [
+                "channel",
+                "eventType",
+                "subject"
+            ],
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "eventType": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "0 on create",
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.PackageAdminStatusReq": {
+            "type": "object",
+            "properties": {
+                "flagDetails": {
+                    "type": "string"
+                },
+                "flagIssueType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "active | hidden | flagged | disabled | pending_approval",
+                    "type": "string"
+                }
+            }
+        },
+        "request.PackageCategoryReq": {
+            "type": "object",
+            "required": [
+                "code",
+                "name"
+            ],
+            "properties": {
+                "code": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "discount_percent": {
-                    "type": "integer"
+                "isActive": {
+                    "type": "boolean"
                 },
-                "documents": {
+                "name": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.PackageReq": {
+            "type": "object",
+            "properties": {
+                "activities": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/request.AgPackageRequiredDocumentReq"
+                        "$ref": "#/definitions/request.ActivityReq"
                     }
                 },
-                "durationDays": {
-                    "type": "integer"
-                },
-                "estimated_amount": {
-                    "type": "integer"
-                },
-                "gallery": {
+                "addons": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/request.AgPackageGalleryReq"
+                        "$ref": "#/definitions/request.AddonReq"
                     }
+                },
+                "availability": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.AvailabilityReq"
+                    }
+                },
+                "availabilityType": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "coverImageURL": {
+                    "type": "string"
+                },
+                "daysDuration": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "destinationCountryId": {
+                    "type": "integer"
+                },
+                "discountPercent": {
+                    "type": "integer"
+                },
+                "displayPrice": {
+                    "type": "integer"
+                },
+                "documentRequirements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.DocumentRequirementReq"
+                    }
+                },
+                "estimatedPrice": {
+                    "type": "integer"
+                },
+                "galleryImages": {
+                    "$ref": "#/definitions/common.JSONMap"
                 },
                 "hotels": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/request.AgPackageHotelReq"
+                        "$ref": "#/definitions/request.HotelReq"
                     }
                 },
                 "id": {
+                    "description": "0 on create",
                     "type": "integer"
                 },
                 "location": {
@@ -4616,394 +4730,247 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "package_type": {
-                    "type": "string"
+                "requiredFields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.RequiredFieldReq"
+                    }
                 },
-                "visa_exempt_json": {
-                    "$ref": "#/definitions/common.JSONMap"
+                "type": {
+                    "type": "string"
                 }
             }
         },
-        "request.AgPackageRequiredDocumentReq": {
+        "request.PayAgentReq": {
             "type": "object",
+            "required": [
+                "bookingId"
+            ],
             "properties": {
-                "document_type": {
+                "bookingId": {
+                    "type": "integer"
+                },
+                "method": {
+                    "description": "manual (MVP) | stripe_transfer",
                     "type": "string"
                 },
-                "field_key": {
+                "notes": {
+                    "type": "string"
+                },
+                "referenceNumber": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.RefundReq": {
+            "type": "object",
+            "required": [
+                "bookingId",
+                "reason",
+                "refundType"
+            ],
+            "properties": {
+                "amount": {
+                    "description": "minor units; required (\u003c= captured) for partial",
+                    "type": "integer"
+                },
+                "bookingId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "refundType": {
+                    "description": "full|partial",
+                    "type": "string"
+                }
+            }
+        },
+        "request.RejectBookingReq": {
+            "type": "object",
+            "properties": {
+                "alternativeDatesSuggested": {
+                    "$ref": "#/definitions/common.JSONMap"
+                },
+                "bookingId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.RequiredFieldReq": {
+            "type": "object",
+            "properties": {
+                "fieldCode": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "is_locked_by_admin": {
+                "isAdminLocked": {
                     "type": "boolean"
                 },
-                "is_required": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "request.AgProfileUpdateReq": {
-            "type": "object",
-            "properties": {
-                "business_email": {
-                    "type": "string"
-                },
-                "company_address": {
-                    "type": "string"
-                },
-                "company_name": {
-                    "type": "string"
-                },
-                "country": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "responsible_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.AgRegisterReq": {
-            "type": "object",
-            "properties": {
-                "business_email": {
-                    "type": "string"
-                },
-                "company_address": {
-                    "type": "string"
-                },
-                "company_name": {
-                    "type": "string"
-                },
-                "country": {
-                    "type": "string"
-                },
-                "document_urls": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "license_number": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "responsible_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.AgSettingsReq": {
-            "type": "object",
-            "properties": {
-                "booking_alerts_enabled": {
+                "isAgentSelectable": {
                     "type": "boolean"
                 },
-                "notification_email": {
-                    "type": "string"
-                },
-                "sla_alerts_enabled": {
+                "isRequired": {
                     "type": "boolean"
-                }
-            }
-        },
-        "request.BxAdClickReq": {
-            "type": "object",
-            "properties": {
-                "ad_id": {
+                },
+                "sortOrder": {
                     "type": "integer"
                 }
             }
         },
-        "request.BxBookingCancelReq": {
+        "request.RequirementProfileReq": {
             "type": "object",
             "properties": {
-                "reason": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.BxBookingEmailReq": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.BxBookingTravelerReq": {
-            "type": "object",
-            "properties": {
-                "booking_id": {
+                "documentTypeId": {
                     "type": "integer"
                 },
-                "travelers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/request.BxTravelerReq"
-                    }
-                }
-            }
-        },
-        "request.BxChangePasswordReq": {
-            "type": "object",
-            "properties": {
-                "new_password": {
-                    "type": "string"
-                },
-                "old_password": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.BxCustomTripBookingReq": {
-            "type": "object",
-            "properties": {
-                "activities": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "agent_id": {
-                    "type": "integer"
-                },
-                "destination_city": {
-                    "type": "string"
-                },
-                "destination_country": {
-                    "type": "string"
-                },
-                "end_date": {
-                    "type": "string"
+                "isRequired": {
+                    "type": "boolean"
                 },
                 "notes": {
                     "type": "string"
                 },
-                "start_date": {
+                "phase": {
+                    "description": "before|after",
                     "type": "string"
                 },
-                "traveler_count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "request.BxFavoriteReq": {
-            "type": "object",
-            "properties": {
-                "entity_id": {
-                    "type": "integer"
-                },
-                "entity_type": {
+                "travelerField": {
                     "type": "string"
                 }
             }
         },
-        "request.BxLoginReq": {
+        "request.ResolveDisputeReq": {
             "type": "object",
+            "required": [
+                "disputeId"
+            ],
             "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.BxOfferAcceptReq": {
-            "type": "object",
-            "properties": {
-                "offer_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "request.BxOfferRejectReq": {
-            "type": "object",
-            "properties": {
-                "offer_id": {
+                "disputeId": {
                     "type": "integer"
                 },
-                "reason": {
+                "resolution": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "resolved | closed",
                     "type": "string"
                 }
             }
         },
-        "request.BxPackageBookingReq": {
+        "request.ReviewReq": {
             "type": "object",
+            "required": [
+                "bookingId",
+                "rating"
+            ],
             "properties": {
-                "notes": {
-                    "type": "string"
-                },
-                "package_id": {
+                "bookingId": {
                     "type": "integer"
-                },
-                "start_date": {
-                    "type": "string"
-                },
-                "traveler_count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "request.BxPaymentSuccessReq": {
-            "type": "object",
-            "properties": {
-                "payment_intent_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.BxProfileUpdateReq": {
-            "type": "object",
-            "properties": {
-                "date_of_birth": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "nationality": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "user_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.BxRegisterReq": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "nationality": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "user_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.BxReviewReq": {
-            "type": "object",
-            "properties": {
-                "booking_id": {
-                    "type": "integer"
-                },
-                "comment": {
-                    "type": "string"
                 },
                 "rating": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1
+                },
+                "reviewText": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.SetRequirementProfilesReq": {
+            "type": "object",
+            "required": [
+                "countryId",
+                "templateId"
+            ],
+            "properties": {
+                "countryId": {
+                    "type": "integer"
+                },
+                "profiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.RequirementProfileReq"
+                    }
+                },
+                "templateId": {
                     "type": "integer"
                 }
             }
         },
-        "request.BxShareReq": {
+        "request.SettingChangeReq": {
             "type": "object",
+            "required": [
+                "key",
+                "newValue",
+                "section"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "newValue": {
+                    "type": "string"
+                },
+                "oldValue": {
+                    "type": "string"
+                },
+                "section": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ShareReq": {
+            "type": "object",
+            "required": [
+                "packageId"
+            ],
             "properties": {
                 "channel": {
                     "type": "string"
                 },
-                "entity_id": {
+                "packageId": {
                     "type": "integer"
-                },
-                "entity_type": {
-                    "type": "string"
                 }
             }
         },
-        "request.BxSubmitDocumentsReq": {
+        "request.SubmitDocumentsReq": {
             "type": "object",
+            "required": [
+                "bookingId",
+                "documents"
+            ],
             "properties": {
-                "email": {
-                    "type": "string"
+                "bookingId": {
+                    "type": "integer"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.TravelerDocReq"
+                    }
                 }
             }
         },
-        "request.BxTravelerReq": {
+        "request.SubmitOfferReq": {
             "type": "object",
             "properties": {
-                "dateOfBirth": {
-                    "type": "string"
+                "availableDates": {
+                    "$ref": "#/definitions/common.JSONMap"
                 },
-                "full_name": {
-                    "type": "string"
-                },
-                "id": {
+                "bookingId": {
                     "type": "integer"
                 },
-                "nationality": {
-                    "type": "string"
-                },
-                "passportExpiry": {
-                    "type": "string"
-                },
-                "passport_number": {
-                    "type": "string"
-                },
-                "traveler_type": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.SysAgentDecisionReq": {
-            "type": "object",
-            "properties": {
-                "agent_id": {
-                    "type": "integer"
-                },
-                "commission_percent": {
+                "finalPrice": {
+                    "description": "minor units",
                     "type": "integer"
                 },
                 "notes": {
-                    "type": "string"
-                },
-                "plan_id": {
-                    "type": "integer"
-                },
-                "reason": {
-                    "type": "string"
-                },
-                "sla_hours": {
-                    "type": "integer"
-                }
-            }
-        },
-        "request.SysBookingActionReq": {
-            "type": "object",
-            "properties": {
-                "booking_id": {
-                    "type": "integer"
-                },
-                "reason": {
-                    "type": "string"
-                },
-                "status": {
                     "type": "string"
                 }
             }
@@ -5011,10 +4978,13 @@ const docTemplate = `{
         "request.SysChangePasswordReq": {
             "type": "object",
             "properties": {
-                "new_password": {
+                "id": {
+                    "type": "integer"
+                },
+                "newPassword": {
                     "type": "string"
                 },
-                "old_password": {
+                "oldPassword": {
                     "type": "string"
                 }
             }
@@ -5022,58 +4992,10 @@ const docTemplate = `{
         "request.SysLoginReq": {
             "type": "object",
             "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.SysPackageModerationReq": {
-            "type": "object",
-            "properties": {
-                "details": {
-                    "type": "string"
-                },
-                "issue_type": {
-                    "type": "string"
-                },
-                "package_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "request.SysPaymentActionReq": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "integer"
-                },
-                "booking_id": {
-                    "type": "integer"
-                },
-                "payment_id": {
-                    "type": "integer"
-                },
-                "reason": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.SysProfileUpdateReq": {
-            "type": "object",
-            "properties": {
                 "email": {
                     "type": "string"
                 },
-                "header_img": {
-                    "type": "string"
-                },
-                "nick_name": {
-                    "type": "string"
-                },
-                "phone": {
+                "password": {
                     "type": "string"
                 }
             }
@@ -5087,10 +5009,13 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "job_title": {
+                "headerImg": {
                     "type": "string"
                 },
-                "nick_name": {
+                "jobTitle": {
+                    "type": "string"
+                },
+                "nickName": {
                     "type": "string"
                 },
                 "password": {
@@ -5099,21 +5024,136 @@ const docTemplate = `{
                 "phone": {
                     "type": "string"
                 },
-                "user_name": {
+                "phoneCountryCode": {
+                    "type": "string"
+                },
+                "userName": {
                     "type": "string"
                 }
             }
         },
-        "request.SysSettingUpdateReq": {
+        "request.TravelerDocReq": {
             "type": "object",
             "properties": {
-                "key": {
+                "documentTypeId": {
+                    "type": "integer"
+                },
+                "fileUrl": {
                     "type": "string"
                 },
-                "section": {
+                "mime": {
                     "type": "string"
                 },
-                "value": {}
+                "originalName": {
+                    "type": "string"
+                },
+                "travelerId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.TravelerReq": {
+            "type": "object",
+            "properties": {
+                "adultOrChild": {
+                    "type": "string"
+                },
+                "dob": {
+                    "description": "layout 2006-01-02",
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "nationalityId": {
+                    "type": "integer"
+                },
+                "passportExpiry": {
+                    "description": "layout 2006-01-02",
+                    "type": "string"
+                },
+                "passportNumber": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UserBlockReq": {
+            "type": "object",
+            "required": [
+                "userId"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.UserLoginReq": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UserRegisterReq": {
+            "type": "object",
+            "required": [
+                "email",
+                "fullName",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "nationality": {
+                    "type": "string"
+                },
+                "nickName": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phoneCountryCode": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.WishlistToggleReq": {
+            "type": "object",
+            "required": [
+                "packageId"
+            ],
+            "properties": {
+                "packageId": {
+                    "type": "integer"
+                }
             }
         },
         "response.Email": {

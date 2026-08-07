@@ -24,6 +24,7 @@ type Booking struct {
 	AmountGross          int64          `json:"amountGross" form:"amountGross" gorm:"default:0;comment:Gross amount, minor units"`
 	DiscountAmount       int64          `json:"discountAmount" form:"discountAmount" gorm:"default:0;comment:Discount amount, minor units"`
 	DiscountPercent      int64          `json:"discountPercent" form:"discountPercent" gorm:"default:0;comment:Discount, basis points"`
+	CouponCode           string         `json:"couponCode" form:"couponCode" gorm:"size:64;index;comment:Applied coupon code"`
 	CommissionPercent    int64          `json:"commissionPercent" form:"commissionPercent" gorm:"default:0;comment:Commission, basis points (snapshot)"`
 	CommissionAmount     int64          `json:"commissionAmount" form:"commissionAmount" gorm:"default:0;comment:Platform commission, minor units (snapshot)"`
 	StripeFee            int64          `json:"stripeFee" form:"stripeFee" gorm:"default:0;comment:Stripe fee, minor units"`
@@ -41,6 +42,7 @@ type Booking struct {
 	CancelledBy          *uint          `json:"cancelledBy" form:"cancelledBy" gorm:"index;comment:Cancelling actor ID"`
 	RequestedAt          *time.Time     `json:"requestedAt" form:"requestedAt" gorm:"comment:Requested at"`
 	PriceConfirmedAt     *time.Time     `json:"priceConfirmedAt" form:"priceConfirmedAt" gorm:"comment:Price confirmed at"`
+	HoldExpiresAt        *time.Time     `json:"holdExpiresAt" form:"holdExpiresAt" gorm:"comment:Reservation hold expiry (pay window)"`
 	PaidAt               *time.Time     `json:"paidAt" form:"paidAt" gorm:"comment:Paid at"`
 	CapturedAt           *time.Time     `json:"capturedAt" form:"capturedAt" gorm:"comment:Captured at"`
 	ConfirmedAt          *time.Time     `json:"confirmedAt" form:"confirmedAt" gorm:"comment:Booking confirmed at"`

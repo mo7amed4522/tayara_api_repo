@@ -63,6 +63,7 @@ func bizModel() error {
 		&engage.Wishlist{},
 		&engage.Share{},
 		&engage.Coupon{},
+		&engage.DeviceToken{},
 		// payment
 		&paymentModel.PaymentTransaction{},
 		&paymentModel.Refund{},
@@ -71,6 +72,7 @@ func bizModel() error {
 		// system
 		&system.SysAdminProfile{},
 		&system.JwtBlacklist{},
+		&system.PasswordReset{},
 	)
 	if err != nil {
 		return err

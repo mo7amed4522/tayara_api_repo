@@ -1,6 +1,8 @@
 package booking
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	bookingReq "github.com/mo7amed4522/tayara_api/model/booking/request"
 	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
@@ -240,4 +242,49 @@ func (BookingApi) ForceCancel(c *gin.Context) {
 		return
 	}
 	response.OkWithMessage("booking force-cancelled", c)
+}
+
+// SetHold
+// @Tags Booking
+// @Summary Agent/admin opens/extends a reservation hold (pay window) on a booking
+// @Produce application/json
+// @Param id query int true "booking id"
+// @Param hours query int true "hold hours"
+// @Success 200 {object} response.Response
+// @Router /api/v1/booking/manage/hold [post]
+func (BookingApi) SetHold(c *gin.Context) {
+	var idReq commonReq.GetById
+	if err := c.ShouldBindQuery(&idReq); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	hours := 0
+	_, _ = fmt.Sscanf(c.Query("hours"), "%d", &hours)
+	expires, err := bookingService.BookingServices.SetHold(idReq.Uint(), hours)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(gin.H{"holdExpiresAt": expires}, c)
+}
+
+// HoldStatus
+// @Tags Booking
+// @Summary Check whether a booking's reservation hold is live
+// @Produce application/json
+// @Param id query int true "booking id"
+// @Success 200 {object} response.Response
+// @Router /api/v1/booking/manage/hold/status [get]
+func (BookingApi) HoldStatus(c *gin.Context) {
+	var idReq commonReq.GetById
+	if err := c.ShouldBindQuery(&idReq); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	live, expires, err := bookingService.BookingServices.HoldStatus(idReq.Uint())
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(gin.H{"live": live, "holdExpiresAt": expires}, c)
 }

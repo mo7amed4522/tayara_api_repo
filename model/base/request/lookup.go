@@ -21,6 +21,14 @@ type SettingChangeReq struct {
 	NewValue string `json:"newValue" binding:"required"`
 }
 
+// SettingUpdateReq upsert a single system setting by key (typed on read by callers).
+type SettingUpdateReq struct {
+	Section     string `json:"section"` // leave empty to keep the existing section
+	Key         string `json:"key" binding:"required"`
+	Value       string `json:"value" binding:"required"`
+	Description string `json:"description"`
+}
+
 // SettingHistoryPageReq paginated change-history listing with optional key/section filter.
 type SettingHistoryPageReq struct {
 	commonReq.PageInfo

@@ -34,9 +34,10 @@ const (
 )
 
 const (
-	AgentStatusPending  = "pending"
-	AgentStatusActive   = "active"
-	AgentStatusRejected = "rejected"
+	AgentStatusPending   = "pending"
+	AgentStatusActive    = "active"
+	AgentStatusRejected  = "rejected"
+	AgentStatusSuspended = "suspended"
 )
 
 const (

@@ -17,6 +17,9 @@ func (r LookupRouter) InitLookupRouter(publicGroup, systemGroup *gin.RouterGroup
 	{
 		system.POST("categories", baseApi.UpsertCategory)
 		system.DELETE("categories", baseApi.DeleteCategory)
+		system.GET("settings", baseApi.Settings)
+		system.PUT("settings", baseApi.UpdateSetting)
+		system.POST("settings/reset", baseApi.ResetSection)
 		system.POST("settings/history", baseApi.RecordSettingChange)
 		system.GET("settings/history", baseApi.SettingHistory)
 	}

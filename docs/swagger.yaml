@@ -4,9 +4,6 @@ definitions:
     type: object
   model.Info:
     properties:
-      ID:
-        description: Primary Key ID
-        type: integer
       attachments:
         description: Attachments
         items:
@@ -28,508 +25,705 @@ definitions:
         description: Author
         type: integer
     type: object
-  request.AgBookingActionReq:
+  request.ActivityReq:
     properties:
-      booking_id:
-        type: integer
-      notes:
-        type: string
-      reason:
-        type: string
-      status:
-        type: string
-    type: object
-  request.AgBookingOfferReq:
-    properties:
-      booking_id:
-        type: integer
-      currency:
-        type: string
-      final_amount:
-        type: integer
-      notes:
-        type: string
-    type: object
-  request.AgChangePasswordReq:
-    properties:
-      new_password:
-        type: string
-      old_password:
-        type: string
-    type: object
-  request.AgCustomTripConfigReq:
-    properties:
-      activities:
-        items:
-          type: string
-        type: array
-      additions:
-        items:
-          type: string
-        type: array
-      cities:
-        $ref: '#/definitions/common.JSONMap'
-      countries:
-        items:
-          type: string
-        type: array
-      duration_max_days:
-        type: integer
-      duration_min_days:
-        type: integer
-      hotel_levels:
-        items:
-          type: string
-        type: array
-      transport:
-        items:
-          type: string
-        type: array
-    type: object
-  request.AgCustomTripOfferReq:
-    properties:
-      available_end_date:
-        type: string
-      available_start_date:
-        type: string
-      currency:
-        type: string
-      custom_trip_request_id:
-        type: integer
-      final_amount:
-        type: integer
-      notes:
-        type: string
-    type: object
-  request.AgDocumentCorrectionReq:
-    properties:
-      booking_id:
-        type: integer
-      document_id:
-        type: integer
-      document_type:
-        type: string
-      rejection_reason:
-        type: string
-      traveler_id:
-        type: integer
-    type: object
-  request.AgLoginReq:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    type: object
-  request.AgPackageActivityReq:
-    properties:
-      estimated_amount:
+      estimatedCost:
         type: integer
       id:
         type: integer
-      image_url:
+      imageURL:
         type: string
-      included:
+      includeInPackage:
         type: boolean
-      sort_order:
+      sortOrder:
         type: integer
       title:
         type: string
     type: object
-  request.AgPackageAdditionReq:
+  request.AdClickReq:
     properties:
-      addition_type:
-        type: string
-      estimated_amount:
+      adId:
         type: integer
+      sourcePage:
+        type: string
+    required:
+    - adId
+    type: object
+  request.AdCreativeReq:
+    properties:
+      bannerImageURL:
+        type: string
+      ctaLabel:
+        type: string
+      displayOrder:
+        type: integer
+      endDatetime:
+        type: string
+      id:
+        description: 0 on create
+        type: integer
+      overlaySubtitle:
+        type: string
+      overlayTitle:
+        type: string
+      placement:
+        type: string
+      redirectType:
+        type: string
+      startDatetime:
+        type: string
+      targetAgentId:
+        type: integer
+      targetCountryId:
+        type: integer
+      targetPackageId:
+        type: integer
+      title:
+        type: string
+    required:
+    - bannerImageURL
+    - placement
+    type: object
+  request.AdSetStatusReq:
+    properties:
       id:
         type: integer
-      included:
+      status:
+        description: active | disabled
+        type: string
+    required:
+    - id
+    - status
+    type: object
+  request.AddonReq:
+    properties:
+      active:
         type: boolean
-      price_per_traveler:
+      addonType:
+        type: string
+      estimatedPrice:
+        type: integer
+      id:
+        type: integer
+      includeInPackage:
         type: boolean
-    type: object
-  request.AgPackageAvailabilityReq:
-    properties:
-      availability_type:
-        type: string
-      end_date:
-        type: string
-      id:
-        type: integer
-      max_slots:
-        type: integer
-      start_date:
+      priceModel:
         type: string
     type: object
-  request.AgPackageGalleryReq:
+  request.AgentApproveReq:
     properties:
-      id:
+      agentId:
         type: integer
-      image_url:
-        type: string
-      sort_order:
+      commissionPercent:
+        description: basis points; 0 = default from plan
         type: integer
+      slaHours:
+        description: 0 = keep default
+        type: integer
+    required:
+    - agentId
     type: object
-  request.AgPackageHotelReq:
+  request.AgentLoginReq:
     properties:
-      estimated_amount:
-        type: integer
-      hotel_name:
+      businessEmail:
         type: string
-      hotel_stars:
+      password:
         type: string
-      id:
-        type: integer
-      included:
-        type: boolean
-      roomType:
-        type: string
+    required:
+    - businessEmail
+    - password
     type: object
-  request.AgPackageReq:
+  request.AgentNoteReq:
     properties:
-      activities:
-        items:
-          $ref: '#/definitions/request.AgPackageActivityReq'
-        type: array
-      additions:
-        items:
-          $ref: '#/definitions/request.AgPackageAdditionReq'
-        type: array
-      availability:
-        items:
-          $ref: '#/definitions/request.AgPackageAvailabilityReq'
-        type: array
-      category:
+      agentId:
+        type: integer
+      noteText:
         type: string
-      city:
+    required:
+    - agentId
+    - noteText
+    type: object
+  request.AgentRegisterReq:
+    properties:
+      businessEmail:
+        type: string
+      companyAddress:
+        type: string
+      companyName:
         type: string
       country:
         type: string
-      cover_image_url:
+      licenseNumber:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      phoneCountryCode:
+        type: string
+      planId:
+        type: integer
+      responsibleName:
+        type: string
+    required:
+    - businessEmail
+    - companyName
+    - password
+    - responsibleName
+    type: object
+  request.AgentRejectReq:
+    properties:
+      agentId:
+        type: integer
+      reason:
+        type: string
+    required:
+    - agentId
+    type: object
+  request.AgentSuspendReq:
+    properties:
+      agentId:
+        type: integer
+      reason:
+        type: string
+    required:
+    - agentId
+    type: object
+  request.ApplyCouponReq:
+    properties:
+      bookingId:
+        type: integer
+      code:
+        type: string
+    required:
+    - bookingId
+    - code
+    type: object
+  request.ApproveDocumentReq:
+    properties:
+      approve:
+        description: true = approve, false = request correction
+        type: boolean
+      documentId:
+        type: integer
+      note:
+        type: string
+    required:
+    - documentId
+    type: object
+  request.AvailabilityReq:
+    properties:
+      endDate:
+        type: string
+      id:
+        type: integer
+      isFixedGroup:
+        type: boolean
+      maxSeats:
+        type: integer
+      notes:
+        type: string
+      startDate:
+        description: layout 2006-01-02
+        type: string
+    type: object
+  request.BookingDocumentReq:
+    properties:
+      bookingId:
+        type: integer
+      docRole:
+        description: agent_confirmation|issued_ticket|kyc_file
+        type: string
+      fileUrl:
+        type: string
+      originalName:
+        type: string
+    required:
+    - bookingId
+    - docRole
+    - fileUrl
+    type: object
+  request.CancelBookingReq:
+    properties:
+      bookingId:
+        type: integer
+      reason:
+        type: string
+    type: object
+  request.CaptureReq:
+    properties:
+      bookingId:
+        type: integer
+    required:
+    - bookingId
+    type: object
+  request.ChangeAgentPasswordReq:
+    properties:
+      newPassword:
+        minLength: 6
+        type: string
+      oldPassword:
+        type: string
+    required:
+    - newPassword
+    - oldPassword
+    type: object
+  request.ChangeUserPasswordReq:
+    properties:
+      newPassword:
+        minLength: 6
+        type: string
+      oldPassword:
+        type: string
+    required:
+    - newPassword
+    - oldPassword
+    type: object
+  request.CommissionOverrideReq:
+    properties:
+      bookingId:
+        type: integer
+      commissionPercent:
+        type: integer
+      reason:
+        type: string
+    required:
+    - bookingId
+    - commissionPercent
+    - reason
+    type: object
+  request.CouponReq:
+    properties:
+      code:
+        type: string
+      userId:
+        type: integer
+      validFrom:
+        type: string
+      validTo:
+        type: string
+      value:
+        type: integer
+    required:
+    - code
+    type: object
+  request.CreateBookingReq:
+    properties:
+      customTripRequestId:
+        type: integer
+      endDate:
+        type: string
+      hotelChoiceId:
+        type: integer
+      notes:
+        type: string
+      packageId:
+        type: integer
+      selectedActivities:
+        $ref: '#/definitions/common.JSONMap'
+      startDate:
+        type: string
+      travelerCount:
+        type: integer
+      travelers:
+        items:
+          $ref: '#/definitions/request.TravelerReq'
+        type: array
+      type:
+        description: package | custom_trip
+        type: string
+    type: object
+  request.CreateDisputeReq:
+    properties:
+      bookingId:
+        type: integer
+      details:
+        type: string
+    required:
+    - bookingId
+    - details
+    type: object
+  request.CreatePaymentReq:
+    properties:
+      bookingId:
+        type: integer
+      paymentMethod:
+        description: card|apple_pay|google_pay|tabby|tamara
+        type: string
+    required:
+    - bookingId
+    - paymentMethod
+    type: object
+  request.CustomTripTemplateReq:
+    properties:
+      activities:
+        $ref: '#/definitions/common.JSONMap'
+      destinationCountryIDs:
+        items:
+          type: integer
+        type: array
+      durationMaxDays:
+        type: integer
+      durationMinDays:
+        type: integer
+      hotelLevels:
+        $ref: '#/definitions/common.JSONMap'
+      id:
+        description: 0 on create
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      pricingLogicHidden:
+        type: boolean
+      transportTypes:
+        $ref: '#/definitions/common.JSONMap'
+      visaAddonsEnabled:
+        type: boolean
+    type: object
+  request.DeviceTokenReq:
+    properties:
+      platform:
+        description: ios|android|web
+        type: string
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  request.DocumentRequirementReq:
+    properties:
+      documentTypeId:
+        type: integer
+      id:
+        type: integer
+      isLocked:
+        type: boolean
+      isOptional:
+        type: boolean
+      isRequired:
+        type: boolean
+      notes:
+        type: string
+      requiredAfter:
+        type: string
+    type: object
+  request.GetById:
+    properties:
+      id:
+        description: Primary Key ID
+        type: integer
+    type: object
+  request.HotelReq:
+    properties:
+      hotelStars:
+        type: integer
+      id:
+        type: integer
+      includeInPackage:
+        type: boolean
+      nights:
+        type: integer
+      optionName:
+        type: string
+      pricePerNightEst:
+        type: integer
+      roomType:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  request.KYCReviewReq:
+    properties:
+      approve:
+        description: true = approved, false = rejected
+        type: boolean
+      bookingId:
+        type: integer
+      note:
+        type: string
+    required:
+    - bookingId
+    type: object
+  request.NotificationTemplateReq:
+    properties:
+      body:
+        type: string
+      channel:
+        type: string
+      eventType:
+        type: string
+      id:
+        description: 0 on create
+        type: integer
+      isActive:
+        type: boolean
+      subject:
+        type: string
+    required:
+    - channel
+    - eventType
+    - subject
+    type: object
+  request.PackageAdminStatusReq:
+    properties:
+      flagDetails:
+        type: string
+      flagIssueType:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      status:
+        description: active | hidden | flagged | disabled | pending_approval
+        type: string
+    type: object
+  request.PackageCategoryReq:
+    properties:
+      code:
         type: string
       description:
         type: string
-      discount_percent:
+      isActive:
+        type: boolean
+      name:
+        type: string
+      sortOrder:
         type: integer
-      documents:
+    required:
+    - code
+    - name
+    type: object
+  request.PackageReq:
+    properties:
+      activities:
         items:
-          $ref: '#/definitions/request.AgPackageRequiredDocumentReq'
+          $ref: '#/definitions/request.ActivityReq'
         type: array
-      durationDays:
-        type: integer
-      estimated_amount:
-        type: integer
-      gallery:
+      addons:
         items:
-          $ref: '#/definitions/request.AgPackageGalleryReq'
+          $ref: '#/definitions/request.AddonReq'
         type: array
+      availability:
+        items:
+          $ref: '#/definitions/request.AvailabilityReq'
+        type: array
+      availabilityType:
+        type: string
+      category:
+        type: string
+      coverImageURL:
+        type: string
+      daysDuration:
+        type: integer
+      description:
+        type: string
+      destinationCountryId:
+        type: integer
+      discountPercent:
+        type: integer
+      displayPrice:
+        type: integer
+      documentRequirements:
+        items:
+          $ref: '#/definitions/request.DocumentRequirementReq'
+        type: array
+      estimatedPrice:
+        type: integer
+      galleryImages:
+        $ref: '#/definitions/common.JSONMap'
       hotels:
         items:
-          $ref: '#/definitions/request.AgPackageHotelReq'
+          $ref: '#/definitions/request.HotelReq'
         type: array
       id:
+        description: 0 on create
         type: integer
       location:
         type: string
       name:
         type: string
-      package_type:
+      requiredFields:
+        items:
+          $ref: '#/definitions/request.RequiredFieldReq'
+        type: array
+      type:
         type: string
-      visa_exempt_json:
-        $ref: '#/definitions/common.JSONMap'
     type: object
-  request.AgPackageRequiredDocumentReq:
+  request.PayAgentReq:
     properties:
-      document_type:
+      bookingId:
+        type: integer
+      method:
+        description: manual (MVP) | stripe_transfer
         type: string
-      field_key:
+      notes:
+        type: string
+      referenceNumber:
+        type: string
+    required:
+    - bookingId
+    type: object
+  request.RefundReq:
+    properties:
+      amount:
+        description: minor units; required (<= captured) for partial
+        type: integer
+      bookingId:
+        type: integer
+      reason:
+        type: string
+      refundType:
+        description: full|partial
+        type: string
+    required:
+    - bookingId
+    - reason
+    - refundType
+    type: object
+  request.RejectBookingReq:
+    properties:
+      alternativeDatesSuggested:
+        $ref: '#/definitions/common.JSONMap'
+      bookingId:
+        type: integer
+      reason:
+        type: string
+    type: object
+  request.RequiredFieldReq:
+    properties:
+      fieldCode:
         type: string
       id:
         type: integer
-      is_locked_by_admin:
+      isAdminLocked:
         type: boolean
-      is_required:
+      isAgentSelectable:
         type: boolean
-    type: object
-  request.AgProfileUpdateReq:
-    properties:
-      business_email:
-        type: string
-      company_address:
-        type: string
-      company_name:
-        type: string
-      country:
-        type: string
-      phone:
-        type: string
-      responsible_name:
-        type: string
-    type: object
-  request.AgRegisterReq:
-    properties:
-      business_email:
-        type: string
-      company_address:
-        type: string
-      company_name:
-        type: string
-      country:
-        type: string
-      document_urls:
-        items:
-          type: string
-        type: array
-      license_number:
-        type: string
-      password:
-        type: string
-      phone:
-        type: string
-      responsible_name:
-        type: string
-    type: object
-  request.AgSettingsReq:
-    properties:
-      booking_alerts_enabled:
+      isRequired:
         type: boolean
-      notification_email:
-        type: string
-      sla_alerts_enabled:
-        type: boolean
-    type: object
-  request.BxAdClickReq:
-    properties:
-      ad_id:
+      sortOrder:
         type: integer
     type: object
-  request.BxBookingCancelReq:
+  request.RequirementProfileReq:
     properties:
-      reason:
-        type: string
-    type: object
-  request.BxBookingEmailReq:
-    properties:
-      email:
-        type: string
-    type: object
-  request.BxBookingTravelerReq:
-    properties:
-      booking_id:
+      documentTypeId:
         type: integer
-      travelers:
-        items:
-          $ref: '#/definitions/request.BxTravelerReq'
-        type: array
-    type: object
-  request.BxChangePasswordReq:
-    properties:
-      new_password:
-        type: string
-      old_password:
-        type: string
-    type: object
-  request.BxCustomTripBookingReq:
-    properties:
-      activities:
-        items:
-          type: string
-        type: array
-      agent_id:
-        type: integer
-      destination_city:
-        type: string
-      destination_country:
-        type: string
-      end_date:
-        type: string
+      isRequired:
+        type: boolean
       notes:
         type: string
-      start_date:
+      phase:
+        description: before|after
         type: string
-      traveler_count:
+      travelerField:
+        type: string
+    type: object
+  request.ResolveDisputeReq:
+    properties:
+      disputeId:
         type: integer
+      resolution:
+        type: string
+      status:
+        description: resolved | closed
+        type: string
+    required:
+    - disputeId
     type: object
-  request.BxFavoriteReq:
+  request.ReviewReq:
     properties:
-      entity_id:
+      bookingId:
         type: integer
-      entity_type:
-        type: string
-    type: object
-  request.BxLoginReq:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    type: object
-  request.BxOfferAcceptReq:
-    properties:
-      offer_id:
-        type: integer
-    type: object
-  request.BxOfferRejectReq:
-    properties:
-      offer_id:
-        type: integer
-      reason:
-        type: string
-    type: object
-  request.BxPackageBookingReq:
-    properties:
-      notes:
-        type: string
-      package_id:
-        type: integer
-      start_date:
-        type: string
-      traveler_count:
-        type: integer
-    type: object
-  request.BxPaymentSuccessReq:
-    properties:
-      payment_intent_id:
-        type: string
-    type: object
-  request.BxProfileUpdateReq:
-    properties:
-      date_of_birth:
-        type: string
-      email:
-        type: string
-      full_name:
-        type: string
-      nationality:
-        type: string
-      phone:
-        type: string
-      user_name:
-        type: string
-    type: object
-  request.BxRegisterReq:
-    properties:
-      email:
-        type: string
-      full_name:
-        type: string
-      nationality:
-        type: string
-      password:
-        type: string
-      phone:
-        type: string
-      user_name:
-        type: string
-    type: object
-  request.BxReviewReq:
-    properties:
-      booking_id:
-        type: integer
-      comment:
-        type: string
       rating:
+        maximum: 5
+        minimum: 1
         type: integer
+      reviewText:
+        type: string
+    required:
+    - bookingId
+    - rating
     type: object
-  request.BxShareReq:
+  request.SetRequirementProfilesReq:
+    properties:
+      countryId:
+        type: integer
+      profiles:
+        items:
+          $ref: '#/definitions/request.RequirementProfileReq'
+        type: array
+      templateId:
+        type: integer
+    required:
+    - countryId
+    - templateId
+    type: object
+  request.SettingChangeReq:
+    properties:
+      key:
+        type: string
+      newValue:
+        type: string
+      oldValue:
+        type: string
+      section:
+        type: string
+    required:
+    - key
+    - newValue
+    - section
+    type: object
+  request.ShareReq:
     properties:
       channel:
         type: string
-      entity_id:
+      packageId:
         type: integer
-      entity_type:
-        type: string
+    required:
+    - packageId
     type: object
-  request.BxSubmitDocumentsReq:
+  request.SubmitDocumentsReq:
     properties:
-      email:
-        type: string
-    type: object
-  request.BxTravelerReq:
-    properties:
-      dateOfBirth:
-        type: string
-      full_name:
-        type: string
-      id:
+      bookingId:
         type: integer
-      nationality:
-        type: string
-      passport_number:
-        type: string
-      passportExpiry:
-        type: string
-      traveler_type:
-        type: string
+      documents:
+        items:
+          $ref: '#/definitions/request.TravelerDocReq'
+        type: array
+    required:
+    - bookingId
+    - documents
     type: object
-  request.SysAgentDecisionReq:
+  request.SubmitOfferReq:
     properties:
-      agent_id:
+      availableDates:
+        $ref: '#/definitions/common.JSONMap'
+      bookingId:
         type: integer
-      commission_percent:
+      finalPrice:
+        description: minor units
         type: integer
       notes:
-        type: string
-      plan_id:
-        type: integer
-      reason:
-        type: string
-      sla_hours:
-        type: integer
-    type: object
-  request.SysBookingActionReq:
-    properties:
-      booking_id:
-        type: integer
-      reason:
-        type: string
-      status:
         type: string
     type: object
   request.SysChangePasswordReq:
     properties:
-      new_password:
+      id:
+        type: integer
+      newPassword:
         type: string
-      old_password:
+      oldPassword:
         type: string
     type: object
   request.SysLoginReq:
     properties:
-      password:
-        type: string
-      username:
-        type: string
-    type: object
-  request.SysPackageModerationReq:
-    properties:
-      details:
-        type: string
-      issue_type:
-        type: string
-      package_id:
-        type: integer
-    type: object
-  request.SysPaymentActionReq:
-    properties:
-      amount:
-        type: integer
-      booking_id:
-        type: integer
-      payment_id:
-        type: integer
-      reason:
-        type: string
-    type: object
-  request.SysProfileUpdateReq:
-    properties:
       email:
         type: string
-      header_img:
-        type: string
-      nick_name:
-        type: string
-      phone:
+      password:
         type: string
     type: object
   request.SysRegisterReq:
@@ -538,24 +732,103 @@ definitions:
         type: string
       email:
         type: string
-      job_title:
+      headerImg:
         type: string
-      nick_name:
+      jobTitle:
+        type: string
+      nickName:
         type: string
       password:
         type: string
       phone:
         type: string
-      user_name:
+      phoneCountryCode:
+        type: string
+      userName:
         type: string
     type: object
-  request.SysSettingUpdateReq:
+  request.TravelerDocReq:
     properties:
-      key:
+      documentTypeId:
+        type: integer
+      fileUrl:
         type: string
-      section:
+      mime:
         type: string
-      value: {}
+      originalName:
+        type: string
+      travelerId:
+        type: integer
+    type: object
+  request.TravelerReq:
+    properties:
+      adultOrChild:
+        type: string
+      dob:
+        description: layout 2006-01-02
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      nationalityId:
+        type: integer
+      passportExpiry:
+        description: layout 2006-01-02
+        type: string
+      passportNumber:
+        type: string
+    type: object
+  request.UserBlockReq:
+    properties:
+      reason:
+        type: string
+      userId:
+        type: integer
+    required:
+    - userId
+    type: object
+  request.UserLoginReq:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  request.UserRegisterReq:
+    properties:
+      email:
+        type: string
+      fullName:
+        type: string
+      nationality:
+        type: string
+      nickName:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      phoneCountryCode:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - fullName
+    - password
+    - username
+    type: object
+  request.WishlistToggleReq:
+    properties:
+      packageId:
+        type: integer
+    required:
+    - packageId
     type: object
   response.Email:
     properties:
@@ -594,41 +867,9 @@ info:
   title: Tayara Swagger API Interface Documentation
   version: v2.7.7
 paths:
-  /bxapi/ads:
+  /api/v1/agent/admin:
     get:
       parameters:
-      - in: query
-        name: agent_id
-        type: integer
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: city
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - in: query
-        name: entity_type
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_id
-        type: integer
-      - in: query
-        name: package_type
-        type: string
       - description: page number
         in: query
         name: page
@@ -638,16 +879,7 @@ paths:
         name: pageSize
         type: integer
       - in: query
-        name: placement
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
         name: status
-        type: string
-      - in: query
-        name: type
         type: string
       produces:
       - application/json
@@ -656,20 +888,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get active app ads
+      summary: Admin lists agents (paginated, filterable by status)
       tags:
-      - BxApiAds
-  /bxapi/ads/click:
+      - Agent
+  /api/v1/agent/admin/approve:
     post:
       parameters:
-      - description: ad click
+      - description: approve payload
         in: body
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.BxAdClickReq'
+          $ref: '#/definitions/request.AgentApproveReq'
       produces:
       - application/json
       responses:
@@ -677,81 +907,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Track ad click
+      summary: Admin approves a pending agent (sets commission % + SLA)
       tags:
-      - BxApiAds
-  /bxapi/agents:
-    get:
-      parameters:
-      - in: query
-        name: agent_id
-        type: integer
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: city
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - in: query
-        name: entity_type
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_id
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: placement
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      - in: query
-        name: type
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get active agents
-      tags:
-      - BxApiAgents
-  /bxapi/agents/{id}:
+      - Agent
+  /api/v1/agent/admin/detail:
     get:
       parameters:
       - description: agent id
-        in: path
+        in: query
         name: id
         required: true
         type: integer
@@ -762,18 +925,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Get active agent detail
+      summary: Admin gets an agent's full detail (documents + notes)
       tags:
-      - BxApiAgents
-  /bxapi/auth/change-password:
+      - Agent
+  /api/v1/agent/admin/note:
     post:
       parameters:
-      - description: password
+      - description: note payload
         in: body
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.BxChangePasswordReq'
+          $ref: '#/definitions/request.AgentNoteReq'
       produces:
       - application/json
       responses:
@@ -781,12 +944,67 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Change user password
+      summary: Admin adds an internal note on an agent
       tags:
-      - BxApiAuth
-  /bxapi/auth/login:
+      - Agent
+  /api/v1/agent/admin/reject:
+    post:
+      parameters:
+      - description: reject payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AgentRejectReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin rejects a pending agent with a reason
+      tags:
+      - Agent
+  /api/v1/agent/admin/suspend:
+    post:
+      parameters:
+      - description: suspend payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AgentSuspendReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin suspends or reactivates an agent
+      tags:
+      - Agent
+  /api/v1/agent/change-password:
+    post:
+      parameters:
+      - description: password change
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChangeAgentPasswordReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent changes their own password
+      tags:
+      - Agent
+  /api/v1/agent/login:
     post:
       parameters:
       - description: login
@@ -794,7 +1012,7 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.BxLoginReq'
+          $ref: '#/definitions/request.AgentLoginReq'
       produces:
       - application/json
       responses:
@@ -802,24 +1020,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Login user
+      summary: Agent login (returns A-token)
       tags:
-      - BxApiAuth
-  /bxapi/auth/logout:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Logout user
-      tags:
-      - BxApiAuth
-  /bxapi/auth/profile:
+      - Agent
+  /api/v1/agent/profile:
     get:
       produces:
       - application/json
@@ -828,19 +1032,1842 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get user profile
+      summary: Agent gets their own profile
       tags:
-      - BxApiAuth
-    put:
+      - Agent
+  /api/v1/agent/register:
+    post:
       parameters:
-      - description: profile
+      - description: agent payload
         in: body
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.BxProfileUpdateReq'
+          $ref: '#/definitions/request.AgentRegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public agent (travel agency) registration
+      tags:
+      - Agent
+  /api/v1/analytics/admin/agents:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin Agents dashboard card
+      tags:
+      - Analytics
+  /api/v1/analytics/admin/business:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin Business dashboard card (GMV, commission, payouts, refunds, net
+        profit)
+      tags:
+      - Analytics
+  /api/v1/analytics/admin/users:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin Users dashboard card
+      tags:
+      - Analytics
+  /api/v1/analytics/agent:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent dashboard card (revenue, bookings, views, avg confirmation time)
+      tags:
+      - Analytics
+  /api/v1/base/categories:
+    delete:
+      parameters:
+      - description: Primary Key ID
+        in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin deletes a package category
+      tags:
+      - Base
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public list of active package categories
+      tags:
+      - Base
+    post:
+      parameters:
+      - description: category payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.PackageCategoryReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin creates/updates a package category
+      tags:
+      - Base
+  /api/v1/base/settings/history:
+    get:
+      parameters:
+      - in: query
+        name: key
+        type: string
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: section
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin views the system-settings change history
+      tags:
+      - Base
+    post:
+      parameters:
+      - description: change payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SettingChangeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin records a system-settings edit (audit trail)
+      tags:
+      - Base
+  /api/v1/booking:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User lists their own bookings (paginated)
+      tags:
+      - Booking
+    post:
+      parameters:
+      - description: booking payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateBookingReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User creates a booking (package or custom trip)
+      tags:
+      - Booking
+  /api/v1/booking/admin:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists all bookings
+      tags:
+      - Booking
+  /api/v1/booking/admin/disputes:
+    get:
+      parameters:
+      - in: query
+        name: bookingId
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists disputes (filterable by booking/status)
+      tags:
+      - Booking
+  /api/v1/booking/admin/disputes/resolve:
+    post:
+      parameters:
+      - description: resolve payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ResolveDisputeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin resolves/closes a dispute
+      tags:
+      - Booking
+  /api/v1/booking/admin/documents/audit:
+    get:
+      parameters:
+      - in: query
+        name: actorId
+        type: integer
+      - in: query
+        name: actorType
+        type: string
+      - in: query
+        name: bookingId
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin views the document-access audit trail
+      tags:
+      - Booking
+  /api/v1/booking/admin/force-cancel:
+    post:
+      parameters:
+      - description: cancel payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CancelBookingReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin force-cancels a booking
+      tags:
+      - Booking
+  /api/v1/booking/admin/kyc:
+    post:
+      parameters:
+      - description: kyc review payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.KYCReviewReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin approves or rejects user KYC
+      tags:
+      - Booking
+  /api/v1/booking/cancel:
+    post:
+      parameters:
+      - description: cancel payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CancelBookingReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User cancels their own booking (before confirmation)
+      tags:
+      - Booking
+  /api/v1/booking/detail:
+    get:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User gets one of their own bookings (with detail)
+      tags:
+      - Booking
+  /api/v1/booking/disputes:
+    get:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User/agent lists disputes for their own booking
+      tags:
+      - Booking
+    post:
+      parameters:
+      - description: dispute payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateDisputeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User or agent opens a dispute on a booking
+      tags:
+      - Booking
+  /api/v1/booking/documents:
+    get:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User lists their own traveler documents (audited)
+      tags:
+      - Booking
+    post:
+      parameters:
+      - description: documents payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SubmitDocumentsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User submits (or resubmits) traveler documents
+      tags:
+      - Booking
+  /api/v1/booking/manage:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent lists their bookings (paginated)
+      tags:
+      - Booking
+  /api/v1/booking/manage/complete:
+    post:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent completes a booking (booking_confirmed -> completed)
+      tags:
+      - Booking
+  /api/v1/booking/manage/detail:
+    get:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent gets one of their bookings
+      tags:
+      - Booking
+  /api/v1/booking/manage/documents:
+    get:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent lists traveler + booking documents for one of their bookings
+        (audited)
+      tags:
+      - Booking
+  /api/v1/booking/manage/documents/review:
+    post:
+      parameters:
+      - description: review payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ApproveDocumentReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent approves a traveler document or requests a correction
+      tags:
+      - Booking
+  /api/v1/booking/manage/documents/upload:
+    post:
+      parameters:
+      - description: document payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.BookingDocumentReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent uploads a booking-level document (confirmation / issued ticket)
+      tags:
+      - Booking
+  /api/v1/booking/manage/hold:
+    post:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: hold hours
+        in: query
+        name: hours
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent/admin opens/extends a reservation hold (pay window) on a booking
+      tags:
+      - Booking
+  /api/v1/booking/manage/hold/status:
+    get:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Check whether a booking's reservation hold is live
+      tags:
+      - Booking
+  /api/v1/booking/manage/issue:
+    post:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent issues tickets / confirmation (issued_ready)
+      tags:
+      - Booking
+  /api/v1/booking/manage/offer:
+    post:
+      parameters:
+      - description: offer payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SubmitOfferReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent submits the final price offer
+      tags:
+      - Booking
+  /api/v1/booking/manage/process:
+    post:
+      parameters:
+      - description: booking id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent marks a booking processing (docs OK + KYC approved)
+      tags:
+      - Booking
+  /api/v1/booking/manage/reject:
+    post:
+      parameters:
+      - description: reject payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.RejectBookingReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent rejects/modifies a booking with alternative dates
+      tags:
+      - Booking
+  /api/v1/booking/manage/review:
+    post:
+      parameters:
+      - description: booking id + note
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CancelBookingReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent starts reviewing a booking
+      tags:
+      - Booking
+  /api/v1/catalog/admin/packages:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists all packages (moderation)
+      tags:
+      - Catalog
+  /api/v1/catalog/admin/packages/status:
+    put:
+      parameters:
+      - description: status action
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.PackageAdminStatusReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin moderates a package (approve/hide/flag/disable)
+      tags:
+      - Catalog
+  /api/v1/catalog/packages:
+    delete:
+      parameters:
+      - description: package id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent deletes one of their own packages
+      tags:
+      - Catalog
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent lists their own packages (paginated)
+      tags:
+      - Catalog
+    post:
+      parameters:
+      - description: package payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.PackageReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent creates a package (draft)
+      tags:
+      - Catalog
+    put:
+      parameters:
+      - description: package payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.PackageReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent updates one of their own packages
+      tags:
+      - Catalog
+  /api/v1/catalog/packages/detail:
+    get:
+      parameters:
+      - description: package id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent gets one of their own packages (with children)
+      tags:
+      - Catalog
+  /api/v1/catalog/packages/submit:
+    post:
+      parameters:
+      - description: package id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent submits a draft package for approval
+      tags:
+      - Catalog
+  /api/v1/catalog/public/packages:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public list of active packages
+      tags:
+      - Catalog
+  /api/v1/catalog/public/packages/detail:
+    get:
+      parameters:
+      - description: package id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public detail of an active package
+      tags:
+      - Catalog
+  /api/v1/catalog/templates:
+    delete:
+      parameters:
+      - description: template id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent deletes one of their own templates
+      tags:
+      - Catalog
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent lists their own custom-trip templates
+      tags:
+      - Catalog
+    post:
+      parameters:
+      - description: template payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CustomTripTemplateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent creates a custom-trip builder template
+      tags:
+      - Catalog
+    put:
+      parameters:
+      - description: template payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CustomTripTemplateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent updates one of their own templates
+      tags:
+      - Catalog
+  /api/v1/catalog/templates/detail:
+    get:
+      parameters:
+      - description: template id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent gets one of their own templates
+      tags:
+      - Catalog
+  /api/v1/catalog/templates/requirements:
+    get:
+      parameters:
+      - in: query
+        name: countryId
+        required: true
+        type: integer
+      - in: query
+        name: templateId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent gets custom-trip requirement profiles for a template+country
+      tags:
+      - Catalog
+    post:
+      parameters:
+      - description: profiles payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SetRequirementProfilesReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent sets custom-trip requirement profiles for a template+country
+      tags:
+      - Catalog
+  /api/v1/engage/admin/ads:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: placement
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists ads with CTR (filterable by placement/status)
+      tags:
+      - Engage
+  /api/v1/engage/admin/coupons:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists all coupons
+      tags:
+      - Engage
+    post:
+      parameters:
+      - description: coupon payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CouponReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin creates a coupon
+      tags:
+      - Engage
+  /api/v1/engage/admin/notification-templates:
+    delete:
+      parameters:
+      - description: Primary Key ID
+        in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin deletes a notification template
+      tags:
+      - Engage
+    post:
+      parameters:
+      - description: template payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.NotificationTemplateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin creates/updates a notification template
+      tags:
+      - Engage
+  /api/v1/engage/admin/notifications:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists notification log (all recipients, filterable)
+      tags:
+      - Engage
+  /api/v1/engage/admin/notifications/resend:
+    post:
+      parameters:
+      - description: notification id
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.GetById'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin resends a notification
+      tags:
+      - Engage
+  /api/v1/engage/admin/reviews:
+    get:
+      parameters:
+      - in: query
+        name: agentId
+        type: integer
+      - in: query
+        name: packageId
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists all reviews (incl. disabled) for moderation
+      tags:
+      - Review
+  /api/v1/engage/admin/reviews/status:
+    put:
+      parameters:
+      - description: Primary Key ID
+        in: query
+        name: id
+        type: integer
+      - description: target status
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin moderates a review status (active/disabled)
+      tags:
+      - Review
+  /api/v1/engage/ads:
+    delete:
+      parameters:
+      - description: Primary Key ID
+        in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin deletes an ad (draft/disabled only)
+      tags:
+      - Engage
+    post:
+      parameters:
+      - description: ad payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AdCreativeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin creates an ad creative (draft)
+      tags:
+      - Engage
+    put:
+      parameters:
+      - description: ad payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AdCreativeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin updates an ad creative
+      tags:
+      - Engage
+  /api/v1/engage/ads/status:
+    put:
+      parameters:
+      - description: status action
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AdSetStatusReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin activates/disables an ad
+      tags:
+      - Engage
+  /api/v1/engage/coupons:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User lists their coupons
+      tags:
+      - Engage
+  /api/v1/engage/coupons/apply:
+    post:
+      parameters:
+      - description: coupon apply payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ApplyCouponReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User applies a coupon to a booking (discount + marks used)
+      tags:
+      - Engage
+  /api/v1/engage/devices:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User lists their registered push devices
+      tags:
+      - Engage
+    post:
+      parameters:
+      - description: device token payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.DeviceTokenReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User registers a push device token (FCM)
+      tags:
+      - Engage
+  /api/v1/engage/devices/remove:
+    post:
+      parameters:
+      - description: device token payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.DeviceTokenReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User deactivates a push device token
+      tags:
+      - Engage
+  /api/v1/engage/notifications:
+    get:
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User lists their own notifications
+      tags:
+      - Engage
+  /api/v1/engage/public/ads:
+    get:
+      parameters:
+      - description: placement
+        in: query
+        name: placement
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public list of currently-active ads for a placement
+      tags:
+      - Engage
+  /api/v1/engage/public/ads/click:
+    post:
+      parameters:
+      - description: click payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AdClickReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public records an ad click
+      tags:
+      - Engage
+  /api/v1/engage/public/ads/impression:
+    post:
+      parameters:
+      - description: ad id
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.GetById'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public records an ad impression
+      tags:
+      - Engage
+  /api/v1/engage/public/reviews:
+    get:
+      parameters:
+      - in: query
+        name: agentId
+        type: integer
+      - in: query
+        name: packageId
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public list of active reviews (filterable)
+      tags:
+      - Review
+  /api/v1/engage/reviews:
+    post:
+      parameters:
+      - description: review payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReviewReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User reviews a completed booking (rating + text)
+      tags:
+      - Engage
+  /api/v1/engage/share:
+    post:
+      parameters:
+      - description: share payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ShareReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User records a share of a package
+      tags:
+      - Engage
+  /api/v1/engage/wishlist:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User lists their saved packages
+      tags:
+      - Engage
+    post:
+      parameters:
+      - description: wishlist payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.WishlistToggleReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User adds/removes a package from their wishlist
+      tags:
+      - Engage
+  /api/v1/payment:
+    post:
+      parameters:
+      - description: payment payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreatePaymentReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User opens a payment for a booking (returns client secret / BNPL session)
+      tags:
+      - Payment
+  /api/v1/payment/capture:
+    post:
+      parameters:
+      - description: capture payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CaptureReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin/system captures an authorized payment
+      tags:
+      - Payment
+  /api/v1/payment/commission:
+    get:
+      parameters:
+      - in: query
+        name: agentId
+        type: integer
+      - in: query
+        name: bookingId
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists commission records (filterable)
+      tags:
+      - Payment
+  /api/v1/payment/commission/manage:
+    get:
+      parameters:
+      - in: query
+        name: agentId
+        type: integer
+      - in: query
+        name: bookingId
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent lists their own commission records
+      tags:
+      - Payment
+  /api/v1/payment/commission/override:
+    post:
+      parameters:
+      - description: override payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CommissionOverrideReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin overrides commission % on a captured booking (reason required,
+        audited)
+      tags:
+      - Payment
+  /api/v1/payment/payouts:
+    get:
+      parameters:
+      - in: query
+        name: agentId
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists all payouts (paginated)
+      tags:
+      - Payment
+  /api/v1/payment/payouts/earnings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent views their earnings dashboard
+      tags:
+      - Payment
+  /api/v1/payment/payouts/manage:
+    get:
+      parameters:
+      - in: query
+        name: agentId
+        type: integer
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Agent lists their own payouts (paginated)
+      tags:
+      - Payment
+  /api/v1/payment/payouts/pay:
+    post:
+      parameters:
+      - description: payout payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.PayAgentReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin pays a pending payout for an eligible booking
+      tags:
+      - Payment
+  /api/v1/payment/payouts/prepare:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin scans bookings and prepares payout records (eligible -> pending)
+      tags:
+      - Payment
+  /api/v1/payment/refund:
+    post:
+      parameters:
+      - description: refund payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.RefundReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin refunds a captured payment (full/partial)
+      tags:
+      - Payment
+  /api/v1/payment/webhook/stripe:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Stripe webhook (payment authorization events)
+      tags:
+      - Payment
+  /api/v1/system/change-password:
+    post:
+      parameters:
+      - description: password
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SysChangePasswordReq'
       produces:
       - application/json
       responses:
@@ -850,18 +2877,42 @@ paths:
             $ref: '#/definitions/response.Response'
       security:
       - ApiKeyAuth: []
-      summary: Update user profile
+      summary: Change system password
       tags:
-      - BxApiAuth
-  /bxapi/auth/register:
+      - SystemAuth
+  /api/v1/system/login:
     post:
       parameters:
+      - description: login
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SysLoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: System login
+      tags:
+      - SystemAuth
+  /api/v1/system/register:
+    post:
+      parameters:
+      - description: Super-admin secret key
+        in: header
+        name: X-Admin-Key
+        required: true
+        type: string
       - description: register
         in: body
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.BxRegisterReq'
+          $ref: '#/definitions/request.SysRegisterReq'
       produces:
       - application/json
       responses:
@@ -869,44 +2920,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Register user
+      summary: Register system admin (requires X-Admin-Key header)
       tags:
-      - BxApiAuth
-  /bxapi/bookings:
+      - SystemAuth
+  /api/v1/user/admin:
     get:
       parameters:
-      - in: query
-        name: agent_id
-        type: integer
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: city
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - in: query
-        name: entity_type
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_id
-        type: integer
-      - in: query
-        name: package_type
-        type: string
       - description: page number
         in: query
         name: page
@@ -916,17 +2935,8 @@ paths:
         name: pageSize
         type: integer
       - in: query
-        name: placement
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
         name: status
         type: string
-      - in: query
-        name: type
-        type: string
       produces:
       - application/json
       responses:
@@ -934,19 +2944,68 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get current user bookings
+      summary: Admin lists users (paginated, filterable by status)
       tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}:
+      - User
+  /api/v1/user/admin/block:
+    post:
+      parameters:
+      - description: block payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserBlockReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin blocks/unblocks a user
+      tags:
+      - User
+  /api/v1/user/change-password:
+    post:
+      parameters:
+      - description: password change
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChangeUserPasswordReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User changes their own password
+      tags:
+      - User
+  /api/v1/user/login:
+    post:
+      parameters:
+      - description: login
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserLoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User login (returns X-token)
+      tags:
+      - User
+  /api/v1/user/profile:
     get:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
@@ -954,25 +3013,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get current user booking detail
+      summary: User gets their own profile
       tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/accept-offer:
+      - User
+  /api/v1/user/register:
     post:
       parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: offer
+      - description: user payload
         in: body
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.BxOfferAcceptReq'
+          $ref: '#/definitions/request.UserRegisterReq'
       produces:
       - application/json
       responses:
@@ -980,788 +3032,9 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Accept booking price offer
+      summary: Public end-user registration
       tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/cancel:
-    post:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: cancel reason
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxBookingCancelReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Cancel current user booking
-      tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/confirm-email:
-    post:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: email
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxBookingEmailReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Confirm booking delivery email
-      tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/documents:
-    get:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get booking document checklist
-      tags:
-      - BxApiDocuments
-    post:
-      consumes:
-      - multipart/form-data
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: traveler id
-        in: formData
-        name: traveler_id
-        required: true
-        type: integer
-      - description: document type
-        in: formData
-        name: document_type
-        required: true
-        type: string
-      - description: document file
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Submit traveler document
-      tags:
-      - BxApiDocuments
-  /bxapi/bookings/{id}/documents/submit:
-    post:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: optional email confirmation
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxSubmitDocumentsReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Submit completed traveler details and documents for review
-      tags:
-      - BxApiDocuments
-  /bxapi/bookings/{id}/offers:
-    get:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get current user booking offers
-      tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/payment-intent:
-    post:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Create Stripe payment intent for booking
-      tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/payment-success:
-    post:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: payment
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxPaymentSuccessReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Confirm Stripe booking payment
-      tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/reject-offer:
-    post:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: offer reject
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxOfferRejectReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Reject booking price offer
-      tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/timeline:
-    get:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get current user booking timeline
-      tags:
-      - BxApiBookings
-  /bxapi/bookings/{id}/travelers:
-    get:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get booking travelers
-      tags:
-      - BxApiTravelers
-    post:
-      parameters:
-      - description: booking id
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: travelers
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxBookingTravelerReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Save booking travelers
-      tags:
-      - BxApiTravelers
-  /bxapi/bookings/custom-trip:
-    post:
-      parameters:
-      - description: custom trip booking
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxCustomTripBookingReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Create custom trip booking
-      tags:
-      - BxApiBookings
-  /bxapi/bookings/package:
-    post:
-      parameters:
-      - description: package booking
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxPackageBookingReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Create package booking
-      tags:
-      - BxApiBookings
-  /bxapi/dicts:
-    get:
-      parameters:
-      - in: query
-        name: agent_id
-        type: integer
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: city
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - in: query
-        name: entity_type
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_id
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: placement
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      - in: query
-        name: type
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get customer lookup values
-      tags:
-      - BxApiDicts
-  /bxapi/favorites:
-    delete:
-      parameters:
-      - description: favorite
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxFavoriteReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Remove favorite
-      tags:
-      - BxApiInteractions
-    get:
-      parameters:
-      - in: query
-        name: agent_id
-        type: integer
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: city
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - in: query
-        name: entity_type
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_id
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: placement
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      - in: query
-        name: type
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get current user favorites
-      tags:
-      - BxApiInteractions
-    post:
-      parameters:
-      - description: favorite
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxFavoriteReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Add favorite
-      tags:
-      - BxApiInteractions
-  /bxapi/packages:
-    get:
-      parameters:
-      - in: query
-        name: agent_id
-        type: integer
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: city
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - in: query
-        name: entity_type
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_id
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: placement
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      - in: query
-        name: type
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get active packages
-      tags:
-      - BxApiPackages
-  /bxapi/packages/{id}:
-    get:
-      parameters:
-      - description: package id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get active package detail
-      tags:
-      - BxApiPackages
-  /bxapi/reviews:
-    get:
-      parameters:
-      - in: query
-        name: agent_id
-        type: integer
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: city
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - in: query
-        name: entity_type
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_id
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: placement
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      - in: query
-        name: type
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Get active reviews
-      tags:
-      - BxApiReviews
-    post:
-      parameters:
-      - description: review
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxReviewReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Create booking review
-      tags:
-      - BxApiReviews
-  /bxapi/reviews/mine:
-    get:
-      parameters:
-      - in: query
-        name: agent_id
-        type: integer
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: city
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - in: query
-        name: entity_type
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_id
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: placement
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      - in: query
-        name: type
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get current user reviews
-      tags:
-      - BxApiReviews
-  /bxapi/shares:
-    post:
-      parameters:
-      - description: share
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.BxShareReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Track share
-      tags:
-      - BxApiInteractions
-  /bxapi/stripe/webhook:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Stripe webhook receiver
-      tags:
-      - BxApiStripe
+      - User
   /email/emailTest:
     post:
       produces:
@@ -1879,10 +3152,6 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Primary Key ID
-        in: query
-        name: ID
-        type: integer
       - description: Content
         in: query
         name: content
@@ -1951,14 +3220,6 @@ paths:
       - in: query
         name: endCreatedAt
         type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
       - description: page number
         in: query
         name: page
@@ -1970,10 +3231,6 @@ paths:
       - in: query
         name: startCreatedAt
         type: string
-      - description: 1 Enable 2 Disable
-        in: query
-        name: status
-        type: integer
       produces:
       - application/json
       responses:
@@ -2001,14 +3258,6 @@ paths:
       - in: query
         name: endCreatedAt
         type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
       - description: page number
         in: query
         name: page
@@ -2020,10 +3269,6 @@ paths:
       - in: query
         name: startCreatedAt
         type: string
-      - description: 1 Enable 2 Disable
-        in: query
-        name: status
-        type: integer
       produces:
       - application/json
       responses:
@@ -2069,1096 +3314,6 @@ paths:
       summary: Update announcement
       tags:
       - Info
-  /manage/agents/register:
-    post:
-      consumes:
-      - multipart/form-data
-      parameters:
-      - description: agent registration
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgRegisterReq'
-      - description: registration documents
-        in: formData
-        name: documents
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Public agent registration
-      tags:
-      - ManageAgents
-  /manage/auth/change-password:
-    post:
-      parameters:
-      - description: password
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgChangePasswordReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Change agent password
-      tags:
-      - ManageAuth
-  /manage/auth/login:
-    post:
-      parameters:
-      - description: login
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgLoginReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Agent login
-      tags:
-      - ManageAuth
-  /manage/auth/logout:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Agent logout
-      tags:
-      - ManageAuth
-  /manage/auth/profile:
-    put:
-      parameters:
-      - description: profile
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgProfileUpdateReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Update agent profile
-      tags:
-      - ManageAuth
-  /manage/balance:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Agent balance
-      tags:
-      - ManageEarnings
-  /manage/bookings:
-    get:
-      parameters:
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: payment_status
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: List agent bookings
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get agent booking detail
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}/confirmation-file:
-    post:
-      consumes:
-      - multipart/form-data
-      parameters:
-      - description: confirmation file
-        in: formData
-        name: file
-        required: true
-        type: file
-      - description: notes
-        in: formData
-        name: notes
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Upload booking confirmation file
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}/documents:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get booking traveler documents
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}/documents/approve:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Approve booking documents
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}/documents/request-correction:
-    post:
-      parameters:
-      - description: correction
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgDocumentCorrectionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Request document correction
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}/issued-ready:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Mark booking issued ready
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}/processing:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Mark booking processing
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}/reject:
-    post:
-      parameters:
-      - description: action
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgBookingActionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Reject booking request
-      tags:
-      - ManageBookings
-  /manage/bookings/{id}/reviewing:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Mark booking as reviewing
-      tags:
-      - ManageBookings
-  /manage/bookings/submit-offer:
-    post:
-      parameters:
-      - description: offer
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgBookingOfferReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Submit final booking price offer
-      tags:
-      - ManageBookings
-  /manage/custom-trips/config:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get custom trip config
-      tags:
-      - ManageCustomTrips
-    put:
-      parameters:
-      - description: config
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgCustomTripConfigReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Update custom trip config
-      tags:
-      - ManageCustomTrips
-  /manage/custom-trips/requests:
-    get:
-      parameters:
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: payment_status
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: List custom trip requests
-      tags:
-      - ManageCustomTrips
-  /manage/custom-trips/requests/{id}:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get custom trip request
-      tags:
-      - ManageCustomTrips
-  /manage/custom-trips/requests/{id}/offer:
-    post:
-      parameters:
-      - description: offer
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgCustomTripOfferReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Submit custom trip offer
-      tags:
-      - ManageCustomTrips
-  /manage/dashboard/summary:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Agent dashboard summary
-      tags:
-      - ManageDashboard
-  /manage/earnings:
-    get:
-      parameters:
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: payment_status
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Agent earnings summary
-      tags:
-      - ManageEarnings
-  /manage/notifications:
-    get:
-      parameters:
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: payment_status
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Agent notifications
-      tags:
-      - ManageNotifications
-  /manage/packages:
-    get:
-      parameters:
-      - in: query
-        name: booking_type
-        type: string
-      - in: query
-        name: country
-        type: string
-      - in: query
-        name: endTime
-        type: string
-      - description: Keywords
-        in: query
-        name: keyword
-        type: string
-      - description: Operator ID
-        in: query
-        name: operateId
-        type: integer
-      - in: query
-        name: package_type
-        type: string
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: pageSize
-        type: integer
-      - in: query
-        name: payment_status
-        type: string
-      - in: query
-        name: startTime
-        type: string
-      - in: query
-        name: status
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: List agent packages
-      tags:
-      - ManagePackages
-    post:
-      parameters:
-      - description: package
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgPackageReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Create agent package
-      tags:
-      - ManagePackages
-  /manage/packages/{id}:
-    delete:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Delete draft package
-      tags:
-      - ManagePackages
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get agent package detail
-      tags:
-      - ManagePackages
-    put:
-      parameters:
-      - description: package
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgPackageReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Update agent package
-      tags:
-      - ManagePackages
-  /manage/packages/{id}/disable:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Disable package
-      tags:
-      - ManagePackages
-  /manage/packages/{id}/duplicate:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Duplicate package
-      tags:
-      - ManagePackages
-  /manage/packages/{id}/submit:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Submit package for approval
-      tags:
-      - ManagePackages
-  /manage/profile:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get agent profile
-      tags:
-      - ManageAuth
-  /manage/settings:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Get agent settings
-      tags:
-      - ManageSettings
-    put:
-      parameters:
-      - description: settings
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.AgSettingsReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Update agent settings
-      tags:
-      - ManageSettings
-  /system/agents/activate:
-    post:
-      parameters:
-      - description: activation
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysAgentDecisionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Activate agent
-      tags:
-      - SystemAgents
-  /system/agents/approve:
-    post:
-      parameters:
-      - description: approval
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysAgentDecisionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Approve agent
-      tags:
-      - SystemAgents
-  /system/agents/reject:
-    post:
-      parameters:
-      - description: rejection
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysAgentDecisionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Reject agent
-      tags:
-      - SystemAgents
-  /system/agents/suspend:
-    post:
-      parameters:
-      - description: suspension
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysAgentDecisionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Suspend agent
-      tags:
-      - SystemAgents
-  /system/auth/change-password:
-    post:
-      parameters:
-      - description: password
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysChangePasswordReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Change system password
-      tags:
-      - SystemAuth
-  /system/auth/login:
-    post:
-      parameters:
-      - description: login
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysLoginReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: System login
-      tags:
-      - SystemAuth
-  /system/auth/logout:
-    post:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: System logout
-      tags:
-      - SystemAuth
-  /system/auth/profile:
-    put:
-      consumes:
-      - multipart/form-data
-      parameters:
-      - description: profile
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysProfileUpdateReq'
-      - description: profile image
-        in: formData
-        name: headerImgFile
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Update system profile
-      tags:
-      - SystemAuth
-  /system/auth/register:
-    post:
-      parameters:
-      - description: register
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysRegisterReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Register system user
-      tags:
-      - SystemAuth
-  /system/bookings/status-override:
-    post:
-      parameters:
-      - description: booking action
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysBookingActionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Override booking status
-      tags:
-      - SystemBookings
-  /system/dashboard/summary:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Admin dashboard summary
-      tags:
-      - SystemDashboard
-  /system/packages/approve:
-    post:
-      parameters:
-      - description: package moderation
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysPackageModerationReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Approve package
-      tags:
-      - SystemPackages
-  /system/payments/capture:
-    post:
-      parameters:
-      - description: payment capture
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysPaymentActionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Capture authorized Stripe payment
-      tags:
-      - SystemPayments
-  /system/payments/refund:
-    post:
-      parameters:
-      - description: payment refund
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysPaymentActionReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Refund or cancel Stripe payment
-      tags:
-      - SystemPayments
-  /system/settings:
-    put:
-      parameters:
-      - description: setting
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.SysSettingUpdateReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Update system setting
-      tags:
-      - SystemSettings
 securityDefinitions:
   ApiKeyAuth:
     in: header

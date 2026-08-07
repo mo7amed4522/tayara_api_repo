@@ -51,6 +51,27 @@ func (UserApi) Login(c *gin.Context) {
 	response.OkWithData(res, c)
 }
 
+// FirebaseLogin
+// @Tags User
+// @Summary User login/register via Firebase (Google / Apple / Phone)
+// @Produce application/json
+// @Param data body bxapiReq.FirebaseLoginReq true "firebase id token"
+// @Success 200 {object} response.Response
+// @Router /api/v1/user/firebase-login [post]
+func (UserApi) FirebaseLogin(c *gin.Context) {
+	var req bxapiReq.FirebaseLoginReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	res, err := userService.UserServices.FirebaseLogin(c.Request.Context(), req)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(res, c)
+}
+
 // GetProfile
 // @Tags User
 // @Summary User gets their own profile

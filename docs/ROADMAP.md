@@ -134,4 +134,48 @@ missing pieces that remain are grouped into four self-contained phases.
 - Deploy/run notes for MySQL + Redis + Mongo in production.
 - **Exit:** docs fresh, error contract consistent, concurrency proven, production-ready notes.
 
+---
+
+# System-gap plan (PRD vs roadmap audit — added after Phase 12)
+
+PRD↔roadmap comparison (full 120pp PRD read). The domain build (Phases 0–12) is covered; the gaps
+below are **system-administration** features from the PRD's Admin Dashboard that belong in the
+`system` (admin) and `base` groups. Ordered by priority.
+
+**Phase 13 — System configuration & settings (must-have, MVP)**
+- Full **System Settings** API in the `system` group: `GET /api/v1/system/settings` (grouped by
+  section — Commission / SLA / Payment-Stripe / Cancellation / Payout / Currency & Contact),
+  `PUT settings/update` (upsert key + audit to `setting_change_history`), and reset-section.
+  `SystemSetting` model + seed already exist; wire the missing routes (only `settings/history` is
+  currently wired).
+- **Stripe fee % setting** (`stripe_fee_percent`) feeding commission math + the commission-record
+  snapshot so `commission amount = gross − strip-fee − % of gross` is correct end-to-end.
+- **Admin change-password** (profile security) for the system actor.
+- **Exit:** settings readable/editable/resettable with full audit; commission math includes strip fee.
+
+**Phase 14 — Auth & notification system gaps**
+- **Password reset** email flow for admin + agent (one-time reset token w/ expiry, email dispatch
+  via the existing SMTP dispatcher in `service/engage/dispatch`).
+- **Notification template management**: admin edit/design `notification_templates` content per
+  trigger + channel, per-trigger active toggle, and a **delivery-status** view
+  (Sent/Failed/Pending per channel) alongside resend.
+- **Exit:** forgotten password recoverable by email; notifications fully manageable in-admin.
+
+**Phase 15 — Scheduling, RBAC admin, & the two booking states**
+- Reconcile the PRD's extra dashboard states **`Agent Reviewing`** and **`Awaiting User Payment`**
+  (PRD §6.3.1) against the canonical enum (Decision 1) so admin filter cards match the PRD's
+  12-state set.
+- Ad placement policy: enforce max-3-active/placement + duplicate display-order block and the
+  Scheduled→Active→Expired **auto-job** (models/Phase6 start this; formalize + a cron-registry view).
+- RBAC: admin role/menu/permission **management** surface on top of the existing `sys_casbin.go`
+  enforcement (Phase 9 covered enforcement only).
+- Multi-currency: track `supported_currencies` as a system setting (keep AED-only runtime; flag the
+  PRD-implied AED+USD as a recorded deviation).
+- **Exit:** admin states + ad policy enforced; role/menu management available; currency config recorded.
+
+**Nice-to-have / v2** (recorded, not blocking): Global Search, CSV/Excel export, ad impression/CTR
+grouped analytics, generated-ticket PDF + email distribution (partially folded into Phase 4).
+
+Each phase is a self-contained slice; proceed to the next only when the previous phase's exit criteria pass.
+
 Each phase is a self-contained slice; proceed to the next only when the previous phase's exit criteria pass.

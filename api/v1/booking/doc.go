@@ -207,3 +207,21 @@ func (DocApi) AdminReviewKYC(c *gin.Context) {
 	}
 	response.OkWithMessage("KYC reviewed", c)
 }
+
+// DocumentAudit
+// @Tags Booking
+// @Summary Admin views the document-access audit trail
+// @Produce application/json
+// @Param data query bookingReq.DocumentAuditReq true "audit filter"
+// @Success 200 {object} response.Response
+// @Router /api/v1/booking/admin/documents/audit [get]
+func (DocApi) DocumentAudit(c *gin.Context) {
+	var req bookingReq.DocumentAuditReq
+	_ = c.ShouldBindQuery(&req)
+	list, total, err := bookingService.DocServices.DocumentAudit(req)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+}

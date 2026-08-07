@@ -70,7 +70,7 @@ func (PayoutApi) ListAdminPayouts(c *gin.Context) {
 // @Tags Payment
 // @Summary Agent lists their own payouts (paginated)
 // @Produce application/json
-// @Param data queryReq.PayoutReq true "page filter"
+// @Param data query paymentReq.PayoutPageReq true "page filter"
 // @Success 200 {object} response.Response
 // @Router /api/v1/payment/payouts/manage [get]
 func (PayoutApi) ListAgentPayouts(c *gin.Context) {

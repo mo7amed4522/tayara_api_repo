@@ -176,10 +176,8 @@ func (p *PaymentServices) Capture(ctx context.Context, adminID, bookingID uint) 
 	var bk bookingModel.Booking
 	_ = global.GVA_DB.First(&bk, bookingID).Error
 	net := tx.Amount
-	feeBPS := int64(global.GVA_CONFIG.Stripe.FeeBPS)
-	if feeBPS <= 0 {
-		feeBPS = 0
-	}
+	// the runtime System Setting (stripe_fee_percent) wins over the deploy-time config default.
+	feeBPS := stripeFeeBPS()
 	feeAmount := utils.MoneyPercentOf(net, feeBPS)
 	commissionAmount := utils.MoneyPercentOf(net, tx.CommissionPercent)
 	agentShare := net - feeAmount - commissionAmount

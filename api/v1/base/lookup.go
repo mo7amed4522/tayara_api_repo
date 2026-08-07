@@ -1,6 +1,8 @@
 package base
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	baseReq "github.com/mo7amed4522/tayara_api/model/base/request"
 	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
@@ -103,4 +105,64 @@ func (LookupApi) SettingHistory(c *gin.Context) {
 		return
 	}
 	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+}
+
+// Settings
+// @Tags Base
+// @Summary Admin views all system settings grouped by section
+// @Produce application/json
+// @Success 200 {object} response.Response
+// @Router /api/v1/base/settings [get]
+func (LookupApi) Settings(c *gin.Context) {
+	sections, err := baseServiceApp.LookupServices.SettingsBySection()
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(sections, c)
+}
+
+// UpdateSetting
+// @Tags Base
+// @Summary Admin updates a system setting (audited)
+// @Produce application/json
+// @Param data body baseReq.SettingUpdateReq true "setting payload"
+// @Success 200 {object} response.Response
+// @Router /api/v1/base/settings [put]
+func (LookupApi) UpdateSetting(c *gin.Context) {
+	adminID := utils.GetUserID(c)
+	var req baseReq.SettingUpdateReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	by := adminID
+	updated, err := baseServiceApp.LookupServices.UpdateSetting(&by, req)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(updated, c)
+}
+
+// ResetSection
+// @Tags Base
+// @Summary Admin resets a settings section to its seeded defaults
+// @Produce application/json
+// @Param section query string true "settings section"
+// @Success 200 {object} response.Response
+// @Router /api/v1/base/settings/reset [post]
+func (LookupApi) ResetSection(c *gin.Context) {
+	adminID := utils.GetUserID(c)
+	section := c.Query("section")
+	if section == "" {
+		response.FailWithMessage("section required", c)
+		return
+	}
+	updated, err := baseServiceApp.LookupServices.ResetSection(context.Background(), adminID, section)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(gin.H{"section": section, "resetCount": updated}, c)
 }

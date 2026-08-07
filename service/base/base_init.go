@@ -105,6 +105,7 @@ func seedSystemSettings(db *gorm.DB) error {
 		systemSetting("commission", "basic_plan_percent", strconv.FormatInt(t.Commission.BasicPlanPercent, 10), "Basic plan commission (basis points)"),
 		systemSetting("commission", "premium_plan_percent", strconv.FormatInt(t.Commission.PremiumPlanPercent, 10), "Premium plan commission (basis points)"),
 		systemSetting("commission", "allow_manual_override", strconv.FormatBool(t.Commission.AllowManualOverride), "Admin may override commission per booking"),
+		systemSetting("commission", "stripe_fee_percent", "230", "Stripe fee (basis points, 230 == 2.3%), shown admin-only"),
 		systemSetting("sla", "agent_response_hours", strconv.Itoa(t.SLA.AgentResponseHours), "Agent response SLA hours"),
 		systemSetting("sla", "user_payment_hours", strconv.Itoa(t.SLA.UserPaymentHours), "User payment pay-window hours"),
 		systemSetting("sla", "warning_threshold_hours", strconv.Itoa(t.SLA.WarningThresholdHours), "SLA warning threshold hours"),

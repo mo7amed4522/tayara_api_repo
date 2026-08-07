@@ -14,6 +14,8 @@ func (sysAdminProfileRouter SysAdminProfileRouter) InitSysAdminProfileRouter(pub
 	{
 		public.POST("register", sysAdminProfileApi.Register)
 		public.POST("login", sysAdminProfileApi.Login)
+		public.POST("forgot-password", sysAdminProfileApi.ForgotPassword)
+		public.POST("reset-password", sysAdminProfileApi.ResetPassword)
 	}
 	{
 		private.POST("changePassword", sysAdminProfileApi.ChangePassword)
