@@ -149,6 +149,17 @@ func (sysAdminProfileApi SysAdminProfileApi) ResetPassword(c *gin.Context) {
 	response.OkWithMessage("Password reset", c)
 }
 
+// JobRegistry
+// @Tags System
+// @Summary Admin views the platform's scheduled jobs (cron registry)
+// @Produce application/json
+// @Success 200 {object} response.Response
+// @Router /api/v1/system/jobs [get]
+func (sysAdminProfileApi SysAdminProfileApi) JobRegistry(c *gin.Context) {
+	jobs := sysAdminProfile.SystemConfigService.JobRegistry()
+	response.OkWithData(jobs, c)
+}
+
 // helper func
 func (SysAdminProfileApi) TokenNext(c *gin.Context, headerName string, user system.SysAdminProfile) {
 	result, err := middleware.IssueDomainToken(user, headerName)

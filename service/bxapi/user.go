@@ -62,7 +62,7 @@ func (s *UserServices) Login(req bxapiReq.UserLoginReq) (*bxapiResp.UserLoginRes
 	if user.Status != constants.UserStatusActive {
 		return nil, errors.New("account is blocked")
 	}
-	token, claims, err := utils.LoginToken(&user)
+	token, claims, err := utils.LoginTokenWithAuthority(&user, constants.AuthorityUser)
 	if err != nil {
 		return nil, err
 	}

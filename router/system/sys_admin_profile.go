@@ -19,5 +19,6 @@ func (sysAdminProfileRouter SysAdminProfileRouter) InitSysAdminProfileRouter(pub
 	}
 	{
 		private.POST("changePassword", sysAdminProfileApi.ChangePassword)
+		private.GET("jobs", sysAdminProfileApi.JobRegistry)
 	}
 }

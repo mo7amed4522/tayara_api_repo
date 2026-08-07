@@ -3,6 +3,7 @@ package middleware
 import (
 	"time"
 
+	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/model/system"
 	"github.com/mo7amed4522/tayara_api/utils"
@@ -16,7 +17,7 @@ type DomainTokenResult struct {
 }
 
 func IssueDomainToken(user system.SysAdminProfile, headerName string) (DomainTokenResult, error) {
-	token, claims, err := utils.LoginToken(&user)
+	token, claims, err := utils.LoginTokenWithAuthority(&user, constants.AuthoritySystem)
 	if err != nil {
 		global.GVA_LOG.Error("get token failed", zap.Error(err))
 		return DomainTokenResult{}, err

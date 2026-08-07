@@ -7,9 +7,12 @@ Go + Gin + GORM (gin-vue-admin) repo: model → service → api → router → i
 ## Canonical decisions (resolving PRD gaps — single source of truth)
 
 1. **Booking lifecycle** (one canonical enum in `constants/`):
-   `BOOKING_REQUESTED → PRICE_PENDING → PRICE_CONFIRMED → PAID_CONFIRMED → DOCS_PENDING → DOCS_SUBMITTED
-   (⇄ DOCS_PENDING_CORRECTION) → PROCESSING → ISSUED_READY → COMPLETED`, plus terminal `CANCELLED` / `REFUNDED`.
-   Cancel/refund reachable from any live state.
+   `BOOKING_REQUESTED → AGENT_REVIEWING → PRICE_CONFIRMED → AWAITING_PAYMENT → PAYMENT_AUTHORIZED →
+   PAID_CONFIRMED → DOCS_PENDING → DOCS_SUBMITTED (⇄ DOCS_PENDING_CORRECTION) → PROCESSING →
+   ISSUED_READY → COMPLETED`, plus terminal `CANCELLED` / `REFUNDED` (reachable from any live state).
+   The PRD's intermediate dashboard states **`Agent Reviewing`** and **`Awaiting User Payment`** are
+   modeled explicitly as `agent_reviewing` and `awaiting_payment` (added during the Phase-2 build),
+   so the admin filter cards match the PRD's 12-state set.
 2. **Independent axes** (three separate columns, not one compound status):
    - `payment_status`: `PENDING → AUTHORIZED → CAPTURED → PARTIALLY_REFUNDED / REFUNDED / FAILED`
    - `kyc_status`: `NOT_SUBMITTED → PENDING → APPROVED / REJECTED` (per user identity)

@@ -68,7 +68,7 @@ func (s *AgentServices) Login(req dxapiReq.AgentLoginReq) (*dxapiResp.AgentLogin
 		return nil, errors.New("agent account is not active (pending approval / suspended / rejected)")
 	}
 	adapter := agentLoginAdapter{agent: &agent}
-	token, claims, err := utils.LoginToken(adapter)
+	token, claims, err := utils.LoginTokenWithAuthority(adapter, constants.AuthorityAgent)
 	if err != nil {
 		return nil, err
 	}
