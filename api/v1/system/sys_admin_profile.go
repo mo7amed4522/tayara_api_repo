@@ -109,6 +109,46 @@ func (sysAdminProfileApi SysAdminProfileApi) ChangePassword(c *gin.Context) {
 	response.OkWithMessage("Password changed", c)
 }
 
+// ForgotPassword
+// @Tags SystemAuth
+// @Summary Request a password-reset email for an admin
+// @Produce application/json
+// @Param data body req.SysForgotPasswordReq true "email"
+// @Success 200 {object} response.Response
+// @Router /api/v1/system/forgot-password [post]
+func (sysAdminProfileApi SysAdminProfileApi) ForgotPassword(c *gin.Context) {
+	var req req.SysForgotPasswordReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if err := sysAdminProfile.RequestForgotPassword(req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("If the account exists, a reset link was emailed", c)
+}
+
+// ResetPassword
+// @Tags SystemAuth
+// @Summary Reset an admin password using a one-time emailed token
+// @Produce application/json
+// @Param data body req.SysResetPasswordReq true "token + new password"
+// @Success 200 {object} response.Response
+// @Router /api/v1/system/reset-password [post]
+func (sysAdminProfileApi SysAdminProfileApi) ResetPassword(c *gin.Context) {
+	var req req.SysResetPasswordReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if err := sysAdminProfile.ResetPassword(req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("Password reset", c)
+}
+
 // helper func
 func (SysAdminProfileApi) TokenNext(c *gin.Context, headerName string, user system.SysAdminProfile) {
 	result, err := middleware.IssueDomainToken(user, headerName)

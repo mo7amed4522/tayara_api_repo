@@ -42,6 +42,7 @@ func (r EngageRouter) InitEngageRouter(publicGroup, bxGroup, systemGroup *gin.Ro
 		system.GET("admin/notifications", notifApi.ListNotifications)
 		system.POST("admin/notifications/resend", notifApi.Resend)
 		system.POST("admin/notification-templates", notifApi.UpsertTemplate)
+		system.GET("admin/notification-templates", notifApi.ListTemplates)
 		system.DELETE("admin/notification-templates", notifApi.DeleteTemplate)
 		system.POST("admin/coupons", userApi.CreateCoupon)
 		system.GET("admin/coupons", userApi.AdminListCoupons)

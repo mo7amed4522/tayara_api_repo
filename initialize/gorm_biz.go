@@ -72,6 +72,7 @@ func bizModel() error {
 		// system
 		&system.SysAdminProfile{},
 		&system.JwtBlacklist{},
+		&system.PasswordReset{},
 	)
 	if err != nil {
 		return err

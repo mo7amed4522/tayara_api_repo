@@ -22,6 +22,13 @@ type UserLoginReq struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// FirebaseLoginReq an end-user Firebase authentication (Google / Apple / Phone). The client sends
+// a Firebase ID token obtained after a successful provider sign-in; the server verifies it and
+// upserts the local user bound to the Firebase UID.
+type FirebaseLoginReq struct {
+	IDToken string `json:"idToken" binding:"required"`
+}
+
 // UserBlockReq admin blocks/unblocks a user.
 type UserBlockReq struct {
 	UserID uint   `json:"userId" binding:"required"`

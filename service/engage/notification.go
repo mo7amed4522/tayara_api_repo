@@ -191,3 +191,15 @@ func (n NotificationServices) DeleteTemplate(id uint) error {
 	}
 	return global.GVA_DB.Delete(&engage.NotificationTemplate{}, id).Error
 }
+
+// ListTemplates returns all notification templates (admin designs/moderates content + triggers).
+func (n NotificationServices) ListTemplates() ([]engage.NotificationTemplate, error) {
+	if global.GVA_DB == nil {
+		return nil, errors.New("db not init")
+	}
+	var list []engage.NotificationTemplate
+	if err := global.GVA_DB.Order("event_type asc, channel asc").Find(&list).Error; err != nil {
+		return nil, err
+	}
+	return list, nil
+}

@@ -16,6 +16,7 @@ func (r UserRouter) InitUserRouter(publicGroup, bxGroup, systemGroup *gin.Router
 	{
 		public.POST("register", userApi.Register)
 		public.POST("login", userApi.Login)
+		public.POST("firebase-login", userApi.FirebaseLogin)
 	}
 	{
 		bx.GET("profile", userApi.GetProfile)

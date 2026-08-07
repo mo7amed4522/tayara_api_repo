@@ -89,6 +89,21 @@ func (NotificationApi) UpsertTemplate(c *gin.Context) {
 	response.OkWithData(tpl, c)
 }
 
+// ListTemplates
+// @Tags Engage
+// @Summary Admin lists all notification templates (design/moderate)
+// @Produce application/json
+// @Success 200 {object} response.Response
+// @Router /api/v1/engage/admin/notification-templates [get]
+func (NotificationApi) ListTemplates(c *gin.Context) {
+	list, err := engageService.NotificationServices.ListTemplates()
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(list, c)
+}
+
 // DeleteTemplate
 // @Tags Engage
 // @Summary Admin deletes a notification template
