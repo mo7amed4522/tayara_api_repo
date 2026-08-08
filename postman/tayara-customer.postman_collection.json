@@ -1,0 +1,455 @@
+{
+  "info": {
+    "_postman_id": "tayara-customer-0001-0001-0001-000000000001",
+    "name": "Tayara - Customer (end-user mobile)",
+    "description": "End-user (mobile) API collection. Authenticated calls use the **X-token** header returned by `/api/v1/user/login`.\n\nMoney is in **minor units** (AED fils). Percentages are **basis points** (10000 = 100%).\n\nThe `Files & Uploads` folder shows the platform upload convention driven by `utils/upload` (OSS) — a `multipart/form-data` request with a `file` field returns a URL that you then place in JSON `fileUrl` / `coverImageURL` fields.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8888" },
+    { "key": "customerToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth & Profile",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/user/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ahmed Ali\",\n  \"username\": \"ahmed.ali\",\n  \"password\": \"123456\",\n  \"nickName\": \"Ahmed\",\n  \"email\": \"ahmed.ali@mail.test\",\n  \"phoneCountryCode\": \"+971\",\n  \"phone\": \"0561000001\",\n  \"nationality\": \"Emirati\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0 && json.data && json.data.token) {",
+                  "  pm.collectionVariables.set('customerToken', json.data.token);",
+                  "  pm.environment.set('customerToken', json.data.token);",
+                  "} else { console.log('login failed', json); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/user/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ahmed.ali\",\n  \"password\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Firebase Login (Google/Apple/Phone)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/user/firebase-login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"<firebase-id-token-from-provider-signin>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-token", "value": "{{customerToken}}" }],
+            "url": "{{baseUrl}}/api/v1/user/profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/user/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"newpass123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Catalog (browse)",
+      "item": [
+        {
+          "name": "List Packages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/public/packages?page=1&pageSize=10&status=active&type=outbound"
+          },
+          "response": []
+        },
+        {
+          "name": "Package Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/public/packages/detail?id=1"
+          },
+          "response": []
+        },
+        {
+          "name": "Package Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/base/categories"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "description": "packageId 1 = Istanbul Highlights (PK-1001), packageId 2 = Dubai City Break (PK-1002). Amounts settle at payment, not here.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"packageId\": 1,\n  \"customTripRequestId\": null,\n  \"type\": \"package\",\n  \"startDate\": \"2026-09-01\",\n  \"endDate\": \"2026-09-06\",\n  \"travelerCount\": 2,\n  \"hotelChoiceId\": 1,\n  \"selectedActivities\": {\n    \"items\": [\"Bosphorus Cruise\", \"Blue Mosque\"]\n  },\n  \"notes\": \"Window seats preferred\",\n  \"travelers\": [\n    {\n      \"fullName\": \"Ahmed Ali\",\n      \"dob\": \"1990-04-12\",\n      \"nationalityId\": 1,\n      \"passportNumber\": \"A12345678\",\n      \"passportExpiry\": \"2031-04-12\",\n      \"adultOrChild\": \"adult\",\n      \"email\": \"ahmed.ali@mail.test\"\n    },\n    {\n      \"fullName\": \"Sara Ali\",\n      \"dob\": \"1993-08-20\",\n      \"nationalityId\": 1,\n      \"passportNumber\": \"A87654321\",\n      \"passportExpiry\": \"2032-08-20\",\n      \"adultOrChild\": \"adult\",\n      \"email\": \"sara.ali@mail.test\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-token", "value": "{{customerToken}}" }],
+            "url": "{{baseUrl}}/api/v1/booking?page=1&pageSize=10&status=&type="
+          },
+          "response": []
+        },
+        {
+          "name": "Booking Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-token", "value": "{{customerToken}}" }],
+            "url": "{{baseUrl}}/api/v1/booking/detail?id=1"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 5,\n  \"reason\": \"Changed travel plans\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Traveler Documents",
+          "description": "Each entry references a traveler (travelerId from the booking) and a document type (1 = passport_copy, 3 = personal_photo). fileUrl comes from the upload flow in the Files & Uploads folder.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/documents",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 1,\n  \"documents\": [\n    {\n      \"travelerId\": 1,\n      \"documentTypeId\": 1,\n      \"fileUrl\": \"https://files.tayara.test/bk1/t1_passport.jpg\",\n      \"originalName\": \"passport.jpg\",\n      \"mime\": \"image/jpeg\"\n    },\n    {\n      \"travelerId\": 2,\n      \"documentTypeId\": 3,\n      \"fileUrl\": \"https://files.tayara.test/bk1/t2_photo.jpg\",\n      \"originalName\": \"photo.jpg\",\n      \"mime\": \"image/jpeg\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Documents",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-token", "value": "{{customerToken}}" }],
+            "url": "{{baseUrl}}/api/v1/booking/documents?bookingId=1"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Dispute",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/disputes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 3,\n  \"details\": \"The package price changed after I confirmed.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Disputes (for booking)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-token", "value": "{{customerToken}}" }],
+            "url": "{{baseUrl}}/api/v1/booking/disputes?bookingId=3"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Payment",
+          "description": "paymentMethod: card | apple_pay | google_pay | tabby | tamara",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 3,\n  \"paymentMethod\": \"card\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Stripe Webhook",
+          "description": "Provider callback, no auth. Real Stripe sends the signature in the `stripe-signature` header.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "stripe-signature", "value": "t=<ts>,v1=<sig>" }
+            ],
+            "url": "{{baseUrl}}/api/v1/payment/webhook/stripe",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_test_event\",\n  \"object\": \"event\",\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"pi_1003_stripe\",\n      \"amount\": 210000,\n      \"currency\": \"aed\",\n      \"status\": \"succeeded\"\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Engage & Content",
+      "item": [
+        {
+          "name": "List Reviews (public)",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/engage/reviews?page=1&pageSize=10" },
+          "response": []
+        },
+        {
+          "name": "Active Ads (public)",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/engage/ads" },
+          "response": []
+        },
+        {
+          "name": "Record Ad Impression (public)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/engage/ads/impression",
+            "body": { "mode": "raw", "raw": "{\n  \"adId\": 1\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Record Ad Click (public)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/engage/ads/click",
+            "body": { "mode": "raw", "raw": "{\n  \"adId\": 1,\n  \"sourcePage\": \"home\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/reviews",
+            "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 1,\n  \"rating\": 5,\n  \"reviewText\": \"Amazing trip, highly recommend!\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Wishlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/wishlist",
+            "body": { "mode": "raw", "raw": "{\n  \"packageId\": 1\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "List Wishlist",
+          "request": { "method": "GET", "header": [{ "key": "X-token", "value": "{{customerToken}}" }], "url": "{{baseUrl}}/api/v1/engage/wishlist" },
+          "response": []
+        },
+        {
+          "name": "Record Share",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/share",
+            "body": { "mode": "raw", "raw": "{\n  \"packageId\": 1,\n  \"channel\": \"whatsapp\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Coupons",
+          "request": { "method": "GET", "header": [{ "key": "X-token", "value": "{{customerToken}}" }], "url": "{{baseUrl}}/api/v1/engage/coupons" },
+          "response": []
+        },
+        {
+          "name": "Apply Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/coupons/apply",
+            "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 3,\n  \"code\": \"SUMMER50\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "My Notifications",
+          "request": { "method": "GET", "header": [{ "key": "X-token", "value": "{{customerToken}}" }], "url": "{{baseUrl}}/api/v1/engage/notifications?page=1&pageSize=10" },
+          "response": []
+        },
+        {
+          "name": "Register Device Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/devices",
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"fcm-token-ahmed-0003\",\n  \"platform\": \"ios\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "List Device Tokens",
+          "request": { "method": "GET", "header": [{ "key": "X-token", "value": "{{customerToken}}" }], "url": "{{baseUrl}}/api/v1/engage/devices" },
+          "response": []
+        },
+        {
+          "name": "Remove Device Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/devices/remove",
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"fcm-token-ahmed-0003\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Files & Uploads (images / docs)",
+      "item": [
+        {
+          "name": "Upload a file (multipart -> utils/upload OSS)",
+          "description": "There is no standalone file route in the repo yet; files are pushed to object storage through `utils/upload.NewOss().UploadFile(file)`, which reads the multipart `file` field and returns `(url, key, err)`.\n\nBody is **multipart/form-data** with a `file` field (the actual binary image/PDF). Point this request at your file-service endpoint. The returned `url` is then used in JSON bodies: `fileUrl` (booking/traveler docs), `coverImageURL` (package), `bannerImageURL` (ad), `headerImg` (profile).",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-token", "value": "{{customerToken}}" }],
+            "url": "{{baseUrl}}/api/v1/files/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": ["/path/to/your/image.jpg"] }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reference an uploaded URL (example)",
+          "description": "Once a file is uploaded to OSS you use its URL inside a JSON body — e.g. a traveler document. `fileUrl` must be a real OSS URL.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-token", "value": "{{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/documents",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 1,\n  \"documents\": [\n    {\n      \"travelerId\": 1,\n      \"documentTypeId\": 1,\n      \"fileUrl\": \"https://<oss>/path/to/uploaded/passport.jpg\",\n      \"originalName\": \"passport.jpg\",\n      \"mime\": \"image/jpeg\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

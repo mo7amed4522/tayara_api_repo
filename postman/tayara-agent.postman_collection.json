@@ -1,0 +1,402 @@
+{
+  "info": {
+    "_postman_id": "tayara-agent-0002-0002-0002-000000000002",
+    "name": "Tayara - Agent (Manage dashboard)",
+    "description": "Travel-agent API collection. Authenticated calls use the **A-token** header returned by `/api/v1/agent/login`.\n\nMoney is in **minor units** (AED fils). Percentages are **basis points** (10000 = 100%). Package child items (hotels/activities/addons) are sent as arrays inside the package body.\n\nThe `Files & Uploads` folder documents the `utils/upload` OSS convention for images/docs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8888" },
+    { "key": "agentToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth & Profile",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/agent/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Desert Safari Dubai\",\n  \"responsibleName\": \"Khalid Al Mansouri\",\n  \"businessEmail\": \"hello@desertsafari.ae\",\n  \"password\": \"123456\",\n  \"phoneCountryCode\": \"+971\",\n  \"phone\": \"0551010101\",\n  \"country\": \"UAE\",\n  \"companyAddress\": \"Al Quoz, Dubai\",\n  \"licenseNumber\": \"DED-1001\",\n  \"planId\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0 && json.data && json.data.token) {",
+                  "  pm.collectionVariables.set('agentToken', json.data.token);",
+                  "  pm.environment.set('agentToken', json.data.token);",
+                  "} else { console.log('login failed', json); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/agent/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessEmail\": \"hello@desertsafari.ae\",\n  \"password\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/agent/profile" },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/agent/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"newpass123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Catalog - Manage Packages",
+      "item": [
+        {
+          "name": "Create Package",
+          "description": "discountPercent must be >= 300 bps (3%). destinationCountryId 1=AE, 2=TR, 7=TH. Child arrays are optional.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/packages",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0,\n  \"type\": \"outbound\",\n  \"name\": \"Istanbul Highlights\",\n  \"coverImageURL\": \"https://files.tayara.test/pk/istanbul.jpg\",\n  \"description\": \"5 days in Istanbul: old city, Bosphorus cruise, culinary tour.\",\n  \"galleryImages\": { \"images\": [\"https://files.tayara.test/pk/ist1.jpg\", \"https://files.tayara.test/pk/ist2.jpg\"] },\n  \"destinationCountryId\": 2,\n  \"location\": \"Istanbul\",\n  \"category\": \"cultural\",\n  \"daysDuration\": 5,\n  \"availabilityType\": \"open_calendar\",\n  \"displayPrice\": 320000,\n  \"estimatedPrice\": 290000,\n  \"discountPercent\": 400,\n  \"availability\": [\n    { \"startDate\": \"2026-09-01\", \"endDate\": \"2026-12-01\", \"isFixedGroup\": false, \"maxSeats\": null, \"notes\": \"Open calendar\" }\n  ],\n  \"hotels\": [\n    { \"hotelStars\": 5, \"roomType\": \"double\", \"optionName\": \"Hagia Sophia Suites\", \"pricePerNightEst\": 25000, \"includeInPackage\": true, \"nights\": 4, \"sortOrder\": 1 }\n  ],\n  \"activities\": [\n    { \"title\": \"Bosphorus Cruise\", \"estimatedCost\": 15000, \"includeInPackage\": true, \"sortOrder\": 1 }\n  ],\n  \"addons\": [\n    { \"addonType\": \"visa_issue_help\", \"estimatedPrice\": 25000, \"priceModel\": \"per_traveler\", \"includeInPackage\": false, \"active\": true }\n  ],\n  \"requiredFields\": [\n    { \"fieldCode\": \"passport_copy\", \"isAgentSelectable\": true, \"isAdminLocked\": true, \"isRequired\": true, \"sortOrder\": 1 }\n  ],\n  \"documentRequirements\": [\n    { \"documentTypeId\": 1, \"isRequired\": true, \"isOptional\": false, \"requiredAfter\": \"payment\", \"isLocked\": false, \"notes\": \"Scanned passport\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Package",
+          "description": "Set `id` to an existing package. Omitted/empty child arrays are left untouched on update.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/packages",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"type\": \"outbound\",\n  \"name\": \"Istanbul Highlights (Updated)\",\n  \"coverImageURL\": \"https://files.tayara.test/pk/istanbul.jpg\",\n  \"description\": \"Updated description\",\n  \"destinationCountryId\": 2,\n  \"location\": \"Istanbul\",\n  \"category\": \"cultural\",\n  \"daysDuration\": 5,\n  \"availabilityType\": \"open_calendar\",\n  \"displayPrice\": 330000,\n  \"estimatedPrice\": 300000,\n  \"discountPercent\": 400\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Package",
+          "request": { "method": "DELETE", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/packages?id=4" },
+          "response": []
+        },
+        {
+          "name": "Submit for Approval",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/packages/submit",
+            "body": { "mode": "raw", "raw": "{\n  \"id\": 1\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "List Own Packages",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/packages?page=1&pageSize=10&status=&type=" },
+          "response": []
+        },
+        {
+          "name": "Get Own Package Detail",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/packages/detail?id=1" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Custom Trip Templates",
+      "item": [
+        {
+          "name": "Create Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/templates",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0,\n  \"name\": \"Custom Middle East\",\n  \"destinationCountryIDs\": [2, 1],\n  \"durationMinDays\": 3,\n  \"durationMaxDays\": 14,\n  \"transportTypes\": { \"options\": [\"car\", \"flight\", \"yacht\"] },\n  \"hotelLevels\": { \"levels\": [3, 4, 5] },\n  \"activities\": { \"items\": [\"desert\", \"city\", \"sea\"] },\n  \"visaAddonsEnabled\": true,\n  \"pricingLogicHidden\": true,\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/templates",
+            "body": { "mode": "raw", "raw": "{\n  \"id\": 1,\n  \"name\": \"Custom Middle East (v2)\",\n  \"durationMinDays\": 3,\n  \"durationMaxDays\": 14,\n  \"visaAddonsEnabled\": true,\n  \"isActive\": true\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Template",
+          "request": { "method": "DELETE", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/templates?id=1" },
+          "response": []
+        },
+        {
+          "name": "List Own Templates",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/templates" },
+          "response": []
+        },
+        {
+          "name": "Get Own Template Detail",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/templates/detail?id=1" },
+          "response": []
+        },
+        {
+          "name": "Set Requirement Profiles",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/templates/requirements",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": 1,\n  \"countryId\": 2,\n  \"profiles\": [\n    { \"documentTypeId\": 1, \"travelerField\": \"passport_copy\", \"isRequired\": true, \"phase\": \"before\", \"notes\": \"Scanned passport\" },\n    { \"documentTypeId\": 3, \"travelerField\": \"personal_photo\", \"isRequired\": true, \"phase\": \"after\", \"notes\": \"Passport photo\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Requirement Profiles",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/templates/requirements?templateId=1&countryId=2" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bookings - Manage",
+      "item": [
+        {
+          "name": "List Agent Bookings",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/booking/manage?page=1&pageSize=10&status=&type=" },
+          "response": []
+        },
+        {
+          "name": "Agent Booking Detail",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/booking/manage/detail?id=4" },
+          "response": []
+        },
+        {
+          "name": "Review Booking",
+          "description": "Moves a requested booking to agent_reviewing.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/manage/review",
+            "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 4,\n  \"reason\": \"Reviewing availability\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Offer",
+          "description": "finalPrice is minor units. An active offer drives the booking to price_confirmed.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/manage/offer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 4,\n  \"finalPrice\": 320000,\n  \"availableDates\": { \"from\": \"2026-10-01\", \"to\": \"2026-10-06\" },\n  \"notes\": \"Confirmed with airline\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/manage/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 4,\n  \"reason\": \"Dates unavailable\",\n  \"alternativeDatesSuggested\": { \"from\": \"2026-11-01\", \"to\": \"2026-11-06\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booking Documents",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/booking/manage/documents?bookingId=1" },
+          "response": []
+        },
+        {
+          "name": "Upload Booking Document",
+          "description": "JSON body (NOT multipart). docRole: agent_confirmation | issued_ticket | kyc_file. fileUrl is the OSS URL from the Files & Uploads folder. The agent_confirmation file is required for payout eligibility.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/manage/documents/upload",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 1,\n  \"docRole\": \"agent_confirmation\",\n  \"fileUrl\": \"https://files.tayara.test/bk1/confirmation.pdf\",\n  \"originalName\": \"confirmation.pdf\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Approve / Request-Correction Document",
+          "description": "approve=true approves; false requests correction.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "A-token", "value": "{{agentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/manage/documents/review",
+            "body": { "mode": "raw", "raw": "{\n  \"documentId\": 1,\n  \"approve\": true,\n  \"note\": \"Passport verified\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Processing",
+          "request": { "method": "POST", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/booking/manage/process?id=1" },
+          "response": []
+        },
+        {
+          "name": "Issue Booking",
+          "request": { "method": "POST", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/booking/manage/issue?id=1" },
+          "response": []
+        },
+        {
+          "name": "Complete Booking",
+          "request": { "method": "POST", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/booking/manage/complete?id=1" },
+          "response": []
+        },
+        {
+          "name": "Set Hold",
+          "request": { "method": "POST", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/booking/manage/hold?id=3" },
+          "response": []
+        },
+        {
+          "name": "Hold Status",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/booking/manage/hold/status?id=3" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments & Earnings",
+      "item": [
+        {
+          "name": "Agent Payouts",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/payment/payouts/manage" },
+          "response": []
+        },
+        {
+          "name": "Agent Earnings",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/payment/payouts/earnings" },
+          "response": []
+        },
+        {
+          "name": "Agent Commission Records",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/payment/commission/manage" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Agent Overview",
+          "request": { "method": "GET", "header": [{ "key": "A-token", "value": "{{agentToken}}" }], "url": "{{baseUrl}}/api/v1/analytics/agent" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Files & Uploads (images / docs)",
+      "item": [
+        {
+          "name": "Upload a file (multipart -> utils/upload OSS)",
+          "description": "Binary images/PDFs are pushed to object storage via `utils/upload.NewOss().UploadFile(file)`, which reads the multipart `file` field and returns `(url, key, err)`.\n\nBody is **multipart/form-data** with a `file` field (the actual binary). The returned URL goes into JSON `fileUrl` / `coverImageURL` / `galleryImages` fields. For this demo the platform has no standalone file route, so point this at your file-service endpoint.",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "A-token", "value": "{{agentToken}}" }],
+            "url": "{{baseUrl}}/api/v1/files/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": ["/path/to/your/package-cover.jpg"] }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
