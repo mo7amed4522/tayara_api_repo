@@ -55,7 +55,7 @@ system:
     db-type: mysql                        # Primary database type
     oss-type: local                       # Object storage type (local, qiniu, etc.)
     use-redis: true                       # Enable Redis
-    use-mongo: false                      # Enable MongoDB
+    use-mongo: true                      # Enable MongoDB
     use-multipoint: false                 # Enable multi-point login
     iplimit-count: 15000                  # IP rate limit request count
     iplimit-time: 3600                    # IP rate limit window (seconds)
