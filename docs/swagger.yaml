@@ -258,6 +258,38 @@ definitions:
     required:
     - bookingId
     type: object
+  request.CasbinInReceive:
+    properties:
+      casbinInfos:
+        items:
+          $ref: '#/definitions/request.CasbinInfo'
+        type: array
+    type: object
+  request.CasbinInfo:
+    properties:
+      method:
+        description: Method
+        type: string
+      path:
+        description: Path
+        type: string
+    type: object
+  request.CasbinUpdateReq:
+    properties:
+      newMethod:
+        type: string
+      newPath:
+        type: string
+      oldMethod:
+        type: string
+      oldPath:
+        type: string
+    required:
+    - newMethod
+    - newPath
+    - oldMethod
+    - oldPath
+    type: object
   request.ChangeAgentPasswordReq:
     properties:
       newPassword:
@@ -409,6 +441,13 @@ definitions:
         type: string
       requiredAfter:
         type: string
+    type: object
+  request.FirebaseLoginReq:
+    properties:
+      idToken:
+        type: string
+    required:
+    - idToken
     type: object
   request.GetById:
     properties:
@@ -677,6 +716,21 @@ definitions:
     - newValue
     - section
     type: object
+  request.SettingUpdateReq:
+    properties:
+      description:
+        type: string
+      key:
+        type: string
+      section:
+        description: leave empty to keep the existing section
+        type: string
+      value:
+        type: string
+    required:
+    - key
+    - value
+    type: object
   request.ShareReq:
     properties:
       channel:
@@ -719,6 +773,11 @@ definitions:
       oldPassword:
         type: string
     type: object
+  request.SysForgotPasswordReq:
+    properties:
+      email:
+        type: string
+    type: object
   request.SysLoginReq:
     properties:
       email:
@@ -745,6 +804,13 @@ definitions:
       phoneCountryCode:
         type: string
       userName:
+        type: string
+    type: object
+  request.SysResetPasswordReq:
+    properties:
+      newPassword:
+        type: string
+      token:
         type: string
     type: object
   request.TravelerDocReq:
@@ -867,6 +933,104 @@ info:
   title: Tayara Swagger API Interface Documentation
   version: v2.7.7
 paths:
+  /api/v1/admin/export/agents:
+    get:
+      parameters:
+      - description: status filter
+        in: query
+        name: status
+        type: string
+      produces:
+      - text/csv
+      responses: {}
+      summary: Admin exports agents to CSV
+      tags:
+      - Export
+  /api/v1/admin/export/bookings:
+    get:
+      parameters:
+      - description: booking status filter
+        in: query
+        name: status
+        type: string
+      produces:
+      - text/csv
+      responses: {}
+      summary: Admin exports bookings to CSV
+      tags:
+      - Export
+  /api/v1/admin/export/payments:
+    get:
+      parameters:
+      - description: status filter
+        in: query
+        name: status
+        type: string
+      produces:
+      - text/csv
+      responses: {}
+      summary: Admin exports payment transactions to CSV
+      tags:
+      - Export
+  /api/v1/admin/export/users:
+    get:
+      parameters:
+      - description: status filter
+        in: query
+        name: status
+        type: string
+      produces:
+      - text/csv
+      responses: {}
+      summary: Admin exports users to CSV
+      tags:
+      - Export
+  /api/v1/admin/search:
+    get:
+      parameters:
+      - description: search keyword
+        in: query
+        name: keyword
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin global cross-entity search (users, agents, packages, bookings)
+      tags:
+      - Search
+  /api/v1/admin/tickets/{id}/pdf:
+    get:
+      parameters:
+      - description: booking id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/pdf
+      responses: {}
+      summary: Generate + download a booking e-ticket PDF
+      tags:
+      - Ticket
+  /api/v1/admin/tickets/{id}/send:
+    post:
+      parameters:
+      - description: booking id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Admin emails a booking e-ticket PDF to the buyer
+      tags:
+      - Ticket
   /api/v1/agent/admin:
     get:
       parameters:
@@ -1149,6 +1313,36 @@ paths:
       summary: Admin creates/updates a package category
       tags:
       - Base
+  /api/v1/base/settings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin views all system settings grouped by section
+      tags:
+      - Base
+    put:
+      parameters:
+      - description: setting payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SettingUpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin updates a system setting (audited)
+      tags:
+      - Base
   /api/v1/base/settings/history:
     get:
       parameters:
@@ -1192,6 +1386,24 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Admin records a system-settings edit (audit trail)
+      tags:
+      - Base
+  /api/v1/base/settings/reset:
+    post:
+      parameters:
+      - description: settings section
+        in: query
+        name: section
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin resets a settings section to its seeded defaults
       tags:
       - Base
   /api/v1/booking:
@@ -2099,6 +2311,27 @@ paths:
       summary: Admin lists ads with CTR (filterable by placement/status)
       tags:
       - Engage
+  /api/v1/engage/admin/ads/analytics:
+    get:
+      parameters:
+      - description: from (RFC3339)
+        in: query
+        name: from
+        type: string
+      - description: to (RFC3339)
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin ad impression/CTR analytics grouped by placement
+      tags:
+      - Engage
   /api/v1/engage/admin/coupons:
     get:
       parameters:
@@ -2159,6 +2392,17 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Admin deletes a notification template
+      tags:
+      - Engage
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists all notification templates (design/moderate)
       tags:
       - Engage
     post:
@@ -2499,7 +2743,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Public records an ad click
+      summary: Admin clicks an ad
       tags:
       - Engage
   /api/v1/engage/public/ads/impression:
@@ -2859,6 +3103,61 @@ paths:
       summary: Stripe webhook (payment authorization events)
       tags:
       - Payment
+  /api/v1/system/casbin/policies:
+    get:
+      parameters:
+      - description: authority id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin lists the permission matrix (routes) for a role
+      tags:
+      - SystemCasbin
+    put:
+      parameters:
+      - description: authority + policies
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CasbinInReceive'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin replaces the route-authority matrix for a role
+      tags:
+      - SystemCasbin
+  /api/v1/system/casbin/policy:
+    put:
+      parameters:
+      - description: old + new path/method
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CasbinUpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin updates a single route rule for a role
+      tags:
+      - SystemCasbin
   /api/v1/system/change-password:
     post:
       parameters:
@@ -2880,6 +3179,37 @@ paths:
       summary: Change system password
       tags:
       - SystemAuth
+  /api/v1/system/forgot-password:
+    post:
+      parameters:
+      - description: email
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SysForgotPasswordReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Request a password-reset email for an admin
+      tags:
+      - SystemAuth
+  /api/v1/system/jobs:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin views the platform's scheduled jobs (cron registry)
+      tags:
+      - System
   /api/v1/system/login:
     post:
       parameters:
@@ -2921,6 +3251,25 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Register system admin (requires X-Admin-Key header)
+      tags:
+      - SystemAuth
+  /api/v1/system/reset-password:
+    post:
+      parameters:
+      - description: token + new password
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SysResetPasswordReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Reset an admin password using a one-time emailed token
       tags:
       - SystemAuth
   /api/v1/user/admin:
@@ -2983,6 +3332,25 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: User changes their own password
+      tags:
+      - User
+  /api/v1/user/firebase-login:
+    post:
+      parameters:
+      - description: firebase id token
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.FirebaseLoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User login/register via Firebase (Google / Apple / Phone)
       tags:
       - User
   /api/v1/user/login:

@@ -46,7 +46,11 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// analytics (admin aggregate cards + agent dashboard card)
 	router.RouterGroupApp.Analytics.InitAnalyticsRouter(managePrivate, systemPrivate)
 
-	// base lookups (package categories + settings change history)
+	// base lookups (shared categories + settings change history)
 	router.RouterGroupApp.Base.InitLookupRouter(publicGroup, systemPrivate)
 
+	// nice-to-have / v2: admin global search, CSV export, e-ticket PDF.
+	router.RouterGroupApp.Search.InitSearchRouter(systemPrivate)
+	router.RouterGroupApp.Export.InitExportRouter(systemPrivate)
+	router.RouterGroupApp.Ticket.InitTicketRouter(systemPrivate)
 }

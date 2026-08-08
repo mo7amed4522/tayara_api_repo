@@ -70,7 +70,7 @@ func (CasbinApi) SyncPolicies(c *gin.Context) {
 // @Tags SystemCasbin
 // @Summary Admin updates a single route rule for a role
 // @Produce application/json
-// @Param data body req.CasbinUpdateReq true "old + new path/method"
+// @Param data body sysReq.CasbinUpdateReq true "old + new path/method"
 // @Success 200 {object} response.Response
 // @Router /api/v1/system/casbin/policy [put]
 func (CasbinApi) UpdatePolicy(c *gin.Context) {
