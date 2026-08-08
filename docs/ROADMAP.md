@@ -176,7 +176,36 @@ below are **system-administration** features from the PRD's Admin Dashboard that
   PRD-implied AED+USD as a recorded deviation).
 - **Exit:** admin states + ad policy enforced; role/menu management available; currency config recorded.
 
-**Nice-to-have / v2** (recorded, not blocking): Global Search, CSV/Excel export, ad impression/CTR
+**Phase 16 — Model-access CSV (`ir.model.access.csv`-style)** (extends the Phase-13/15 CSV feature)
+- Modeled on **Odoo's `ir.model.access.csv`**: a small declarative CSV that is the *single source of
+  truth* for role→model→CRUD access. One row per (role, model) grant, with 4 perm bit-flags:
+  `read /write /create /unlink`. Format (the standard Odoo header):
+  ```
+  id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+  access_pkg_user,Package.user,catalog.package,group.user,       1,0,0,0
+  access_pkg_agent,Package.agent,catalog.package,group.agent,    1,1,1,0
+  access_pkg_admin,Package.admin,catalog.package,group.admin,    1,1,1,1
+  ```
+- **Export** (`GET /api/v1/admin/export/permissions`) — a new `service/export` method dumps every
+  (role, model) grant as one CSV row. Columns `id,name,model_id:id,group_id:id,perm_read,
+  perm_write,perm_create,perm_unlink` via the existing `csvFromRows` helper. A maintained
+  `permission_matrix.csv` ships in `settings/` (or mirrored as a `system_setting`) as the
+  human-reviewable, diff-able grant sheet.
+- **Import / enforce** (`POST /admin/export/permissions/import`): parse the CSV, validate each row
+  (known `model_id` mapped to a GORM model/table, known `group_id` → an Authority, boolean flags),
+  translate into **Casbin policies** (subject = group authority, object = model table, action =
+  `create`/`read`/`update`/`delete`) and apply through the existing `SyncPolicy`/`AddPolicies`
+  path in `service/system/sys_casbin.go`, then `FreshCasbin()` + `LoadPolicy()` for immediate
+  enforcement. Reject malformed rows with a row-numbered error report (no partial write).
+- **Audit**: each import stamps `sys_operation_record` with the importing admin, row count, and a
+  before/after diff — matching the repo's audit-first rule (decision 6, CLAUDE.md §2).
+- **Route guard**: all under the System (admin) guard like the rest of the `export` module; import
+  is admin-only (SystemJWTAuth + Casbin `POST`).
+- **Exit:** admin can download the full role→model→CRUD matrix, edit it in a spreadsheet, and
+  re-upload the sheet to reprovision RBAC across every model — with immediate Casbin enforcement
+  and a full audit trail.
+
+**Nice-to-have / v2** (recorded, not blocking): Global Search, ad impression/CTR
 grouped analytics, generated-ticket PDF + email distribution (partially folded into Phase 4).
 
 Each phase is a self-contained slice; proceed to the next only when the previous phase's exit criteria pass.

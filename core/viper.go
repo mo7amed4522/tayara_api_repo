@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mo7amed4522/tayara_api/core/internal"
@@ -50,9 +51,16 @@ func Viper(path ...string) *viper.Viper {
 	v := viper.New()
 	v.SetConfigFile(config)
 	v.SetConfigType("yaml")
-	err := v.ReadInConfig()
+
+	// Read the raw file and run ${VAR} / ${VAR:-default} expansion first so secrets can be
+	// injected via the process environment (see expandEnv). viper.LoadShellStyle() has no
+	// `:-default` fallback, so we expand the bytes ourselves before viper parses them.
+	raw, err := os.ReadFile(config)
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+	if err = v.ReadConfig(strings.NewReader(expandEnv(string(raw)))); err != nil {
+		panic(fmt.Errorf("Fatal error parsing config file: %s \n", err))
 	}
 	v.WatchConfig()
 

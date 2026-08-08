@@ -7,6 +7,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/model/common/response"
 	sysReq "github.com/mo7amed4522/tayara_api/model/system/request"
+	"github.com/mo7amed4522/tayara_api/utils"
 )
 
 // CasbinApi exposes the RBAC permission-management endpoints (admin). It builds on the existing
@@ -25,12 +26,22 @@ var casbinSvc = sysAdminProfile.CasbinService
 // @Success 200 {object} response.Response
 // @Router /api/v1/system/casbin/policies [get]
 func (CasbinApi) ListPolicies(c *gin.Context) {
-	authID, err := strconv.ParseUint(c.Query("id"), 10, 64)
-	if err != nil {
-		response.FailWithMessage("authority id required", c)
-		return
+	// Optional ?id=<authorityId> override (admin acting for another role). If omitted, fall back
+	// to the caller's own authority id from the JWT — so a bare authenticated call (just an
+	// S-token) returns that role's policies without requiring an explicit id.
+	var authID uint
+	idParam := c.Query("id")
+	if idParam != "" {
+		parsed, err := strconv.ParseUint(idParam, 10, 64)
+		if err != nil {
+			response.FailWithMessage("invalid authority id", c)
+			return
+		}
+		authID = uint(parsed)
+	} else {
+		authID = utils.GetUserAuthorityId(c)
 	}
-	policies := casbinSvc.GetPolicyPathByAuthorityId(uint(authID))
+	policies := casbinSvc.GetPolicyPathByAuthorityId(authID)
 	response.OkWithData(gin.H{
 		"authorityId": authID,
 		"policies":    policies,

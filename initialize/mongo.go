@@ -95,7 +95,7 @@ func (m *mongo) CreateIndexes(ctx context.Context, name string, indexes [][]stri
 		length1 := len(indexes[i])
 		keys := make([]string, 0, length1)
 		for j := 0; j < length1; j++ {
-			if indexes[i][i][0] == '-' {
+			if indexes[i][j][0] == '-' {
 				keys = append(keys, indexes[i][j], "-1")
 				continue
 			}
