@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mo7amed4522/tayara_api/core/internal"
@@ -16,22 +15,6 @@ import (
 
 	"github.com/mo7amed4522/tayara_api/global"
 )
-
-// expandEnv expands ${VAR} and ${VAR:-default} references in the config text from the
-// process environment. A missing variable with no default expands to "". This lets secrets
-// (JWT key, DB passwords, R2 keys, Stripe keys, ...) live in environment variables instead of
-// being committed to the repo. Example: ${DB_PASSWORD:-} -> env value or ""; ${MYSQL_HOST:-db} -> env or "db".
-func expandEnv(s string) string {
-	return os.Expand(s, func(k string) string {
-		if name, def, ok := strings.Cut(k, ":-"); ok {
-			if v, found := os.LookupEnv(name); found {
-				return v
-			}
-			return def
-		}
-		return os.Getenv(k)
-	})
-}
 
 // Viper //
 // Priority: Command line > Environment variables > Default value
