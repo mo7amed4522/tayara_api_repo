@@ -66,7 +66,7 @@ so the files below only set the backing-store hosts and the CORS whitelist.
 | File | Scale | Selected by | Backing stores |
 |------|-------|-------------|----------------|
 | [`config.release.yaml`](config.release.yaml) | **Small** — single VPS, one domain | auto in `gin.ReleaseMode` | MySQL/Redis/Mongo on the same box (`127.0.0.1`), uploads served by the app (`oss-type: local`) |
-| [`config.release.large.yaml`](config.release.large.yaml) | **Large** — distributed cloud | `GVA_CONFIG=config.release.large.yaml go run .` | managed RDS/Aurora (`db.tayara.internal`), ElastiCache, Atlas Mongo (payment ledger on), media on CDN object storage (`oss-type: qiniu`, `use-cdn-domains`) |
+| [`config.release.large.yaml`](config.release.large.yaml) | **Large** — distributed cloud | `GVA_CONFIG=config.release.large.yaml go run .` | managed RDS/Aurora (`db.tayara.internal`), ElastiCache, Atlas Mongo (payment ledger on), media on **Cloudflare R2** (`oss-type: cloudflare-r2`, custom domain) |
 
 **Small scale layout** — one VPS, Nginx TLS in front:
 ```
@@ -80,7 +80,7 @@ tayara.com/uploads/   -> local static files    (oss-type: local)
 api.tayara.com        -> LB/WAF -> fleet on :8888   (API + Stripe webhook ingress)
 admin.tayara.com      -> static build on CDN
 agent.tayara.com      -> static build on CDN
-media.tayara.com      -> object storage / CloudFront (oss-type: qiniu, use-cdn-domains: true)
+media.tayara.com      -> Cloudflare R2 public bucket / custom domain (oss-type: cloudflare-r2)
 db.tayara.internal    -> RDS/Aurora multi-AZ (TLS)
 redis.tayara.internal -> ElastiCache / Redis Cloud
 cluster0.….mongodb.net-> Atlas (payment ledger)
@@ -96,7 +96,7 @@ are used by both release configs; the host vars are populated per scale:
 | `REDIS_ADDR` / `REDIS_PASSWORD` | Redis connection |
 | `MONGO_USERNAME` / `MONGO_PASSWORD` / `MONGO_OPTIONS` | MongoDB/Atlas |
 | `SMTP_HOST` / `SMTP_PASSWORD` | Email SMTP |
-| `QINIU_ACCESS_KEY` / `QINIU_SECRET_KEY` / `QINIU_BUCKET` | Qiniu object storage (large) |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` / `R2_PUBLIC_URL` / `R2_PATH` | Cloudflare R2 object storage (large) |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_S3_BUCKET` | AWS S3 (large) |
 | `FIREBASE_API_KEY` / `FIREBASE_CREDENTIALS_FILE` | Firebase Auth |
 | `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` / `STRIPE_WEBHOOK_SECRET` | Stripe test/live keys |

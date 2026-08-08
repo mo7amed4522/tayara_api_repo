@@ -61,7 +61,7 @@ system:
     env: release
     addr: 8888                            # Each replica binds this; LB terminates TLS
     db-type: mysql
-    oss-type: qiniu                       # Large scale: media on CDN object storage
+    oss-type: cloudflare-r2               # Large scale: media on Cloudflare R2 (custom domain)
     use-redis: true
     use-mongo: true                       # Payment ledger enabled
     use-multipoint: true
@@ -140,15 +140,15 @@ autocode:
     web-form: /view
     web-table: /view
 
-# qiniu cloud storage configuration (ACTIVE at large scale - CDN domain)
-qiniu:
-    zone: ZoneHuaDong
-    bucket: ${QINIU_BUCKET:-tayara-media}
-    img-path: "/images"
-    use-https: true
-    access-key: ${QINIU_ACCESS_KEY}
-    secret-key: ${QINIU_SECRET_KEY}
-    use-cdn-domains: true                 # Serve media via a CDN/CNAME domain
+# cloudflare-r2 object storage configuration (ACTIVE at large scale - custom domain)
+# R2 is S3-compatible; the upload util uses the AWS SDK against the R2 S3 API endpoint.
+cloudflare-r2:
+    bucket: ${R2_BUCKET:-tayara-media}          # R2 bucket name
+    base-url: ${R2_PUBLIC_URL:-media.tayara.com} # public URL / custom domain (no scheme)
+    path: ${R2_PATH:-uploads}                   # object key prefix
+    account-id: ${R2_ACCOUNT_ID}                # Cloudflare account id
+    access-key-id: ${R2_ACCESS_KEY_ID}          # R2 access key id
+    secret-access-key: ${R2_SECRET_ACCESS_KEY}  # R2 secret access key
 
 aliyun-oss:
     endpoint: oss-cn-hangzhou.aliyuncs.com
