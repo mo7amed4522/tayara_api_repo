@@ -1,0 +1,296 @@
+# Tayara API — RELEASE config (SMALL SCALE)
+# ------------------------------------------------------------------
+# Single VPS + one domain, Nginx TLS in front of the app. The app still
+# listens on :8888; a reverse proxy terminates HTTPS and maps the public
+# domains below to 127.0.0.1:8888.
+#
+# This file is auto-selected in gin.ReleaseMode (core/internal/constant.go).
+# Secret values are injected via environment variables - never commit real keys.
+# ------------------------------------------------------------------
+
+# jwt configuration
+jwt:
+    signing-key: ${JWT_SIGNING_KEY:-tayara-prod}
+    expires-time: 7d                      # Token expiration: 7 days
+    buffer-time: 5h                       # Refresh buffer: 5 hours
+    issuer: tayara-api                    # Token issuer identifier
+
+# zap logger configuration
+zap:
+    level: info                           # Log level (info, debug, warn, error)
+    format: console                       # Output format (console or json)
+    prefix: "[tayara-api]"                # Log message prefix
+    director: log                         # Log directory
+    show-line: true                       # Show file and line number
+    encode-level: LowercaseColorLevelEncoder # Level encoding style
+    stacktrace-key: stacktrace            # Key for stacktrace in logs
+    log-in-console: true                  # Output logs to console
+
+# redis configuration
+redis:
+    db: 0                                 # Redis database index
+    addr: 127.0.0.1:6379                  # Redis server address (same VPS)
+    password: ${REDIS_PASSWORD:-}         # Redis password (from env)
+
+# mongo configuration (optional at small scale; keep disabled unless used)
+mongo:
+    coll: tayara                          # Default MongoDB collection
+    options: ""                           # Additional connection options
+    database: tayara                      # MongoDB database name
+    username: ${MONGO_USERNAME:-admin}
+    password: ${MONGO_PASSWORD:-}
+    min-pool-size: 0
+    max-pool-size: 100
+    socket-timeout-ms: 0
+    connect-timeout-ms: 0
+    is-zap: false
+    hosts:
+        - host: "127.0.0.1"               # MongoDB host (same VPS)
+          port: "27017"
+
+# email configuration (SMTP; switch host to SES/SendGrid if preferred)
+email:
+    to: admin@tayara.com                  # Default recipient address
+    port: 465                             # SMTP port (SSL)
+    from: noreply@tayara.com              # Sender address
+    host: smtp.163.com                    # SMTP server host
+    is-ssl: true
+    secret: ${SMTP_PASSWORD}              # SMTP auth password (from env)
+    nickname: Tayara Team
+
+# system configuration
+system:
+    env: release                          # Environment (local, dev, prod)
+    addr: 8888                            # Server listening port (behind proxy)
+    db-type: mysql
+    oss-type: local                       # Small scale: serve uploads from this box
+    use-redis: true
+    use-mongo: false                      # Keep off unless you need the payment ledger
+    use-multipoint: false
+    iplimit-count: 15000
+    iplimit-time: 3600
+    super-admin-key: ${SUPER_ADMIN_KEY}               # required to register platform admins
+
+# captcha configuration
+captcha:
+    key-long: 6
+    img-width: 240
+    img-height: 80
+    open-captcha: 0
+    open-captcha-timeout: 3600
+
+# mysql connect configuration
+mysql:
+    path: 127.0.0.1                       # MySQL host (same VPS)
+    port: "3306"
+    config: charset=utf8mb4&parseTime=True&loc=Local
+    db-name: tayara
+    username: ${MYSQL_USERNAME:-tayara}
+    password: ${MYSQL_PASSWORD}           # MySQL password (from env)
+    max-idle-conns: 10
+    max-open-conns: 100
+    log-mode: error
+    log-zap: false
+
+# pgsql connect configuration (unused; kept for parity)
+pgsql:
+    path: 127.0.0.1
+    port: "5432"
+    config: sslmode=disable
+    db-name: tayara
+    username: postgres
+    password: ${PGSQL_PASSWORD:-postgres}
+    max-idle-conns: 10
+    max-open-conns: 100
+    log-mode: "error"
+    log-zap: false
+
+db-list:
+    - disable: true
+      type: ""
+      alias-name: ""
+      path: ""
+      port: ""
+      config: ""
+      db-name: ""
+      username: ""
+      password: ""
+      max-idle-conns: 10
+      max-open-conns: 100
+      log-mode: ""
+      log-zap: false
+
+# local storage configuration (used while oss-type = local)
+local:
+    path: uploads                         # Served at https://tayara.com/uploads by Nginx
+    store-path: uploads
+
+# autocode configuration (dev tooling; not used in prod)
+autocode:
+    transfer-restart: true
+    root: /srv/tayara-api
+    server: /server
+    server-plug: /plugin/%s
+    server-api: /api/v1/%s
+    server-initialize: /initialize
+    server-model: /model/%s
+    server-request: /model/%s/request
+    server-router: /router/%s
+    server-service: /service/%s
+    web: /web/src
+    web-api: /api
+    web-form: /view
+    web-table: /view
+
+# object storage providers (unused at small scale unless you switch oss-type)
+qiniu:
+    zone: ZoneHuaDong
+    bucket: ${QINIU_BUCKET:-tayara-bucket}
+    img-path: "/images"
+    use-https: true
+    access-key: ${QINIU_ACCESS_KEY}
+    secret-key: ${QINIU_SECRET_KEY}
+    use-cdn-domains: false
+
+aliyun-oss:
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    access-key-id: ${ALIYUN_ACCESS_KEY_ID}
+    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET}
+    bucket-name: ${ALIYUN_BUCKET:-tayara-bucket}
+    bucket-url: https://tayara-bucket.oss-cn-hangzhou.aliyuncs.com
+    base-path: /uploads
+
+tencent-cos:
+    bucket: ${TENCENT_BUCKET:-tayara-10005608}
+    region: ap-shanghai
+    secret-id: ${TENCENT_SECRET_ID}
+    secret-key: ${TENCENT_SECRET_KEY}
+    base-url: https://tayara-10005608.cos.ap-shanghai.myqcloud.com
+    path-prefix: /uploads
+
+aws-s3:
+    bucket: ${AWS_S3_BUCKET:-tayara-bucket}
+    region: ${AWS_S3_REGION:-us-east-1}
+    endpoint: s3.amazonaws.com
+    s3-force-path-style: false
+    disable-ssl: false
+    secret-id: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+    base-url: https://tayara-bucket.s3.amazonaws.com
+    path-prefix: /uploads
+
+hua-wei-obs:
+    path: /uploads
+    bucket: ${HUAWEI_BUCKET:-tayara-bucket}
+    endpoint: obs.cn-north-1.myhuaweicloud.com
+    access-key: ${HUAWEI_ACCESS_KEY}
+    secret-key: ${HUAWEI_SECRET_KEY}
+
+# stripe payment configuration
+stripe:
+    secret-key: ${STRIPE_SECRET_KEY:-sk_test_your_secret_key}
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY:-pk_test_your_publishable_key}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:-whsec_your_webhook_secret}
+    currency: AED
+    capture-method: manual
+    auto-capture: false
+    payment-hold-hours: 2
+    payment-methods: [card, apple_pay, google_pay]
+    fee-bps: 250
+
+# payment (orchestrator): BNPL providers
+payment:
+    enabled-methods: [card, apple_pay, google_pay, tabby, tamara]
+    tabby:
+        enabled: true
+        base-url: ${TABBY_BASE_URL:-https://api.tabby.ai}
+        secret-key: ${TABBY_SECRET_KEY:-pk_test_your_tabby_key}
+        webhook-secret: ${TABBY_WEBHOOK_SECRET:-}
+        currency: AED
+    tamara:
+        enabled: true
+        base-url: ${TAMARA_BASE_URL:-https://api.tamara.co}
+        secret-key: ${TAMARA_SECRET_KEY:-pk_test_your_tamara_key}
+        webhook-secret: ${TAMARA_WEBHOOK_SECRET:-}
+        currency: AED
+
+# excel configuration
+excel:
+    dir: ./resource/excel
+
+# timer task db clear table
+Timer:
+    start: true
+    spec: "@daily"
+    detail:
+        - tableName: logs
+          compareField: created_at
+          interval: 30
+        - tableName: sessions
+          compareField: updated_at
+          interval: 7
+
+# Cross-domain (CORS) configuration - production dashboard origins
+cors:
+  mode: whitelist
+  whitelist:
+    - allow-origin: https://admin.tayara.com
+      allow-headers: content-type, X-token, A-token, S-token
+      allow-methods: GET, POST, PUT, DELETE, OPTIONS
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
+      allow-credentials: true
+    - allow-origin: https://agent.tayara.com
+      allow-headers: content-type, X-token, A-token, S-token
+      allow-methods: GET, POST, PUT, DELETE, OPTIONS
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
+      allow-credentials: true
+    - allow-origin: https://api.tayara.com
+      allow-headers: content-type, X-token, A-token, S-token
+      allow-methods: GET, POST, PUT, DELETE, OPTIONS
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
+      allow-credentials: true
+
+# Firebase Authentication
+firebase:
+    enabled: true
+    project-id: taiyara-676dc
+    credentials-file: ./firebase/tayara-service-account.json
+    api-key: ${FIREBASE_API_KEY}
+    auth-domain: taiyara-676dc.firebaseapp.com
+    storage-bucket: taiyara-676dc.firebasestorage.app
+    messaging-sender-id: "271442722424"
+    app-id: "1:271442722424:web:c9e878c8f06f8ba12f378d"
+    providers:
+        google: true
+        apple: true
+        facebook: true
+        phone: true
+
+# Travel marketplace business defaults (seeded at init; runtime value wins)
+travel:
+    default-currency: AED
+    supported-currencies:
+        - AED
+        - USD
+    commission:
+        basic-plan-percent: 1000
+        premium-plan-percent: 1500
+        allow-manual-override: true
+    sla:
+        agent-response-hours: 2
+        user-payment-hours: 2
+        warning-threshold-hours: 2
+        auto-alert-on-breach: true
+    payment:
+        hold-duration-hours: 2
+        auto-capture: false
+        auto-refund-before-capture: false
+        partial-refund-enabled: true
+    cancellation:
+        auto-cancel-price-pending-hours: 13
+        auto-cancel-kyc-pending-hours: 48
+        allow-admin-force-cancel: true
+    payout:
+        manual-only: true
+        require-admin-verification: true
+        require-confirmation-file: true

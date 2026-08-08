@@ -11,6 +11,22 @@ var AutoCodeMssql = new(autoCodeMssql)
 
 type autoCodeMssql struct{}
 
+// sanitizeIdent validates that an SQL identifier (database/table name) contains only
+// letters, digits and underscores. Any other character (space, quote, semicolon, dot,
+// dash) is rejected so a request-supplied value can never inject SQL through the
+// interpolated identifiers below.
+func sanitizeIdent(s string) (string, error) {
+	if s == "" {
+		return "", fmt.Errorf("identifier cannot be empty")
+	}
+	for _, r := range s {
+		if !(r == '_' || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')) {
+			return "", fmt.Errorf("invalid identifier %q", s)
+		}
+	}
+	return s, nil
+}
+
 // GetDB Get all database names
 // Author [mo7amed4522](https://github.com/mo7amed4522)
 func (s *autoCodeMssql) GetDB(businessDB string) (data []response.Db, err error) {
@@ -29,6 +45,10 @@ func (s *autoCodeMssql) GetDB(businessDB string) (data []response.Db, err error)
 func (s *autoCodeMssql) GetTables(businessDB string, dbName string) (data []response.Table, err error) {
 	var entities []response.Table
 
+	dbName, err = sanitizeIdent(dbName)
+	if err != nil {
+		return nil, err
+	}
 	sql := fmt.Sprintf(`select name as 'table_name' from %s.DBO.sysobjects where xtype='U'`, dbName)
 	if businessDB == "" {
 		err = global.GVA_DB.Raw(sql).Scan(&entities).Error
@@ -43,6 +63,12 @@ func (s *autoCodeMssql) GetTables(businessDB string, dbName string) (data []resp
 // Author [mo7amed4522](https://github.com/mo7amed4522)
 func (s *autoCodeMssql) GetColumn(businessDB string, tableName string, dbName string) (data []response.Column, err error) {
 	var entities []response.Column
+	if dbName, err = sanitizeIdent(dbName); err != nil {
+		return nil, err
+	}
+	if tableName, err = sanitizeIdent(tableName); err != nil {
+		return nil, err
+	}
 	sql := fmt.Sprintf(`
 SELECT
     sc.name AS column_name,

@@ -1,0 +1,294 @@
+# Tayara API — RELEASE config (LARGE SCALE / distributed cloud)
+# ------------------------------------------------------------------
+# Load-balancer + autoscaled API replicas, CDN-hosted dashboards, object-storage
+# media, and fully managed backing stores. Not auto-selected; run with:
+#     GVA_CONFIG=config.release.large.yaml go run .
+# Every secret is an env var - never commit real keys.
+# ------------------------------------------------------------------
+
+# jwt configuration
+jwt:
+    signing-key: ${JWT_SIGNING_KEY:-tayara-prod}
+    expires-time: 7d
+    buffer-time: 5h
+    issuer: tayara-api
+
+# zap logger configuration (JSON for centralised log shipping)
+zap:
+    level: info
+    format: json                          # JSON logs for log-aggregation
+    prefix: "[tayara-api]"
+    director: log
+    show-line: true
+    encode-level: LowercaseColorLevelEncoder
+    stacktrace-key: stacktrace
+    log-in-console: false
+
+# redis configuration (managed cluster)
+redis:
+    db: 0
+    addr: ${REDIS_ADDR:-redis.tayara.internal:6379}   # ElastiCache / Redis Cloud
+    password: ${REDIS_PASSWORD}           # TLS/auth (from env)
+
+# mongo configuration (managed Atlas cluster for the payment ledger)
+mongo:
+    coll: tayara
+    options: ${MONGO_OPTIONS:-ssl=true&replicaSet=atlas-xxxx}
+    database: tayara
+    username: ${MONGO_USERNAME}
+    password: ${MONGO_PASSWORD}
+    min-pool-size: 10
+    max-pool-size: 200
+    socket-timeout-ms: 5000
+    connect-timeout-ms: 10000
+    is-zap: true
+    hosts:
+        - host: "cluster0.xxxxx.mongodb.net"          # Atlas
+          port: "27017"
+
+# email configuration (SES / SendGrid with verified domain)
+email:
+    to: admin@tayara.com
+    port: 587                             # SES: 587/TLS or 465/SSL
+    from: noreply@tayara.com
+    host: ${SMTP_HOST:-email-smtp.eu-west-1.amazonaws.com}
+    is-ssl: true
+    secret: ${SMTP_PASSWORD}
+    nickname: Tayara Team
+
+# system configuration
+system:
+    env: release
+    addr: 8888                            # Each replica binds this; LB terminates TLS
+    db-type: mysql
+    oss-type: qiniu                       # Large scale: media on CDN object storage
+    use-redis: true
+    use-mongo: true                       # Payment ledger enabled
+    use-multipoint: true
+    iplimit-count: 150000
+    iplimit-time: 3600
+    super-admin-key: ${SUPER_ADMIN_KEY}               # required to register platform admins
+
+# captcha configuration
+captcha:
+    key-long: 6
+    img-width: 240
+    img-height: 80
+    open-captcha: 0
+    open-captcha-timeout: 3600
+
+# mysql connect configuration (managed RDS/Aurora, multi-AZ)
+mysql:
+    path: ${MYSQL_HOST:-db.tayara.internal}           # RDS / Aurora endpoint
+    port: "3306"
+    config: charset=utf8mb4&parseTime=True&loc=Local&tls=true
+    db-name: ${MYSQL_DB:-tayara}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    max-idle-conns: 50
+    max-open-conns: 200
+    log-mode: error
+    log-zap: true
+
+# pgsql connect configuration (unused; kept for parity)
+pgsql:
+    path: ${PGSQL_HOST:-db.tayara.internal}
+    port: "5432"
+    config: sslmode=require
+    db-name: tayara
+    username: ${PGSQL_USERNAME:-postgres}
+    password: ${PGSQL_PASSWORD}
+    max-idle-conns: 10
+    max-open-conns: 100
+    log-mode: "error"
+    log-zap: false
+
+db-list:
+    - disable: true
+      type: ""
+      alias-name: ""
+      path: ""
+      port: ""
+      config: ""
+      db-name: ""
+      username: ""
+      password: ""
+      max-idle-conns: 10
+      max-open-conns: 100
+      log-mode: ""
+      log-zap: false
+
+# local storage configuration (fallback only; not the active backend)
+local:
+    path: uploads
+    store-path: uploads
+
+# autocode configuration (dev tooling; not used in prod)
+autocode:
+    transfer-restart: true
+    root: /srv/tayara-api
+    server: /server
+    server-plug: /plugin/%s
+    server-api: /api/v1/%s
+    server-initialize: /initialize
+    server-model: /model/%s
+    server-request: /model/%s/request
+    server-router: /router/%s
+    server-service: /service/%s
+    web: /web/src
+    web-api: /api
+    web-form: /view
+    web-table: /view
+
+# qiniu cloud storage configuration (ACTIVE at large scale - CDN domain)
+qiniu:
+    zone: ZoneHuaDong
+    bucket: ${QINIU_BUCKET:-tayara-media}
+    img-path: "/images"
+    use-https: true
+    access-key: ${QINIU_ACCESS_KEY}
+    secret-key: ${QINIU_SECRET_KEY}
+    use-cdn-domains: true                 # Serve media via a CDN/CNAME domain
+
+aliyun-oss:
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    access-key-id: ${ALIYUN_ACCESS_KEY_ID}
+    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET}
+    bucket-name: ${ALIYUN_BUCKET:-tayara-media}
+    bucket-url: https://tayara-media.oss-cn-hangzhou.aliyuncs.com
+    base-path: /uploads
+
+tencent-cos:
+    bucket: ${TENCENT_BUCKET:-tayara-10005608}
+    region: ap-shanghai
+    secret-id: ${TENCENT_SECRET_ID}
+    secret-key: ${TENCENT_SECRET_KEY}
+    base-url: https://tayara-10005608.cos.ap-shanghai.myqcloud.com
+    path-prefix: /uploads
+
+aws-s3:
+    bucket: ${AWS_S3_BUCKET:-tayara-media}
+    region: ${AWS_S3_REGION:-eu-west-1}
+    endpoint: s3.amazonaws.com
+    s3-force-path-style: false
+    disable-ssl: false
+    secret-id: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+    base-url: ${MEDIA_CDN_DOMAIN:-https://media.tayara.com}   # CloudFront origin
+    path-prefix: /uploads
+
+hua-wei-obs:
+    path: /uploads
+    bucket: ${HUAWEI_BUCKET:-tayara-media}
+    endpoint: obs.cn-north-1.myhuaweicloud.com
+    access-key: ${HUAWEI_ACCESS_KEY}
+    secret-key: ${HUAWEI_SECRET_KEY}
+
+# stripe payment configuration
+stripe:
+    secret-key: ${STRIPE_SECRET_KEY:-sk_test_your_secret_key}
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY:-pk_test_your_publishable_key}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:-whsec_your_webhook_secret}
+    currency: AED
+    capture-method: manual
+    auto-capture: false
+    payment-hold-hours: 2
+    payment-methods: [card, apple_pay, google_pay]
+    fee-bps: 250
+
+# payment (orchestrator): BNPL providers
+payment:
+    enabled-methods: [card, apple_pay, google_pay, tabby, tamara]
+    tabby:
+        enabled: true
+        base-url: ${TABBY_BASE_URL:-https://api.tabby.ai}
+        secret-key: ${TABBY_SECRET_KEY:-pk_test_your_tabby_key}
+        webhook-secret: ${TABBY_WEBHOOK_SECRET:-}
+        currency: AED
+    tamara:
+        enabled: true
+        base-url: ${TAMARA_BASE_URL:-https://api.tamara.co}
+        secret-key: ${TAMARA_SECRET_KEY:-pk_test_your_tamara_key}
+        webhook-secret: ${TAMARA_WEBHOOK_SECRET:-}
+        currency: AED
+
+# excel configuration
+excel:
+    dir: ./resource/excel
+
+# timer task db clear table
+Timer:
+    start: true
+    spec: "@daily"
+    detail:
+        - tableName: logs
+          compareField: created_at
+          interval: 30
+        - tableName: sessions
+          compareField: updated_at
+          interval: 7
+
+# Cross-domain (CORS) configuration - production dashboard origins only
+cors:
+  mode: whitelist
+  whitelist:
+    - allow-origin: https://admin.tayara.com
+      allow-headers: content-type, X-token, A-token, S-token
+      allow-methods: GET, POST, PUT, DELETE, OPTIONS
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
+      allow-credentials: true
+    - allow-origin: https://agent.tayara.com
+      allow-headers: content-type, X-token, A-token, S-token
+      allow-methods: GET, POST, PUT, DELETE, OPTIONS
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
+      allow-credentials: true
+    - allow-origin: https://api.tayara.com
+      allow-headers: content-type, X-token, A-token, S-token
+      allow-methods: GET, POST, PUT, DELETE, OPTIONS
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, X-token, A-token, S-token
+      allow-credentials: true
+
+# Firebase Authentication
+firebase:
+    enabled: true
+    project-id: taiyara-676dc
+    credentials-file: ${FIREBASE_CREDENTIALS_FILE:-./firebase/tayara-service-account.json}
+    api-key: ${FIREBASE_API_KEY}
+    auth-domain: taiyara-676dc.firebaseapp.com
+    storage-bucket: taiyara-676dc.firebasestorage.app
+    messaging-sender-id: "271442722424"
+    app-id: "1:271442722424:web:c9e878c8f06f8ba12f378d"
+    providers:
+        google: true
+        apple: true
+        facebook: true
+        phone: true
+
+# Travel marketplace business defaults (seeded at init; runtime value wins)
+travel:
+    default-currency: AED
+    supported-currencies:
+        - AED
+        - USD
+    commission:
+        basic-plan-percent: 1000
+        premium-plan-percent: 1500
+        allow-manual-override: true
+    sla:
+        agent-response-hours: 2
+        user-payment-hours: 2
+        warning-threshold-hours: 2
+        auto-alert-on-breach: true
+    payment:
+        hold-duration-hours: 2
+        auto-capture: false
+        auto-refund-before-capture: false
+        partial-refund-enabled: true
+    cancellation:
+        auto-cancel-price-pending-hours: 13
+        auto-cancel-kyc-pending-hours: 48
+        allow-admin-force-cancel: true
+    payout:
+        manual-only: true
+        require-admin-verification: true
+        require-confirmation-file: true

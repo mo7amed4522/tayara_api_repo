@@ -25,14 +25,17 @@ type SysAdminProfileApi struct{}
 // @Success 200 {object} response.Response
 // @Router /api/v1/system/register [post]
 func (SysAdminProfileApi) Register(c *gin.Context) {
-	// Check admin key if required
+	// Check admin key. Fail closed: if no key is configured, admin registration is
+	// disabled entirely rather than left open. Set `system.super-admin-key` to enable it.
 	superAdminKey := global.GVA_CONFIG.System.SuperAdminKey
-	if superAdminKey != "" {
-		provided := c.GetHeader("X-Admin-Key")
-		if provided != superAdminKey {
-			response.FailWithMessage("Unauthorized: invalid admin key", c)
-			return
-		}
+	if superAdminKey == "" {
+		response.FailWithMessage("System admin registration is disabled: set system.super-admin-key", c)
+		return
+	}
+	provided := c.GetHeader("X-Admin-Key")
+	if provided != superAdminKey {
+		response.FailWithMessage("Unauthorized: invalid admin key", c)
+		return
 	}
 	var req request.SysRegisterReq
 	var headerImageFile = (*multipart.FileHeader)(nil)

@@ -57,6 +57,55 @@ platform fee is `stripe.fee-bps`. Business defaults (SLA hours, hold hours, payo
 
 MySQL, Redis, and MongoDB connection settings are all under `config.yaml` (`mysql`, `redis`, `mongo`).
 
+### Release configuration (host & domain)
+
+Production ships with **two** ready-made configs. The app always listens on `:8888` on all
+interfaces — TLS + public domains are terminated by whatever fronts it (Nginx / load balancer),
+so the files below only set the backing-store hosts and the CORS whitelist.
+
+| File | Scale | Selected by | Backing stores |
+|------|-------|-------------|----------------|
+| [`config.release.yaml`](config.release.yaml) | **Small** — single VPS, one domain | auto in `gin.ReleaseMode` | MySQL/Redis/Mongo on the same box (`127.0.0.1`), uploads served by the app (`oss-type: local`) |
+| [`config.release.large.yaml`](config.release.large.yaml) | **Large** — distributed cloud | `GVA_CONFIG=config.release.large.yaml go run .` | managed RDS/Aurora (`db.tayara.internal`), ElastiCache, Atlas Mongo (payment ledger on), media on CDN object storage (`oss-type: qiniu`, `use-cdn-domains`) |
+
+**Small scale layout** — one VPS, Nginx TLS in front:
+```
+api.tayara.com        -> 127.0.0.1:8888        (API)
+admin.tayara.com      -> dashboard SPA         (cors origin)
+agent.tayara.com      -> dashboard SPA         (cors origin)
+tayara.com/uploads/   -> local static files    (oss-type: local)
+```
+**Large scale layout** — load balancer + autoscaled replicas, CDN-hosted dashboards:
+```
+api.tayara.com        -> LB/WAF -> fleet on :8888   (API + Stripe webhook ingress)
+admin.tayara.com      -> static build on CDN
+agent.tayara.com      -> static build on CDN
+media.tayara.com      -> object storage / CloudFront (oss-type: qiniu, use-cdn-domains: true)
+db.tayara.internal    -> RDS/Aurora multi-AZ (TLS)
+redis.tayara.internal -> ElastiCache / Redis Cloud
+cluster0.….mongodb.net-> Atlas (payment ledger)
+```
+
+**Environment variables** (all secrets; never commit real keys). The Stripe/Tabby/Tamara vars below
+are used by both release configs; the host vars are populated per scale:
+
+| Variable | Purpose |
+|----------|---------|
+| `JWT_SIGNING_KEY` | JWT signing key (release) |
+| `MYSQL_HOST` / `MYSQL_USERNAME` / `MYSQL_PASSWORD` / `MYSQL_DB` | MySQL/RDS connection |
+| `REDIS_ADDR` / `REDIS_PASSWORD` | Redis connection |
+| `MONGO_USERNAME` / `MONGO_PASSWORD` / `MONGO_OPTIONS` | MongoDB/Atlas |
+| `SMTP_HOST` / `SMTP_PASSWORD` | Email SMTP |
+| `QINIU_ACCESS_KEY` / `QINIU_SECRET_KEY` / `QINIU_BUCKET` | Qiniu object storage (large) |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_S3_BUCKET` | AWS S3 (large) |
+| `FIREBASE_API_KEY` / `FIREBASE_CREDENTIALS_FILE` | Firebase Auth |
+| `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` / `STRIPE_WEBHOOK_SECRET` | Stripe test/live keys |
+| `TABBY_SECRET_KEY` / `TABBY_BASE_URL` / `TABBY_WEBHOOK_SECRET` | Tabby BNPL |
+| `TAMARA_SECRET_KEY` / `TAMARA_BASE_URL` / `TAMARA_WEBHOOK_SECRET` | Tamara BNPL |
+
+> `config.yaml` (dev default) carries real-looking DB passwords and a Firebase API key in plain text.
+> Keep it out of git or replace with `${VAR}` before release.
+
 ## Run
 
 ```bash
@@ -82,3 +131,29 @@ go test ./service/booking/ -v # end-to-end lifecycle smoke + terminal-state test
 The end-to-end smoke test (`service/booking/lifecycle_smoke_test.go`) drives the real services
 over an in-memory sqlite DB: seed → book → offer → pay(authorize/capture) → docs → KYC →
 processing → issued → completed → payout read, plus a terminal-state enforcement check.
+
+## Security (hardening + scan)
+
+A defensive security review found and fixed the following (see `security/attack.sh`):
+
+| Area | Finding | Fix |
+|------|---------|-----|
+| Admin registration | `/system/register` was open — anyone could mint an admin S-token (`super-admin-key` empty) | Fail closed: registration rejected unless `system.super-admin-key` is set (`api/v1/system/sys_admin_profile.go`) |
+| Brute force | No rate limiting on login/register/firebase-login | In-memory IP limiter `middleware.AuthRateLimit()` wired into `publicGroup` (`initialize/router_biz.go`) |
+| JWT key | Weak/guessable default signing keys | Boot guard `validateJWTSigningKey()` (≥32 chars outside local) in `main.go`; strong defaults |
+| JWT alg | Parsers did not pin the algorithm (alg-confusion risk) | Both `ParseToken` implementations enforce HS256 |
+| File upload | No extension/size/path validation; traversal via `customPath` | Allowlist + 10 MB cap + path-traversal guard in `utils/upload/local.go` |
+| Enumeration | System login returned distinct "record not found" vs "password error" | Unified generic error + timing-uniform dummy hash (`service/system/sys_admin_profile.go`) |
+| SQL injection | MSSQL autocode interpolated identifiers into SQL | `sanitizeIdent()` allowlist in `service/system/sys_auto_code_mssql.go` |
+| Secrets | Live Firebase service-account private key + DB passwords committed | Untracked + `.gitignore`d; rotate the key |
+
+**Run the scanner** (probes a live instance; static checks run without a server):
+
+```bash
+./security/attack.sh                         # http://localhost:8888
+./security/attack.sh http://192.168.1.10:8888
+```
+
+Each check prints `[ PASS ]` (fixed) or `[ FAIL ]` (vulnerable); the exit code is 0 only when
+nothing is vulnerable. **Note:** the Firebase service-account key is still in git history — rotate
+the credential in the Firebase console and, for a public repo, rewrite history.

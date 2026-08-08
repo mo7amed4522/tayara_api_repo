@@ -6,3 +6,6 @@ config.docker.yaml
 /tayara_api
 /tayara_api/*
 .tayara_api/
+# Secret material - never commit
+/firebase/*.json
+!/firebase/README.md

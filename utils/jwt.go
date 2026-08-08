@@ -60,6 +60,12 @@ func (j *JWT) CreateTokenByOldToken(oldToken string, claims request.CustomClaims
 // Parse token
 func (j *JWT) ParseToken(tokenString string) (*request.CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &request.CustomClaims{}, func(token *jwt.Token) (i interface{}, e error) {
+		// Pin the algorithm: only accept HMAC-SHA256. Rejecting any other `alg`
+		// (e.g. RS256/ES256 used to attack an HS256 key, or none) prevents
+		// algorithm-confusion forgery.
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, TokenInvalid
+		}
 		return j.SigningKey, nil
 	})
 	if err != nil {

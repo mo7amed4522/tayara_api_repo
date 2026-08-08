@@ -59,6 +59,10 @@ func (sysAdminProfileServices *SysAdminProfileServices) Register(u request.SysRe
 // @description: Login
 // @param: u *model.SysAdminProfile
 // @return: err error, adminInter *model.SysAdminProfile
+// dummyPasswordHash is a valid bcrypt hash used only to keep login timing uniform
+// when the email does not exist, so attackers cannot enumerate accounts by timing.
+var dummyPasswordHash = utils.BcryptHash("invalid-account-timing")
+
 func (sysAdminProfileServices *SysAdminProfileServices) Login(u request.SysLoginReq) (userInter *system.SysAdminProfile, err error) {
 	if nil == global.GVA_DB {
 		return nil, fmt.Errorf("db not init")
@@ -66,12 +70,16 @@ func (sysAdminProfileServices *SysAdminProfileServices) Login(u request.SysLogin
 	var user system.SysAdminProfile
 	err = global.GVA_DB.Where("email = ?", u.Email).First(&user).Error
 	if err == nil {
-
 		if ok := utils.BcryptCheck(u.Password, user.Password); !ok {
-			return nil, errors.New("password error")
+			return nil, errors.New("invalid email or password")
 		}
+		return &user, nil
 	}
-	return &user, err
+	// Account not found: burn a bcrypt comparison so response timing does not reveal
+	// whether the email is registered, then return the same generic error. This
+	// removes the previous "record not found" vs "password error" enumeration leak.
+	utils.BcryptCheck(u.Password, dummyPasswordHash)
+	return nil, errors.New("invalid email or password")
 }
 
 // @author: [mo7amed4522](https://github.com/mo7amed4522)

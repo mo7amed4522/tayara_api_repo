@@ -15,6 +15,10 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	bxPrivateGroup := routers[2]
 	holder(publicGroup, privateGroup, bxPrivateGroup)
 
+	// Guard the unauthenticated credential endpoints (login/register/firebase-login)
+	// against brute-force and credential-stuffing before any route group is mounted.
+	publicGroup.Use(middleware.AuthRateLimit())
+
 	bxPrivate := publicGroup.Group("")
 	bxPrivate.Use(middleware.BxDomainJWTAuth())
 	managePrivate := publicGroup.Group("")

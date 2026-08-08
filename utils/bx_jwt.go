@@ -59,6 +59,10 @@ func (j *BxJWT) CreateTokenByOldToken(oldToken string, claims bxapiReq.CustomCla
 // Parse token
 func (j *BxJWT) ParseToken(tokenString string) (*bxapiReq.CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &bxapiReq.CustomClaims{}, func(token *jwt.Token) (i interface{}, e error) {
+		// Pin the algorithm to HS256 to prevent algorithm-confusion forgery.
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, BxTokenInvalid
+		}
 		return j.SigningKey, nil
 	})
 	if err != nil {

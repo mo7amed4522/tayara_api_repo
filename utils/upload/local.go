@@ -17,6 +17,19 @@ import (
 
 var mu sync.Mutex
 
+// maxUploadSize caps a single uploaded file (10 MB) to prevent disk-exhaustion DoS.
+const maxUploadSize int64 = 10 << 20
+
+// allowedUploadExts is the extension allowlist. Uploads outside this set are rejected
+// so the storage path can never host active content (.html, .svg, .php, .sh, ...) that
+// would otherwise be served back to users as stored XSS / code execution.
+var allowedUploadExts = map[string]bool{
+	".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true,
+	".pdf": true, ".doc": true, ".docx": true,
+}
+
+func isAllowedUploadExt(ext string) bool { return allowedUploadExts[ext] }
+
 type Local struct{}
 
 //@author: [mo7amed4522](https://github.com/mo7amed4522)
@@ -32,7 +45,26 @@ func (*Local) UploadFile(file *multipart.FileHeader) (string, string, error) {
 
 func (*Local) UploadFileWithPath(file *multipart.FileHeader, customPath string) (string, string, error) {
 	// Read file extensions
-	ext := filepath.Ext(file.Filename)
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+
+	// Extension allowlist: reject anything not in allowedUploadExts so the storage
+	// path cannot host active content that is later served back to clients.
+	if !isAllowedUploadExt(ext) {
+		return "", "", errors.New("file type not allowed")
+	}
+	// Size cap: reject empty or oversized uploads to prevent disk-exhaustion DoS.
+	if file.Size <= 0 || file.Size > maxUploadSize {
+		return "", "", errors.New("file size exceeds allowed limit")
+	}
+	// Path-traversal guard: customPath is concatenated into the on-disk path, so it
+	// must be a single safe path segment (no separators, no "..").
+	if customPath != "" {
+		clean := filepath.Clean(customPath)
+		if clean == "." || strings.HasPrefix(clean, "..") || strings.ContainsAny(customPath, "/\\") {
+			return "", "", errors.New("invalid upload path")
+		}
+	}
+
 	// Read filenames and encrypt them
 	name := strings.TrimSuffix(file.Filename, ext)
 	name = utils.MD5V([]byte(name))

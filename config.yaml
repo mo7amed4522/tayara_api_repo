@@ -1,6 +1,6 @@
 # jwt configuration
 jwt:
-    signing-key: tayar                    # JWT signing key
+    signing-key: 8f3b9a6c2e5d4f1a7b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8  # JWT signing key (>=32 chars)
     expires-time: 7d                      # Token expiration: 7 days
     buffer-time: 5h                       # Refresh buffer: 5 hours
     issuer: tayara-api                    # Token issuer identifier
