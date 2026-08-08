@@ -55,7 +55,7 @@ system:
     db-type: mysql                        # Primary database type
     oss-type: local                       # Object storage type (local, qiniu, etc.)
     use-redis: true                       # Enable Redis
-    use-mongo: false                      # Enable MongoDB
+    use-mongo: true                      # Enable MongoDB
     use-multipoint: false                 # Enable multi-point login
     iplimit-count: 15000                  # IP rate limit request count
     iplimit-time: 3600                    # IP rate limit window (seconds)
@@ -178,6 +178,16 @@ hua-wei-obs:
     endpoint: obs.cn-north-1.myhuaweicloud.com # OBS endpoint
     access-key: your-huawei-access-key     # Access key
     secret-key: your-huawei-secret-key     # Secret key
+
+# cloudflare-r2 object storage configuration (S3-compatible; used when oss-type = cloudflare-r2)
+# Values are injected from the environment - set R2_* variables at deploy time.
+cloudflare-r2:
+    bucket: ${R2_BUCKET:-tayara-media}          # R2 bucket name
+    base-url: ${R2_PUBLIC_URL:-media.tayara.com} # public URL / r2.dev host (no scheme)
+    path: ${R2_PATH:-uploads}                   # object key prefix
+    account-id: ${R2_ACCOUNT_ID}                # Cloudflare account id
+    access-key-id: ${R2_ACCESS_KEY_ID}          # R2 access key id
+    secret-access-key: ${R2_SECRET_ACCESS_KEY}  # R2 secret access key
 
 # stripe payment configuration
 stripe:

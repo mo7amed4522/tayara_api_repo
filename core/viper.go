@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
@@ -15,6 +16,22 @@ import (
 
 	"github.com/mo7amed4522/tayara_api/global"
 )
+
+// expandEnv expands ${VAR} and ${VAR:-default} references in the config text from the
+// process environment. A missing variable with no default expands to "". This lets secrets
+// (JWT key, DB passwords, R2 keys, Stripe keys, ...) live in environment variables instead of
+// being committed to the repo. Example: ${DB_PASSWORD:-} -> env value or ""; ${MYSQL_HOST:-db} -> env or "db".
+func expandEnv(s string) string {
+	return os.Expand(s, func(k string) string {
+		if name, def, ok := strings.Cut(k, ":-"); ok {
+			if v, found := os.LookupEnv(name); found {
+				return v
+			}
+			return def
+		}
+		return os.Getenv(k)
+	})
+}
 
 // Viper //
 // Priority: Command line > Environment variables > Default value
@@ -52,22 +69,25 @@ func Viper(path ...string) *viper.Viper {
 	v.SetConfigFile(config)
 	v.SetConfigType("yaml")
 
-	// Read the raw file and run ${VAR} / ${VAR:-default} expansion first so secrets can be
-	// injected via the process environment (see expandEnv). viper.LoadShellStyle() has no
-	// `:-default` fallback, so we expand the bytes ourselves before viper parses them.
-	raw, err := os.ReadFile(config)
+	// Read the raw file and expand ${VAR}/${VAR:-default} from the environment before
+	// unmarshalling, so secrets can be injected via env vars without committing them.
+	data, err := os.ReadFile(config)
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
-	if err = v.ReadConfig(strings.NewReader(expandEnv(string(raw)))); err != nil {
-		panic(fmt.Errorf("Fatal error parsing config file: %s \n", err))
+	if err := v.ReadConfig(bytes.NewReader([]byte(expandEnv(string(data))))); err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 	v.WatchConfig()
 
 	v.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("config file changed:", e.Name)
-		if err = v.Unmarshal(&global.GVA_CONFIG); err != nil {
-			fmt.Println(err)
+		// Re-expand env vars on hot-reload so the change reflects the current environment.
+		if d, rerr := os.ReadFile(config); rerr == nil {
+			_ = v.ReadConfig(bytes.NewReader([]byte(expandEnv(string(d)))))
+		}
+		if uerr := v.Unmarshal(&global.GVA_CONFIG); uerr != nil {
+			fmt.Println(uerr)
 		}
 	})
 	if err = v.Unmarshal(&global.GVA_CONFIG); err != nil {
