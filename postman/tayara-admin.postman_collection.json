@@ -1,0 +1,749 @@
+{
+  "info": {
+    "_postman_id": "tayara-admin-0003-0003-0003-000000000003",
+    "name": "Tayara - Admin (Platform dashboard)",
+    "description": "Platform-admin API collection. Authenticated calls use the **S-token** header returned by `/api/v1/system/login`.\n\nMoney is in **minor units** (AED fils). Percentages are **basis points** (10000 = 100%). For image/doc uploads follow the `Files & Uploads` folder convention (multipart `file` -> `utils/upload` OSS URL referenced in JSON bodies).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8888" },
+    { "key": "adminToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/system/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"ops.admin\",\n  \"password\": \"123456\",\n  \"nickName\": \"Ops Admin\",\n  \"headerImg\": \"\",\n  \"email\": \"ops@tayara.test\",\n  \"phoneCountryCode\": \"+971\",\n  \"phone\": \"0500000001\",\n  \"department\": \"Operations\",\n  \"jobTitle\": \"Platform Operator\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0 && json.data && json.data.token) {",
+                  "  pm.collectionVariables.set('adminToken', json.data.token);",
+                  "  pm.environment.set('adminToken', json.data.token);",
+                  "} else { console.log('login failed', json); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/system/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@tayara.test\",\n  \"password\": \"123456\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/system/forgot-password",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@tayara.test\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "description": "token comes from the Forgot-Password flow.",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/system/reset-password",
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"<reset-token>\",\n  \"newPassword\": \"123456\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/system/changePassword",
+            "body": { "mode": "raw", "raw": "{\n  \"id\": 1,\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"newpass123\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "System Jobs (SLA/cron status)",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/system/jobs" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RBAC - Casbin",
+      "item": [
+        {
+          "name": "List Policies",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/system/casbin/policies" },
+          "response": []
+        },
+        {
+          "name": "Sync Role Policies",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/system/casbin/policies",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorityId\": 2,\n  \"policies\": [\n    { \"path\": \"/api/v1/booking/admin/*\", \"method\": \"GET\" },\n    { \"path\": \"/api/v1/payment/capture\", \"method\": \"POST\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update a Policy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/system/casbin/policy",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPath\": \"/api/v1/booking/admin/*\",\n  \"newPath\": \"/api/v1/booking/admin/*\",\n  \"oldMethod\": \"GET\",\n  \"newMethod\": \"GET\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users (end users)",
+      "item": [
+        {
+          "name": "List Users",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/user/admin?page=1&pageSize=10&status=" },
+          "response": []
+        },
+        {
+          "name": "Block / Unblock User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/user/admin/block",
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": 4,\n  \"reason\": \"Suspected chargeback abuse\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Agents (approval & moderation)",
+      "item": [
+        {
+          "name": "List Agents",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/agent/admin?page=1&pageSize=10&status=" },
+          "response": []
+        },
+        {
+          "name": "Agent Detail",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/agent/admin/detail?id=3" },
+          "response": []
+        },
+        {
+          "name": "Approve Agent",
+          "description": "commissionPercent basis points (1000 = 10%).",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/agent/admin/approve",
+            "body": { "mode": "raw", "raw": "{\n  \"agentId\": 3,\n  \"commissionPercent\": 800,\n  \"slaHours\": 2\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/agent/admin/reject",
+            "body": { "mode": "raw", "raw": "{\n  \"agentId\": 5,\n  \"reason\": \"License documents did not verify\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Suspend / Reinstate Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/agent/admin/suspend",
+            "body": { "mode": "raw", "raw": "{\n  \"agentId\": 4,\n  \"reason\": \"Suspended for SLA breaches\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Admin Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/agent/admin/note",
+            "body": { "mode": "raw", "raw": "{\n  \"agentId\": 1,\n  \"noteText\": \"Verified trade license. Top performer for outbound Turkey.\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Catalog - Admin",
+      "item": [
+        {
+          "name": "List All Packages",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/admin/packages?page=1&pageSize=10&status=" },
+          "response": []
+        },
+        {
+          "name": "Set Package Status",
+          "description": "status: published | rejected | deactivated. On rejection pass flagIssueType/flagDetails.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/admin/packages/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"status\": \"published\",\n  \"note\": \"Approved after review\",\n  \"flagIssueType\": \"\",\n  \"flagDetails\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bookings - Admin",
+      "item": [
+        {
+          "name": "List All Bookings",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/booking/admin?page=1&pageSize=10&status=&type=" },
+          "response": []
+        },
+        {
+          "name": "Force Cancel",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/admin/force-cancel",
+            "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 2,\n  \"reason\": \"Admin forced cancellation\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "KYC Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/admin/kyc",
+            "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 1,\n  \"approve\": true,\n  \"note\": \"KYC passed\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "List Disputes",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/booking/admin/disputes" },
+          "response": []
+        },
+        {
+          "name": "Resolve Dispute",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/booking/admin/disputes/resolve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"disputeId\": 1,\n  \"status\": \"resolved\",\n  \"resolution\": \"Refunded in full; no chargeback filed\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Document Access Audit",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/booking/admin/documents/audit" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments - Admin",
+      "item": [
+        {
+          "name": "Capture Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/payment/capture",
+            "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 1\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Refund",
+          "description": "refundType: full | partial. amount minor units.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/payment/refund",
+            "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 2,\n  \"refundType\": \"partial\",\n  \"amount\": 50000,\n  \"reason\": \"Partial refund per policy\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Prepare Payout",
+          "description": "Prepares a payout batch for eligible completed bookings.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/payment/payouts/prepare",
+            "body": { "mode": "raw", "raw": "{\n  \"batchLabel\": \"August payout\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Pay Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/payment/payouts/pay",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 1,\n  \"method\": \"bank_transfer\",\n  \"referenceNumber\": \"TRF-0001\",\n  \"notes\": \"Paid via wire\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Payouts",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/payment/payouts" },
+          "response": []
+        },
+        {
+          "name": "Override Commission",
+          "description": "commissionPercent basis points (800 = 8%).",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/payment/commission/override",
+            "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 1,\n  \"commissionPercent\": 800,\n  \"reason\": \"Preferred agent promo\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "List Commission Records",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/payment/commission" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Engage & Content",
+      "item": [
+        {
+          "name": "List Reviews (moderation)",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/engage/admin/reviews" },
+          "response": []
+        },
+        {
+          "name": "Set Review Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/admin/reviews/status",
+            "body": { "mode": "raw", "raw": "{\n  \"id\": 1,\n  \"status\": \"approved\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Ad Creative",
+          "description": "bannerImageURL comes from the Files & Uploads folder. redirectType: package | agent | custom. placement: home_banner | travel_category | category_spotlight.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/ads",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0,\n  \"title\": \"Istanbul Seasonal Deals\",\n  \"placement\": \"home_banner\",\n  \"displayOrder\": 1,\n  \"startDatetime\": \"2026-08-01T00:00:00Z\",\n  \"endDatetime\": \"2026-09-30T23:59:59Z\",\n  \"bannerImageURL\": \"https://files.tayara.test/ads/ist.jpg\",\n  \"overlayTitle\": \"Save on Istanbul\",\n  \"overlaySubtitle\": \"Book by Sep 30\",\n  \"ctaLabel\": \"Book now\",\n  \"redirectType\": \"package\",\n  \"targetCountryId\": 2,\n  \"targetAgentId\": 0,\n  \"targetPackageId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Ad Creative",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/ads",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"title\": \"Istanbul Seasonal Deals (v2)\",\n  \"placement\": \"home_banner\",\n  \"displayOrder\": 1,\n  \"startDatetime\": \"2026-08-01T00:00:00Z\",\n  \"endDatetime\": \"2026-10-15T23:59:59Z\",\n  \"bannerImageURL\": \"https://files.tayara.test/ads/ist.jpg\",\n  \"overlayTitle\": \"Save on Istanbul\",\n  \"overlaySubtitle\": \"Extended\",\n  \"ctaLabel\": \"Book now\",\n  \"redirectType\": \"package\",\n  \"targetCountryId\": 2,\n  \"targetAgentId\": 0,\n  \"targetPackageId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Ad Creative",
+          "request": { "method": "DELETE", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/engage/ads?id=1" },
+          "response": []
+        },
+        {
+          "name": "Set Ad Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/ads/status",
+            "body": { "mode": "raw", "raw": "{\n  \"id\": 1,\n  \"status\": \"active\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "List Ads (admin)",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/engage/admin/ads" },
+          "response": []
+        },
+        {
+          "name": "Ad Analytics",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/engage/admin/ads/analytics" },
+          "response": []
+        },
+        {
+          "name": "List Notifications (admin)",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/engage/admin/notifications" },
+          "response": []
+        },
+        {
+          "name": "Resend Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/admin/notifications/resend",
+            "body": { "mode": "raw", "raw": "{\n  \"id\": 1\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Notification Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/admin/notification-templates",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0,\n  \"eventType\": \"booking_confirmed\",\n  \"channel\": \"email\",\n  \"subject\": \"Your booking is confirmed\",\n  \"body\": \"Hi, your booking {{code}} is confirmed.\",\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Notification Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/admin/notification-templates",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"eventType\": \"booking_confirmed\",\n  \"channel\": \"email\",\n  \"subject\": \"Booking confirmed\",\n  \"body\": \"Hi, your booking {{code}} is confirmed. Enjoy!\",\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Notification Templates",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/engage/admin/notification-templates" },
+          "response": []
+        },
+        {
+          "name": "Delete Notification Template",
+          "request": { "method": "DELETE", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/engage/admin/notification-templates?id=1" },
+          "response": []
+        },
+        {
+          "name": "Create Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/engage/admin/coupons",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME10\",\n  \"userId\": 0,\n  \"value\": 10000,\n  \"validFrom\": \"2026-08-01T00:00:00Z\",\n  \"validTo\": \"2026-12-31T23:59:59Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Coupons",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/engage/admin/coupons" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Base Reference Data",
+      "item": [
+        {
+          "name": "Create Package Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/base/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"luxury\",\n  \"name\": \"Luxury\",\n  \"description\": \"Premium experiences\",\n  \"sortOrder\": 6,\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Package Category",
+          "request": { "method": "DELETE", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/base/categories?code=luxury" },
+          "response": []
+        },
+        {
+          "name": "Get Settings",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/base/settings" },
+          "response": []
+        },
+        {
+          "name": "Update Setting",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/base/settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"section\": \"booking\",\n  \"key\": \"agent_sla_hours\",\n  \"value\": \"2\",\n  \"description\": \"Hours agent has to respond\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Setting",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/base/settings/reset",
+            "body": { "mode": "raw", "raw": "{\n  \"section\": \"booking\",\n  \"key\": \"agent_sla_hours\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Settings Change History",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "S-token", "value": "{{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/base/settings/history",
+            "body": { "mode": "raw", "raw": "{\n  \"section\": \"booking\",\n  \"key\": \"agent_sla_hours\",\n  \"oldValue\": \"4\",\n  \"newValue\": \"2\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "User Analytics",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/analytics/admin/users" },
+          "response": []
+        },
+        {
+          "name": "Agent Analytics",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/analytics/admin/agents" },
+          "response": []
+        },
+        {
+          "name": "Business Analytics",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/analytics/admin/business" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search & Export",
+      "item": [
+        {
+          "name": "Global Search",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/admin/search?q=istanbul" },
+          "response": []
+        },
+        {
+          "name": "Export Users",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/admin/export/users" },
+          "response": []
+        },
+        {
+          "name": "Export Agents",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/admin/export/agents" },
+          "response": []
+        },
+        {
+          "name": "Export Bookings",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/admin/export/bookings" },
+          "response": []
+        },
+        {
+          "name": "Export Payments",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/admin/export/payments" },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tickets (e-ticket PDF)",
+      "item": [
+        {
+          "name": "Download Booking E-ticket PDF",
+          "description": "Generates and streams the booking e-ticket as a PDF attachment (`Content-Type: application/pdf`).",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "S-token", "value": "{{adminToken}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/tickets/1/pdf"
+          },
+          "response": []
+        },
+        {
+          "name": "Email Booking E-ticket to Buyer",
+          "description": "Sends the booking e-ticket PDF by email to the buyer. No request body — only the booking `id` path param. Returns `{\"delivery\": \"<status>\"}`.",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "S-token", "value": "{{adminToken}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/tickets/1/send"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Files & Uploads (images / docs)",
+      "item": [
+        {
+          "name": "Upload a file (multipart -> utils/upload OSS)",
+          "description": "Binary images/PDFs are pushed to object storage via `utils/upload.NewOss().UploadFile(file)`, which reads the multipart `file` field and returns `(url, key, err)`. The returned URL goes into JSON fields (`bannerImageURL`, `fileUrl`, `coverImageURL`).\n\nBody is **multipart/form-data** with a `file` field. For this demo the platform has no standalone file route, so point this at your file-service endpoint.",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "S-token", "value": "{{adminToken}}" }],
+            "url": "{{baseUrl}}/api/v1/files/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": ["/path/to/your/banner.jpg"] }]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
