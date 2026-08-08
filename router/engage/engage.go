@@ -39,6 +39,7 @@ func (r EngageRouter) InitEngageRouter(publicGroup, bxGroup, systemGroup *gin.Ro
 		system.PUT("ads/status", adApi.SetStatus)
 		system.DELETE("ads", adApi.DeleteAd)
 		system.GET("admin/ads", adApi.ListAds)
+		system.GET("admin/ads/analytics", adApi.GroupedAnalytics)
 		system.GET("admin/notifications", notifApi.ListNotifications)
 		system.POST("admin/notifications/resend", notifApi.Resend)
 		system.POST("admin/notification-templates", notifApi.UpsertTemplate)

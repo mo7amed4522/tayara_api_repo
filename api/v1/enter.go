@@ -8,8 +8,11 @@ import (
 	"github.com/mo7amed4522/tayara_api/api/v1/catalog"
 	"github.com/mo7amed4522/tayara_api/api/v1/dxapi"
 	"github.com/mo7amed4522/tayara_api/api/v1/engage"
+	"github.com/mo7amed4522/tayara_api/api/v1/export"
 	"github.com/mo7amed4522/tayara_api/api/v1/payment"
+	"github.com/mo7amed4522/tayara_api/api/v1/search"
 	"github.com/mo7amed4522/tayara_api/api/v1/system"
+	"github.com/mo7amed4522/tayara_api/api/v1/ticket"
 )
 
 var ApiGroupApp = new(ApiGroup)
@@ -24,4 +27,7 @@ type ApiGroup struct {
 	EngageApiGroup    engage.ApiGroup
 	AnalyticsApiGroup analytics.ApiGroup
 	BaseApiGroup      base.ApiGroup
+	SearchApiGroup    search.ApiGroup
+	ExportApiGroup    export.ApiGroup
+	TicketApiGroup    ticket.ApiGroup
 }

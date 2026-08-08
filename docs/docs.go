@@ -16,6 +16,156 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/admin/export/agents": {
+            "get": {
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "Export"
+                ],
+                "summary": "Admin exports agents to CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "status filter",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/admin/export/bookings": {
+            "get": {
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "Export"
+                ],
+                "summary": "Admin exports bookings to CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "booking status filter",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/admin/export/payments": {
+            "get": {
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "Export"
+                ],
+                "summary": "Admin exports payment transactions to CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "status filter",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/admin/export/users": {
+            "get": {
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "Export"
+                ],
+                "summary": "Admin exports users to CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "status filter",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/admin/search": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Admin global cross-entity search (users, agents, packages, bookings)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search keyword",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/tickets/{id}/pdf": {
+            "get": {
+                "produces": [
+                    "application/pdf"
+                ],
+                "tags": [
+                    "Ticket"
+                ],
+                "summary": "Generate + download a booking e-ticket PDF",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/admin/tickets/{id}/send": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Ticket"
+                ],
+                "summary": "Admin emails a booking e-ticket PDF to the buyer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "booking id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/api/v1/agent/admin": {
             "get": {
                 "produces": [
@@ -459,6 +609,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/base/settings": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Admin views all system settings grouped by section",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Admin updates a system setting (audited)",
+                "parameters": [
+                    {
+                        "description": "setting payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SettingUpdateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/base/settings/history": {
             "get": {
                 "produces": [
@@ -518,6 +715,34 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/request.SettingChangeReq"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/base/settings/reset": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Admin resets a settings section to its seeded defaults",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "settings section",
+                        "name": "section",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1949,6 +2174,39 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/engage/admin/ads/analytics": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin ad impression/CTR analytics grouped by placement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "from (RFC3339)",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "to (RFC3339)",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/engage/admin/coupons": {
             "get": {
                 "produces": [
@@ -2021,6 +2279,23 @@ const docTemplate = `{
             }
         },
         "/api/v1/engage/admin/notification-templates": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "Admin lists all notification templates (design/moderate)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
             "post": {
                 "produces": [
                     "application/json"
@@ -2562,7 +2837,7 @@ const docTemplate = `{
                 "tags": [
                     "Engage"
                 ],
-                "summary": "Public records an ad click",
+                "summary": "Admin clicks an ad",
                 "parameters": [
                     {
                         "description": "click payload",
@@ -3148,6 +3423,92 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/system/casbin/policies": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SystemCasbin"
+                ],
+                "summary": "Admin lists the permission matrix (routes) for a role",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "authority id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SystemCasbin"
+                ],
+                "summary": "Admin replaces the route-authority matrix for a role",
+                "parameters": [
+                    {
+                        "description": "authority + policies",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CasbinInReceive"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system/casbin/policy": {
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SystemCasbin"
+                ],
+                "summary": "Admin updates a single route rule for a role",
+                "parameters": [
+                    {
+                        "description": "old + new path/method",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CasbinUpdateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/system/change-password": {
             "post": {
                 "security": [
@@ -3173,6 +3534,55 @@ const docTemplate = `{
                         }
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system/forgot-password": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SystemAuth"
+                ],
+                "summary": "Request a password-reset email for an admin",
+                "parameters": [
+                    {
+                        "description": "email",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SysForgotPasswordReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system/jobs": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Admin views the platform's scheduled jobs (cron registry)",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3237,6 +3647,36 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/request.SysRegisterReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system/reset-password": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SystemAuth"
+                ],
+                "summary": "Reset an admin password using a one-time emailed token",
+                "parameters": [
+                    {
+                        "description": "token + new password",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SysResetPasswordReq"
                         }
                     }
                 ],
@@ -3335,6 +3775,36 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/request.ChangeUserPasswordReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/firebase-login": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "User login/register via Firebase (Google / Apple / Phone)",
+                "parameters": [
+                    {
+                        "description": "firebase id token",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.FirebaseLoginReq"
                         }
                     }
                 ],
@@ -4300,6 +4770,53 @@ const docTemplate = `{
                 }
             }
         },
+        "request.CasbinInReceive": {
+            "type": "object",
+            "properties": {
+                "casbinInfos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.CasbinInfo"
+                    }
+                }
+            }
+        },
+        "request.CasbinInfo": {
+            "type": "object",
+            "properties": {
+                "method": {
+                    "description": "Method",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "Path",
+                    "type": "string"
+                }
+            }
+        },
+        "request.CasbinUpdateReq": {
+            "type": "object",
+            "required": [
+                "newMethod",
+                "newPath",
+                "oldMethod",
+                "oldPath"
+            ],
+            "properties": {
+                "newMethod": {
+                    "type": "string"
+                },
+                "newPath": {
+                    "type": "string"
+                },
+                "oldMethod": {
+                    "type": "string"
+                },
+                "oldPath": {
+                    "type": "string"
+                }
+            }
+        },
         "request.ChangeAgentPasswordReq": {
             "type": "object",
             "required": [
@@ -4523,6 +5040,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "requiredAfter": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.FirebaseLoginReq": {
+            "type": "object",
+            "required": [
+                "idToken"
+            ],
+            "properties": {
+                "idToken": {
                     "type": "string"
                 }
             }
@@ -4925,6 +5453,28 @@ const docTemplate = `{
                 }
             }
         },
+        "request.SettingUpdateReq": {
+            "type": "object",
+            "required": [
+                "key",
+                "value"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "section": {
+                    "description": "leave empty to keep the existing section",
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
         "request.ShareReq": {
             "type": "object",
             "required": [
@@ -4989,6 +5539,14 @@ const docTemplate = `{
                 }
             }
         },
+        "request.SysForgotPasswordReq": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
         "request.SysLoginReq": {
             "type": "object",
             "properties": {
@@ -5028,6 +5586,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "userName": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.SysResetPasswordReq": {
+            "type": "object",
+            "properties": {
+                "newPassword": {
+                    "type": "string"
+                },
+                "token": {
                     "type": "string"
                 }
             }

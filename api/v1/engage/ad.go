@@ -1,6 +1,8 @@
 package engage
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
 	"github.com/mo7amed4522/tayara_api/model/common/response"
@@ -153,9 +155,35 @@ func (AdApi) RecordImpression(c *gin.Context) {
 	response.OkWithMessage("ok", c)
 }
 
+// GroupedAnalytics
+// @Tags Engage
+// @Summary Admin ad impression/CTR analytics grouped by placement
+// @Produce application/json
+// @Param from query string false "from (RFC3339)"
+// @Param to query string false "to (RFC3339)"
+// @Success 200 {object} response.Response
+// @Router /api/v1/engage/admin/ads/analytics [get]
+func (AdApi) GroupedAnalytics(c *gin.Context) {
+	from, errFrom := time.Parse(time.RFC3339, c.Query("from"))
+	to, errTo := time.Parse(time.RFC3339, c.Query("to"))
+	var fromPtr, toPtr *time.Time
+	if errFrom == nil {
+		fromPtr = &from
+	}
+	if errTo == nil {
+		toPtr = &to
+	}
+	res, err := engageService.AdServices.AdGroupedAnalytics(fromPtr, toPtr)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(res, c)
+}
+
 // RecordClick
 // @Tags Engage
-// @Summary Public records an ad click
+// @Summary Admin clicks an ad
 // @Produce application/json
 // @Param data body engageReq.AdClickReq true "click payload"
 // @Success 200 {object} response.Response
