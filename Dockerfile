@@ -1,31 +1,36 @@
-FROM golang:alpine as builder
+# Tayara API — production container.
+# Two-stage build: compile a static binary, then copy it into a slim alpine runtime.
+# The runtime intentionally does NOT bake config.yaml (it holds DB/email/Firebase secrets),
+# so mount it at runtime, e.g.:
+#   docker run -d -p 8888:8888 \
+#     -v $(pwd)/config.yaml:/app/config.yaml \
+#     ghcr.io/<org>/tayara_api:latest
 
-WORKDIR /go/src/github.com/fadi/tayara_api
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /workspace
 COPY . .
 
-RUN go env -w GO111MODULE=on \
-    && go env -w GOPROXY=https://goproxy.cn,direct \
-    && go env -w CGO_ENABLED=0 \
-    && go env \
-    && go mod tidy \
-    && go build -o server .
+RUN apk add --no-cache git ca-certificates tzdata \
+    && go env -w CGO_ENABLED=0 GOFLAGS=-mod=mod \
+    && go mod download \
+    && go build -trimpath -ldflags "-s -w" -o /out/server main.go
 
-FROM alpine:latest
+FROM alpine:3.20
 
-LABEL MAINTAINER="fadi@fadi.com"
-# Set time zone
-ENV TZ=Asia/Shanghai
-RUN apk update && apk add --no-cache tzdata openntpd \
-    && ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apk add --no-cache ca-certificates tzdata \
+    && addgroup -S tay && adduser -S -G tay tay \
+    && mkdir -p /app && chown tay:tay /app
 
-WORKDIR /go/src/github.com/fadi/tayara_api
+WORKDIR /app
 
-COPY --from=0 /go/src/github.com/fadi/tayara_api/server ./
-COPY --from=0 /go/src/github.com/fadi/tayara_api/resource ./resource/
-COPY --from=0 /go/src/github.com/fadi/tayara_api/config.docker.yaml ./
+COPY --from=builder /out/server /app/server
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-# Mount directory: If using an SQLite database, example container command: `docker run -d -v /host_path/gva.db:/go/src/github.com/fadi/tayara_api/gva.db -p 8888:8888 --name gva-server-v1 gva-server:1.0`
-# VOLUME ["/go/src/github.com/fadi/tayara_api"]
+USER tay
 
+# The API listens on the port read from config (`system.addr`, default 8888 in config.yaml).
 EXPOSE 8888
-ENTRYPOINT ./server -c config.docker.yaml
+
+# Config is expected to be mounted at /app/config.yaml; see core/viper.go for -c parsing.
+ENTRYPOINT ["./server", "-c", "config.yaml"]

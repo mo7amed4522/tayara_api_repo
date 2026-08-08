@@ -1,0 +1,61 @@
+name: CI
+
+# Continuous verification for every push and pull request. This is the gate that
+# proves the code "works fine" before any deploy is allowed: it builds, vets, runs
+# the full test suite, and regenerates + diffs the Swagger docs so a drift in the
+# API contract fails loudly instead of silently.
+on:
+  push:
+    branches: [master, main, dev_branch]
+  pull_request:
+
+env:
+  GO_VERSION: "1.26"
+
+jobs:
+  verify:
+    name: build / vet / test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./... -count=1
+
+  # Confirm committed Swagger docs are fresh — regenerating must be a no-op diff.
+  swagger:
+    name: swagger docs in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Generate docs
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@v1.8.12
+          $(go env GOPATH)/bin/swag init -g main.go -o docs
+
+      - name: Ensure no diff
+        run: |
+          if ! git diff --exit-code -- docs/; then
+            echo "::error::docs/swagger* are out of date. Run 'swag init -g main.go -o docs' and commit."
+            exit 1
+          fi

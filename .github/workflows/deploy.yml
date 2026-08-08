@@ -1,0 +1,101 @@
+name: Deploy
+
+# Production deploy. On a merge to master/main and can also be triggered manually.
+#
+# Two deployment targets run independently and are each optional — the deploy steps are
+# skipped when their secrets aren't configured, so the workflow stays green with no server
+# creds:
+#   * GHCR image — pushed by the repo's own GITHUB_TOKEN to the package registry.
+#   * SSH to a server — needs DEPLOY_HOST / DEPLOY_USER / DEPLOY_KEY / DEPLOY_DIR secrets
+#     and a systemd unit named `tayara-api` on the box (binary + config are copied then
+#     the unit is restarted).
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  build-image:
+    name: Build & push container image (GHCR)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          platforms: linux/amd64
+
+  deploy-ssh:
+    name: Deploy to server over SSH
+    runs-on: ubuntu-latest
+    steps:
+      # Detect whether a server target is configured. `secrets` cannot be referenced in `if:`,
+      # so we surface it through an env mapping into a step output and gate on that output.
+      - id: configured
+        env:
+          KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then echo "enabled=false"; else echo "enabled=true"; fi
+
+      - uses: actions/checkout@v4
+        if: steps.configured.outputs.enabled == 'true'
+
+      - uses: actions/setup-go@v5
+        if: steps.configured.outputs.enabled == 'true'
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - name: Build linux backend binary
+        if: steps.configured.outputs.enabled == 'true'
+        run: |
+          chmod +x build.sh
+          ./build.sh linux
+
+      - name: Copy binary + config to host
+        if: steps.configured.outputs.enabled == 'true'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: "server,config.yaml"
+          target: ${{ secrets.DEPLOY_DIR }}
+
+      - name: Restart service
+        if: steps.configured.outputs.enabled == 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_DIR }}"
+            chmod +x server
+            sudo systemctl restart tayara-api
+            sudo systemctl status tayara-api --no-pager -l | tail -n 20
