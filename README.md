@@ -66,7 +66,7 @@ so the files below only set the backing-store hosts and the CORS whitelist.
 | File | Scale | Selected by | Backing stores |
 |------|-------|-------------|----------------|
 | [`config.release.yaml`](config.release.yaml) | **Small** — single VPS, one domain | auto in `gin.ReleaseMode` | MySQL/Redis/Mongo on the same box (`127.0.0.1`), uploads served by the app (`oss-type: local`) |
-| [`config.release.large.yaml`](config.release.large.yaml) | **Large** — distributed cloud | `GVA_CONFIG=config.release.large.yaml go run .` | managed RDS/Aurora (`db.tayara.internal`), ElastiCache, Atlas Mongo (payment ledger on), media on **Cloudflare R2** (`oss-type: cloudflare-r2`, custom domain) |
+| [`config.release.large.yaml`](config.release.large.yaml) | **Large** — distributed cloud | `GVA_CONFIG=config.release.large.yaml go run .` | managed RDS/Aurora (`db.tayara.internal`), ElastiCache, Atlas Mongo (payment ledger on), media on **Cloudflare R2** (`oss-type: cloudflare-r2`) |
 
 **Small scale layout** — one VPS, Nginx TLS in front:
 ```
@@ -80,7 +80,9 @@ tayara.com/uploads/   -> local static files    (oss-type: local)
 api.tayara.com        -> LB/WAF -> fleet on :8888   (API + Stripe webhook ingress)
 admin.tayara.com      -> static build on CDN
 agent.tayara.com      -> static build on CDN
-media.tayara.com      -> Cloudflare R2 public bucket / custom domain (oss-type: cloudflare-r2)
+media.tayara.com      -> Cloudflare R2 (oss-type: cloudflare-r2)
+   free plan: R2 custom domains are paid. Serve publicly via the bucket's r2.dev URL
+   (set R2_PUBLIC_URL=<bucket>.<account>.r2.dev) or a free Worker bound to R2.
 db.tayara.internal    -> RDS/Aurora multi-AZ (TLS)
 redis.tayara.internal -> ElastiCache / Redis Cloud
 cluster0.….mongodb.net-> Atlas (payment ledger)
@@ -157,3 +159,30 @@ A defensive security review found and fixed the following (see `security/attack.
 Each check prints `[ PASS ]` (fixed) or `[ FAIL ]` (vulnerable); the exit code is 0 only when
 nothing is vulnerable. **Note:** the Firebase service-account key is still in git history — rotate
 the credential in the Firebase console and, for a public repo, rewrite history.
+
+## Deploy & endpoints
+
+The app always listens on `:{{system.addr}}` (= `8888`) on all interfaces. Put a reverse proxy /
+load balancer in front for TLS + the public domain. Config reads `${VAR}` / `${VAR:-default}` from
+the environment (`core/viper.go`), so set secrets as env vars — never edit them into config files.
+
+**Required env vars** (deploy): `JWT_SIGNING_KEY` (≥32 chars), `MYSQL_HOST`/`MYSQL_USERNAME`/
+`MYSQL_PASSWORD`, `REDIS_PASSWORD`, `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`, and for R2:
+`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`,
+`R2_PATH`. Enable admin registration with `SUPER_ADMIN_KEY`.
+
+```bash
+go build -o tayara-api .          # or build the release binary
+GVA_CONFIG=config.release.large.yaml ./tayara-api
+```
+
+**Endpoints you get from config.yaml** (`system.addr: 8888`):
+
+| Client | Base URL | Auth header | Login |
+|--------|----------|-------------|-------|
+| API base | `http://localhost:8888` (prod: your domain) | — | — |
+| Mobile user | `…/api/v1/user/login` | `X-token` | `POST /api/v1/user/login` |
+| Agent dashboard | `…/api/v1/agent/login` | `A-token` | `POST /api/v1/agent/login` |
+| Admin dashboard | `…/api/v1/system/login` | `S-token` | `POST /api/v1/system/login` |
+| Media (R2) | `https://${R2_PUBLIC_URL}/${R2_PATH}/…` | — | — |
+| Stripe webhook | `…/api/v1/payment/webhook/stripe` | — | — |
