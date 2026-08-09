@@ -8,6 +8,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/global"
 	bookingModel "github.com/mo7amed4522/tayara_api/model/booking"
 	bkReq "github.com/mo7amed4522/tayara_api/model/booking/request"
+	"github.com/mo7amed4522/tayara_api/utils"
 )
 
 // DisputeServices owns the booking dispute lifecycle (open -> resolved/closed by admin).
@@ -75,9 +76,9 @@ func (s DisputeServices) Resolve(adminID uint, req bkReq.ResolveDisputeReq) (*bo
 }
 
 // List returns disputes filtered by booking/status (admin).
-func (s DisputeServices) List(req bkReq.DisputePageReq) ([]bookingModel.Dispute, int64, error) {
+func (s DisputeServices) List(req bkReq.DisputePageReq) ([]bookingModel.Dispute, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&bookingModel.Dispute{})
 	if req.BookingID > 0 {
@@ -86,15 +87,12 @@ func (s DisputeServices) List(req bkReq.DisputePageReq) ([]bookingModel.Dispute,
 	if req.Status != "" {
 		db = db.Where("status = ?", req.Status)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []bookingModel.Dispute
-	if err := db.Scopes(req.Paginate()).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("created_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // ListForBooking returns disputes for a specific booking (user/agent scoped).

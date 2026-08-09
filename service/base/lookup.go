@@ -10,6 +10,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/model/base"
 	baseReq "github.com/mo7amed4522/tayara_api/model/base/request"
+	"github.com/mo7amed4522/tayara_api/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -71,9 +72,9 @@ func (s LookupServices) RecordChange(adminID uint, req baseReq.SettingChangeReq)
 }
 
 // SettingHistory returns the settings history trail (admin), optionally filtered by key/section.
-func (s LookupServices) SettingHistory(req baseReq.SettingHistoryPageReq) ([]base.SettingChangeHistory, int64, error) {
+func (s LookupServices) SettingHistory(req baseReq.SettingHistoryPageReq) ([]base.SettingChangeHistory, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&base.SettingChangeHistory{})
 	if req.Key != "" {
@@ -82,15 +83,12 @@ func (s LookupServices) SettingHistory(req baseReq.SettingHistoryPageReq) ([]bas
 	if req.Section != "" {
 		db = db.Where("section = ?", req.Section)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []base.SettingChangeHistory
-	if err := db.Scopes(req.Paginate()).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("created_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // --- system settings management (PRD §6.10 System Settings page) ---

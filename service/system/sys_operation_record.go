@@ -5,6 +5,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/common/request"
 	"github.com/mo7amed4522/tayara_api/model/system"
 	systemReq "github.com/mo7amed4522/tayara_api/model/system/request"
+	"github.com/mo7amed4522/tayara_api/utils"
 )
 
 //@author: [mo7amed4522](https://github.com/mo7amed4522)
@@ -61,9 +62,7 @@ func (operationRecordService *OperationRecordService) GetSysOperationRecord(id u
 //@param: info systemReq.SysOperationRecordSearch
 //@return: list interface{}, total int64, err error
 
-func (operationRecordService *OperationRecordService) GetSysOperationRecordInfoList(info systemReq.SysOperationRecordSearch) (list interface{}, total int64, err error) {
-	limit := info.PageSize
-	offset := info.PageSize * (info.Page - 1)
+func (operationRecordService *OperationRecordService) GetSysOperationRecordInfoList(info systemReq.SysOperationRecordSearch) (list interface{}, total int64, totalPage int64, err error) {
 	// Create db
 	db := global.GVA_DB.Model(&system.SysOperationRecord{})
 	var sysOperationRecords []system.SysOperationRecord
@@ -108,10 +107,12 @@ func (operationRecordService *OperationRecordService) GetSysOperationRecordInfoL
 		db = db.Where("created_at <= ?", endTime)
 	}
 
-	err = db.Count(&total).Error
+	var pr *utils.PaginateResult
+	pr, err = utils.PaginateWithCustomQuery(db, db.Order("id desc").Preload("User"), info.Page, info.PageSize, &sysOperationRecords)
 	if err != nil {
 		return
 	}
-	err = db.Order("id desc").Limit(limit).Offset(offset).Preload("User").Find(&sysOperationRecords).Error
-	return sysOperationRecords, total, err
+	total = pr.Total
+	totalPage = pr.TotalPage
+	return sysOperationRecords, total, totalPage, err
 }

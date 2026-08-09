@@ -99,12 +99,12 @@ func (LookupApi) RecordSettingChange(c *gin.Context) {
 func (LookupApi) SettingHistory(c *gin.Context) {
 	var req baseReq.SettingHistoryPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := baseServiceApp.LookupServices.SettingHistory(req)
+	list, total, totalPage, err := baseServiceApp.LookupServices.SettingHistory(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // Settings

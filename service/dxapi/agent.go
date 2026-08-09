@@ -207,23 +207,20 @@ func (s *AgentServices) AddNote(adminID uint, req dxapiReq.AgentNoteReq) (*dxapi
 }
 
 // List returns agents (admin: all; scoped by status filter).
-func (s *AgentServices) List(req dxapiReq.AgentPageReq) ([]dxapi.DxAgentProfile, int64, error) {
+func (s *AgentServices) List(req dxapiReq.AgentPageReq) ([]dxapi.DxAgentProfile, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&dxapi.DxAgentProfile{})
 	if req.Status != "" {
 		db = db.Where("status = ?", req.Status)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []dxapi.DxAgentProfile
-	if err := db.Scopes(req.Paginate()).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("created_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // GetAdminDetail returns an agent with its documents + notes (admin view).

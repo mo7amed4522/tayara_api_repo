@@ -71,12 +71,12 @@ func (BookingApi) ListOwnBookings(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req bookingReq.BookingPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := bookingService.BookingServices.ListOwnBookings(userID, req)
+	list, total, totalPage, err := bookingService.BookingServices.ListOwnBookings(userID, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // CancelBooking
@@ -111,12 +111,12 @@ func (BookingApi) ListAgentBookings(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req bookingReq.BookingPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := bookingService.BookingServices.ListAgentBookings(agentID, req)
+	list, total, totalPage, err := bookingService.BookingServices.ListAgentBookings(agentID, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // GetAgentBooking
@@ -215,12 +215,12 @@ func (BookingApi) RejectBooking(c *gin.Context) {
 func (BookingApi) ListAllBookings(c *gin.Context) {
 	var req bookingReq.BookingPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := bookingService.BookingServices.ListAllBookings(req)
+	list, total, totalPage, err := bookingService.BookingServices.ListAllBookings(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // ForceCancel

@@ -128,21 +128,18 @@ func (s *UserServices) Block(adminID uint, req bxapiReq.UserBlockReq) (*bxapi.Bx
 }
 
 // List returns users (admin: all; scoped by status filter).
-func (s *UserServices) List(req bxapiReq.UserPageReq) ([]bxapi.BxsUserProfile, int64, error) {
+func (s *UserServices) List(req bxapiReq.UserPageReq) ([]bxapi.BxsUserProfile, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&bxapi.BxsUserProfile{})
 	if req.Status != "" {
 		db = db.Where("status = ?", req.Status)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []bxapi.BxsUserProfile
-	if err := db.Scopes(req.Paginate()).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("created_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }

@@ -42,12 +42,12 @@ func (ReviewApi) CreateReview(c *gin.Context) {
 func (ReviewApi) ListReviews(c *gin.Context) {
 	var req engageReq.ReviewPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := engageService.ReviewServices.PublicReviews(req)
+	list, total, totalPage, err := engageService.ReviewServices.PublicReviews(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // AdminListReviews
@@ -60,12 +60,12 @@ func (ReviewApi) ListReviews(c *gin.Context) {
 func (ReviewApi) AdminListReviews(c *gin.Context) {
 	var req engageReq.ReviewPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := engageService.ReviewServices.ListReviews(req)
+	list, total, totalPage, err := engageService.ReviewServices.ListReviews(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // SetStatus

@@ -119,12 +119,12 @@ func (UserApi) ChangePassword(c *gin.Context) {
 func (UserApi) ListUsers(c *gin.Context) {
 	var req bxapiReq.UserPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := userService.UserServices.List(req)
+	list, total, totalPage, err := userService.UserServices.List(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // Block

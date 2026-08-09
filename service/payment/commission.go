@@ -69,9 +69,9 @@ func (p *PaymentServices) OverrideCommission(adminID uint, req paymentReq.Commis
 }
 
 // ListCommission returns commission records (admin: all; agent: scoped by agentID).
-func (p *PaymentServices) ListCommission(agentID uint, req paymentReq.CommissionPageReq) ([]paymentModel.CommissionRecord, int64, error) {
+func (p *PaymentServices) ListCommission(agentID uint, req paymentReq.CommissionPageReq) ([]paymentModel.CommissionRecord, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&paymentModel.CommissionRecord{})
 	if agentID > 0 {
@@ -83,13 +83,10 @@ func (p *PaymentServices) ListCommission(agentID uint, req paymentReq.Commission
 	if req.BookingID > 0 {
 		db = db.Where("booking_id = ?", req.BookingID)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []paymentModel.CommissionRecord
-	if err := db.Scopes(req.Paginate()).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("created_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }

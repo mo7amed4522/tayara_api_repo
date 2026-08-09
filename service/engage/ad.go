@@ -141,9 +141,9 @@ func (a AdServices) RecordClick(userID *uint, req engageReq.AdClickReq) (*engage
 }
 
 // ListAds returns ads filtered by placement/status (admin) with computed CTR.
-func (a AdServices) ListAds(req engageReq.AdCreativePageReq) ([]engageResp.AdDetail, int64, error) {
+func (a AdServices) ListAds(req engageReq.AdCreativePageReq) ([]engageResp.AdDetail, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&engage.AdCreative{})
 	if req.Placement != "" {
@@ -152,13 +152,10 @@ func (a AdServices) ListAds(req engageReq.AdCreativePageReq) ([]engageResp.AdDet
 	if req.Status != "" {
 		db = db.Where("status = ?", req.Status)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var ads []engage.AdCreative
-	if err := db.Scopes(req.Paginate()).Order("display_order asc").Find(&ads).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("display_order asc"), req.Page, req.PageSize, &ads)
+	if err != nil {
+		return nil, 0, 0, err
 	}
 	out := make([]engageResp.AdDetail, 0, len(ads))
 	for _, ad := range ads {
@@ -168,7 +165,7 @@ func (a AdServices) ListAds(req engageReq.AdCreativePageReq) ([]engageResp.AdDet
 		}
 		out = append(out, engageResp.AdDetail{AdCreative: ad, CTR: ctr})
 	}
-	return out, total, nil
+	return out, pr.Total, pr.TotalPage, nil
 }
 
 // ActiveAds returns only currently-active creatives for a placement (buyer-facing).

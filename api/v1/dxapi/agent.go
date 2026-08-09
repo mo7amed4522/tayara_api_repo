@@ -99,12 +99,12 @@ func (AgentApi) ChangePassword(c *gin.Context) {
 func (AgentApi) ListAgents(c *gin.Context) {
 	var req dxapiReq.AgentPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := agentService.AgentServices.List(req)
+	list, total, totalPage, err := agentService.AgentServices.List(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // GetAdminDetail

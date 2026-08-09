@@ -20,12 +20,12 @@ type NotificationApi struct{}
 func (NotificationApi) ListNotifications(c *gin.Context) {
 	var req engageReq.NotificationPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := engageService.NotificationServices.ListNotifications(req, "", 0)
+	list, total, totalPage, err := engageService.NotificationServices.ListNotifications(req, "", 0)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // ListMyNotifications
@@ -39,12 +39,12 @@ func (NotificationApi) ListMyNotifications(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.NotificationPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := engageService.NotificationServices.ListNotifications(req, "user", userID)
+	list, total, totalPage, err := engageService.NotificationServices.ListNotifications(req, "user", userID)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // Resend

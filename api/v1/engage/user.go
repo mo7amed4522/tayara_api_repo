@@ -101,12 +101,12 @@ func (UserEngageApi) ListCoupons(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.CouponPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := engageService.UserEngageServices.ListCoupons(userID, req)
+	list, total, totalPage, err := engageService.UserEngageServices.ListCoupons(userID, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // AdminListCoupons
@@ -119,12 +119,12 @@ func (UserEngageApi) ListCoupons(c *gin.Context) {
 func (UserEngageApi) AdminListCoupons(c *gin.Context) {
 	var req engageReq.CouponPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := engageService.UserEngageServices.ListCoupons(0, req)
+	list, total, totalPage, err := engageService.UserEngageServices.ListCoupons(0, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // ApplyCoupon

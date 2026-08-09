@@ -41,12 +41,12 @@ func (CommissionApi) Override(c *gin.Context) {
 func (CommissionApi) List(c *gin.Context) {
 	var req paymentReq.CommissionPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := paymentService.PaymentServices.ListCommission(0, req)
+	list, total, totalPage, err := paymentService.PaymentServices.ListCommission(0, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // AgentList
@@ -60,10 +60,10 @@ func (CommissionApi) AgentList(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req paymentReq.CommissionPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := paymentService.PaymentServices.ListCommission(agentID, req)
+	list, total, totalPage, err := paymentService.PaymentServices.ListCommission(agentID, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }

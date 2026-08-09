@@ -53,12 +53,12 @@ func (DisputeApi) Create(c *gin.Context) {
 func (DisputeApi) List(c *gin.Context) {
 	var req bkReq.DisputePageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := bookingService.DisputeServices.List(req)
+	list, total, totalPage, err := bookingService.DisputeServices.List(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // Resolve

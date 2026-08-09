@@ -273,9 +273,9 @@ func (d DocServices) transition(ctx context.Context, bookingID uint, toStatus, a
 }
 
 // DocumentAudit returns the document-access audit trail (admin). Filterable by booking/actor.
-func (d DocServices) DocumentAudit(req request.DocumentAuditReq) ([]booking.DocumentAccessLog, int64, error) {
+func (d DocServices) DocumentAudit(req request.DocumentAuditReq) ([]booking.DocumentAccessLog, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&booking.DocumentAccessLog{})
 	if req.BookingID > 0 {
@@ -287,15 +287,12 @@ func (d DocServices) DocumentAudit(req request.DocumentAuditReq) ([]booking.Docu
 	if req.ActorID > 0 {
 		db = db.Where("actor_id = ?", req.ActorID)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []booking.DocumentAccessLog
-	if err := db.Scopes(req.Paginate()).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("created_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 var _ = gorm.ErrRecordNotFound // keep gorm import available for future scoping helpers

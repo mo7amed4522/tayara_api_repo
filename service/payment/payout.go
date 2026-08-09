@@ -12,6 +12,7 @@ import (
 	paymentReq "github.com/mo7amed4522/tayara_api/model/payment/request"
 	paymentResp "github.com/mo7amed4522/tayara_api/model/payment/response"
 	"github.com/mo7amed4522/tayara_api/service/engage"
+	"github.com/mo7amed4522/tayara_api/utils"
 )
 
 // eligibleForPayout evaluates the four payout gates from the PRD: payment captured AND agent
@@ -153,9 +154,9 @@ func (p *PaymentServices) payoutDetail(bookingID uint) (*paymentResp.PayoutDetai
 }
 
 // ListPayouts lists payouts (admin: all; agent: scoped by agentID).
-func (p *PaymentServices) ListPayouts(agentID uint, req paymentReq.PayoutPageReq) ([]paymentModel.Payout, int64, error) {
+func (p *PaymentServices) ListPayouts(agentID uint, req paymentReq.PayoutPageReq) ([]paymentModel.Payout, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&paymentModel.Payout{})
 	if agentID > 0 {
@@ -167,15 +168,12 @@ func (p *PaymentServices) ListPayouts(agentID uint, req paymentReq.PayoutPageReq
 	if req.Status != "" {
 		db = db.Where("payout_status = ?", req.Status)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []paymentModel.Payout
-	if err := db.Scopes(req.Paginate()).Order("updated_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("updated_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // AgentEarnings returns the agent's dashboard earnings aggregation.

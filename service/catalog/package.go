@@ -137,18 +137,18 @@ func (p *PackageServices) GetOwnPackage(agentID, id uint) (*response.PackageDeta
 }
 
 // ListOwnPackages paginated list of the agent's own packages (agent scoping enforced).
-func (p *PackageServices) ListOwnPackages(agentID uint, req request.PackagePageReq) ([]catalog.Package, int64, error) {
+func (p *PackageServices) ListOwnPackages(agentID uint, req request.PackagePageReq) ([]catalog.Package, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&catalog.Package{}).Where("agent_id = ?", agentID)
 	return p.page(db, req)
 }
 
 // ListPublicPackages paginated list of active packages for anonymous/buyer browsing.
-func (p *PackageServices) ListPublicPackages(req request.PackagePageReq) ([]catalog.Package, int64, error) {
+func (p *PackageServices) ListPublicPackages(req request.PackagePageReq) ([]catalog.Package, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&catalog.Package{}).Where("status = ?", constants.PackageStatusActive)
 	if req.Type != "" {
@@ -166,9 +166,9 @@ func (p *PackageServices) GetPublicPackage(id uint) (*response.PackageDetail, er
 }
 
 // AdminListPackages paginated list of all packages (admin sees all).
-func (p *PackageServices) AdminListPackages(req request.PackagePageReq) ([]catalog.Package, int64, error) {
+func (p *PackageServices) AdminListPackages(req request.PackagePageReq) ([]catalog.Package, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&catalog.Package{})
 	return p.page(db, req)
@@ -252,16 +252,13 @@ func (p *PackageServices) buildDetail(scoped *gorm.DB, id uint) (*response.Packa
 }
 
 // page runs a paginated count+find on the given model scope.
-func (p *PackageServices) page(db *gorm.DB, req request.PackagePageReq) ([]catalog.Package, int64, error) {
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
+func (p *PackageServices) page(db *gorm.DB, req request.PackagePageReq) ([]catalog.Package, int64, int64, error) {
 	var list []catalog.Package
-	if err := db.Scopes(req.Paginate()).Order("updated_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("updated_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // clearChildren removes all child rows of a package (used on update before re-insert).

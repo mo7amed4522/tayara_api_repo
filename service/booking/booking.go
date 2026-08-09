@@ -342,15 +342,15 @@ func (b *BookingServices) GetBooking(id uint) (*response.BookingDetail, error) {
 	return b.buildDetail(global.GVA_DB, id)
 }
 
-func (b *BookingServices) ListOwnBookings(userID uint, req request.BookingPageReq) ([]booking.Booking, int64, error) {
+func (b *BookingServices) ListOwnBookings(userID uint, req request.BookingPageReq) ([]booking.Booking, int64, int64, error) {
 	return b.page(global.GVA_DB.Model(&booking.Booking{}).Where("user_id = ?", userID), req)
 }
 
-func (b *BookingServices) ListAgentBookings(agentID uint, req request.BookingPageReq) ([]booking.Booking, int64, error) {
+func (b *BookingServices) ListAgentBookings(agentID uint, req request.BookingPageReq) ([]booking.Booking, int64, int64, error) {
 	return b.page(global.GVA_DB.Model(&booking.Booking{}).Where("agent_id = ?", agentID), req)
 }
 
-func (b *BookingServices) ListAllBookings(req request.BookingPageReq) ([]booking.Booking, int64, error) {
+func (b *BookingServices) ListAllBookings(req request.BookingPageReq) ([]booking.Booking, int64, int64, error) {
 	return b.page(global.GVA_DB.Model(&booking.Booking{}), req)
 }
 
@@ -385,9 +385,9 @@ func (b *BookingServices) buildDetail(scoped *gorm.DB, id uint) (*response.Booki
 		Documents: documents, StatusHistory: statusHistory}, nil
 }
 
-func (b *BookingServices) page(db *gorm.DB, req request.BookingPageReq) ([]booking.Booking, int64, error) {
+func (b *BookingServices) page(db *gorm.DB, req request.BookingPageReq) ([]booking.Booking, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	if req.Status != "" {
 		db = db.Where("booking_status = ?", req.Status)
@@ -395,15 +395,12 @@ func (b *BookingServices) page(db *gorm.DB, req request.BookingPageReq) ([]booki
 	if req.Type != "" {
 		db = db.Where("type = ?", req.Type)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []booking.Booking
-	if err := db.Scopes(req.Paginate()).Order("updated_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("updated_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // ProcessOverdueSLA is the cron entry point: finds breached SLA timers and applies the auto action

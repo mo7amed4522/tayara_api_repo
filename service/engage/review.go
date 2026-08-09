@@ -8,6 +8,7 @@ import (
 	bookingModel "github.com/mo7amed4522/tayara_api/model/booking"
 	"github.com/mo7amed4522/tayara_api/model/engage"
 	engageReq "github.com/mo7amed4522/tayara_api/model/engage/request"
+	"github.com/mo7amed4522/tayara_api/utils"
 )
 
 type ReviewServices struct{}
@@ -45,9 +46,9 @@ func (r ReviewServices) CreateReview(userID uint, req engageReq.ReviewReq) (*eng
 }
 
 // ListReviews returns reviews filtered by agent/package/status (admin sees all states).
-func (r ReviewServices) ListReviews(req engageReq.ReviewPageReq) ([]engage.Review, int64, error) {
+func (r ReviewServices) ListReviews(req engageReq.ReviewPageReq) ([]engage.Review, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	db := global.GVA_DB.Model(&engage.Review{})
 	if req.AgentID > 0 {
@@ -59,19 +60,16 @@ func (r ReviewServices) ListReviews(req engageReq.ReviewPageReq) ([]engage.Revie
 	if req.Status != "" {
 		db = db.Where("review_status = ?", req.Status)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
 	var list []engage.Review
-	if err := db.Scopes(req.Paginate()).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(db, db.Order("created_at desc"), req.Page, req.PageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, total, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // PublicReviews returns only active published reviews (buyer-facing).
-func (r ReviewServices) PublicReviews(req engageReq.ReviewPageReq) ([]engage.Review, int64, error) {
+func (r ReviewServices) PublicReviews(req engageReq.ReviewPageReq) ([]engage.Review, int64, int64, error) {
 	req.Status = constants.ReviewStatusActive
 	return r.ListReviews(req)
 }

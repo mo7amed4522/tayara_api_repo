@@ -137,12 +137,12 @@ func (CatalogApi) ListOwnPackages(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req catalogReq.PackagePageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := catalogService.PackageServices.ListOwnPackages(agentID, req)
+	list, total, totalPage, err := catalogService.PackageServices.ListOwnPackages(agentID, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // ListPublicPackages
@@ -155,12 +155,12 @@ func (CatalogApi) ListOwnPackages(c *gin.Context) {
 func (CatalogApi) ListPublicPackages(c *gin.Context) {
 	var req catalogReq.PackagePageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := catalogService.PackageServices.ListPublicPackages(req)
+	list, total, totalPage, err := catalogService.PackageServices.ListPublicPackages(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // GetPublicPackage
@@ -194,12 +194,12 @@ func (CatalogApi) GetPublicPackage(c *gin.Context) {
 func (CatalogApi) AdminListPackages(c *gin.Context) {
 	var req catalogReq.PackagePageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, err := catalogService.PackageServices.AdminListPackages(req)
+	list, total, totalPage, err := catalogService.PackageServices.AdminListPackages(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // AdminSetStatus
