@@ -5754,6 +5754,9 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                },
+                "totalPage": {
+                    "type": "integer"
                 }
             }
         },

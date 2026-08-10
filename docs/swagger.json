@@ -5745,6 +5745,9 @@
                 },
                 "total": {
                     "type": "integer"
+                },
+                "totalPage": {
+                    "type": "integer"
                 }
             }
         },
