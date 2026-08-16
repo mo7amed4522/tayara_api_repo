@@ -917,6 +917,8 @@ definitions:
         type: integer
       total:
         type: integer
+      totalPage:
+        type: integer
     type: object
   response.Response:
     properties:
