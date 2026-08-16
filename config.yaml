@@ -71,7 +71,7 @@ captcha:
 # mysql connect configuration
 mysql:
     path: localhost                       # MySQL host
-    port: "3306"                          # MySQL port
+    port: "3307"                          # MySQL port
     config: charset=utf8mb4&parseTime=True&loc=Local # Connection parameters
     db-name: tayara                       # Database name
     username: root                        # MySQL username
