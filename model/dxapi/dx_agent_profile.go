@@ -31,6 +31,8 @@ type DxAgentProfile struct {
 	PlanID            *uint      `json:"planId" form:"planId" gorm:"index;comment:Commission plan ID"`
 	ShortDescription  *string    `json:"shortDescription" form:"shortDescription" gorm:"size:200;comment:Company address"`
 	LongDescription   *string    `json:"longDescription" form:"longDescription" gorm:"size:500;comment:Company address"`
+	BackgroundImage   string     `json:"backgroundImage" form:"backgroundImage" gorm:"size:500;comment:Background image URL"`
+	TrustedTravelersCount int64   `json:"trustedTravelersCount" form:"trustedTravelersCount" gorm:"default:0;comment:Trusted by X travelers count"`
 	CommissionPercent int64      `json:"commissionPercent" form:"commissionPercent" gorm:"default:0;comment:Basis points, 10000 means 100 percent"`
 	SLAHours          int        `json:"slaHours" form:"slaHours" gorm:"default:2;comment:Agent response SLA hours"`
 	ApprovedBy        *uint      `json:"approvedBy" form:"approvedBy" gorm:"index;comment:Approving admin user ID"`

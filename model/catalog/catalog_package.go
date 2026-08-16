@@ -26,6 +26,8 @@ type Package struct {
 	DisplayPrice         int64          `json:"displayPrice" form:"displayPrice" gorm:"default:0;comment:Display price, minor units"`
 	EstimatedPrice       int64          `json:"estimatedPrice" form:"estimatedPrice" gorm:"default:0;comment:Estimated price, minor units"`
 	DiscountPercent      int64          `json:"discountPercent" form:"discountPercent" gorm:"default:0;comment:Basis points, min 300 (3%)"`
+	AvailableSeats       int            `json:"availableSeats" form:"availableSeats" gorm:"default:0;comment:Available seats for next departure"`
+	NextDepartureDate    *time.Time     `json:"nextDepartureDate" form:"nextDepartureDate" gorm:"comment:Next scheduled departure date"`
 	Status               string         `json:"status" form:"status" gorm:"size:32;index;default:draft;comment:Package status"`
 	FlagIssueType        string         `json:"flagIssueType" form:"flagIssueType" gorm:"size:64;comment:Flag issue type"`
 	FlagDetails          string         `json:"flagDetails" form:"flagDetails" gorm:"size:500;comment:Flag details"`

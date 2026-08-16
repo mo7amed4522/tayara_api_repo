@@ -33,6 +33,8 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// identity: agent (dx) registration + admin approval; user (bx) registration + block
 	router.RouterGroupApp.Manage.InitAgentRouter(publicGroup, managePrivate, systemPrivate)
 	router.RouterGroupApp.BxApi.InitUserRouter(publicGroup, bxPrivate, systemPrivate)
+	router.RouterGroupApp.BxApi.InitHomeRouter(publicGroup, bxPrivate)
+	router.RouterGroupApp.BxApi.InitAgentDetailRouter(publicGroup)
 
 	// catalog (packages by agent, moderation by admin, browsing by public/buyer)
 	router.RouterGroupApp.Catalog.InitCatalogRouter(publicGroup, managePrivate, systemPrivate)
