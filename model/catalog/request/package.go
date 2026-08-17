@@ -64,6 +64,48 @@ type DocumentRequirementReq struct {
 	Notes          string `json:"notes"`
 }
 
+// ItineraryDayReq daily itinerary request DTO.
+type ItineraryDayReq struct {
+	ID          uint               `json:"id"`
+	DayNumber   int                `json:"dayNumber"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	SortOrder   int                `json:"sortOrder"`
+	Items       []ItineraryItemReq `json:"items"`
+}
+
+// ItineraryItemReq a time-slotted entry inside an itinerary day.
+type ItineraryItemReq struct {
+	ID          uint   `json:"id"`
+	Time        string `json:"time"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	SortOrder   int    `json:"sortOrder"`
+}
+
+// PackageInclusionReq a "what's included" line item.
+type PackageInclusionReq struct {
+	ID        uint   `json:"id"`
+	Category  string `json:"category"`
+	ItemText  string `json:"itemText"`
+	SortOrder int    `json:"sortOrder"`
+}
+
+// PackageExclusionReq a "what's NOT included" line item.
+type PackageExclusionReq struct {
+	ID        uint   `json:"id"`
+	ItemText  string `json:"itemText"`
+	SortOrder int    `json:"sortOrder"`
+}
+
+// PackageHighlightReq a highlight/amenity tag for a package.
+type PackageHighlightReq struct {
+	ID        uint   `json:"id"`
+	Name      string `json:"name"`
+	IconURL   string `json:"iconURL"`
+	SortOrder int    `json:"sortOrder"`
+}
+
 // PackageReq create/update payload for a package + its child items.
 type PackageReq struct {
 	ID                   uint                     `json:"id"` // 0 on create
@@ -80,12 +122,23 @@ type PackageReq struct {
 	DisplayPrice         int64                    `json:"displayPrice"`
 	EstimatedPrice       int64                    `json:"estimatedPrice"`
 	DiscountPercent      int64                    `json:"discountPercent"`
+	// Tour detail fields.
+	StatusTour    string `json:"statusTour"`
+	TimeDisplay   string `json:"timeDisplay"`
+	Destination   string `json:"destination"`
+	OriginalPrice int64  `json:"originalPrice"`
+	PromoTag      string `json:"promoTag"`
+	// Child items.
 	Availability         []AvailabilityReq        `json:"availability"`
 	Hotels               []HotelReq               `json:"hotels"`
 	Activities           []ActivityReq            `json:"activities"`
 	Addons               []AddonReq               `json:"addons"`
 	RequiredFields       []RequiredFieldReq       `json:"requiredFields"`
 	DocumentRequirements []DocumentRequirementReq `json:"documentRequirements"`
+	ItineraryDays        []ItineraryDayReq        `json:"itineraryDays"`
+	Includes             []PackageInclusionReq    `json:"includes"`
+	Excludes             []PackageExclusionReq    `json:"excludes"`
+	Highlights           []PackageHighlightReq    `json:"highlights"`
 }
 
 // PackagePageReq paginated listing with optional status filter.

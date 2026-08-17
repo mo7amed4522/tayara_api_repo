@@ -14,6 +14,7 @@ func (r CatalogRouter) InitCatalogRouter(publicGroup, manageGroup, systemGroup *
 	{
 		public.GET("packages", catalogApi.ListPublicPackages)
 		public.GET("packages/detail", catalogApi.GetPublicPackage)
+		public.GET("packages/detail/reviews", catalogApi.ListPublicPackageReviews)
 	}
 	{
 		manage.POST("packages", catalogApi.CreatePackage)
@@ -25,6 +26,7 @@ func (r CatalogRouter) InitCatalogRouter(publicGroup, manageGroup, systemGroup *
 	}
 	{
 		system.GET("packages", catalogApi.AdminListPackages)
+		system.GET("packages/detail", catalogApi.AdminGetPackageDetail)
 		system.PUT("packages/status", catalogApi.AdminSetStatus)
 	}
 }

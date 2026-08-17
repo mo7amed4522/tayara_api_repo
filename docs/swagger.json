@@ -1650,6 +1650,34 @@
                 }
             }
         },
+        "/api/v1/catalog/admin/packages/detail": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Admin gets full package detail (with children) for moderation review",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "package id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/catalog/admin/packages/status": {
             "put": {
                 "produces": [
@@ -1920,6 +1948,48 @@
                         "name": "id",
                         "in": "query",
                         "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/catalog/public/packages/detail/reviews": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Catalog"
+                ],
+                "summary": "Public paginated reviews for an active package",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "package id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "page size",
+                        "name": "pageSize",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2333,6 +2403,76 @@
                         "default": 10,
                         "description": "max results",
                         "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customer/packages/detail": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Customer"
+                ],
+                "summary": "Public detail of an active package",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "package id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customer/packages/detail/reviews": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Customer"
+                ],
+                "summary": "Public paginated reviews for an active package",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "package id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "page size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -5350,6 +5490,52 @@
                 }
             }
         },
+        "request.ItineraryDayReq": {
+            "type": "object",
+            "properties": {
+                "dayNumber": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.ItineraryItemReq"
+                    }
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ItineraryItemReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "time": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "request.KYCReviewReq": {
             "type": "object",
             "required": [
@@ -5442,6 +5628,54 @@
                 }
             }
         },
+        "request.PackageExclusionReq": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "itemText": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.PackageHighlightReq": {
+            "type": "object",
+            "properties": {
+                "iconURL": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.PackageInclusionReq": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "itemText": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
         "request.PackageReq": {
             "type": "object",
             "properties": {
@@ -5458,6 +5692,7 @@
                     }
                 },
                 "availability": {
+                    "description": "Child items.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/request.AvailabilityReq"
@@ -5478,6 +5713,9 @@
                 "description": {
                     "type": "string"
                 },
+                "destination": {
+                    "type": "string"
+                },
                 "destinationCountryId": {
                     "type": "integer"
                 },
@@ -5496,8 +5734,20 @@
                 "estimatedPrice": {
                     "type": "integer"
                 },
+                "excludes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.PackageExclusionReq"
+                    }
+                },
                 "galleryImages": {
                     "$ref": "#/definitions/common.JSONMap"
+                },
+                "highlights": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.PackageHighlightReq"
+                    }
                 },
                 "hotels": {
                     "type": "array",
@@ -5509,10 +5759,28 @@
                     "description": "0 on create",
                     "type": "integer"
                 },
+                "includes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.PackageInclusionReq"
+                    }
+                },
+                "itineraryDays": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.ItineraryDayReq"
+                    }
+                },
                 "location": {
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "originalPrice": {
+                    "type": "integer"
+                },
+                "promoTag": {
                     "type": "string"
                 },
                 "requiredFields": {
@@ -5520,6 +5788,13 @@
                     "items": {
                         "$ref": "#/definitions/request.RequiredFieldReq"
                     }
+                },
+                "statusTour": {
+                    "description": "Tour detail fields.",
+                    "type": "string"
+                },
+                "timeDisplay": {
+                    "type": "string"
                 },
                 "type": {
                     "type": "string"

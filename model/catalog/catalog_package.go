@@ -35,6 +35,12 @@ type Package struct {
 	SubmittedAt          *time.Time     `json:"submittedAt" form:"submittedAt" gorm:"comment:Submitted for approval at"`
 	ApprovedBy           *uint          `json:"approvedBy" form:"approvedBy" gorm:"index;comment:Approving admin ID"`
 	ApprovedAt           *time.Time     `json:"approvedAt" form:"approvedAt" gorm:"comment:Approved at"`
+	// Tour detail fields (visible on the customer-facing package detail page).
+	StatusTour    string `json:"statusTour" form:"statusTour" gorm:"size:64;comment:Tour status label, e.g. Cultural Tour"`
+	TimeDisplay   string `json:"timeDisplay" form:"timeDisplay" gorm:"size:64;comment:Formatted time string, e.g. 5 Days / 4 Nights"`
+	Destination   string `json:"destination" form:"destination" gorm:"size:128;comment:Route description, e.g. Luxor to Aswan"`
+	OriginalPrice int64  `json:"originalPrice" form:"originalPrice" gorm:"default:0;comment:Price before discount, minor units"`
+	PromoTag      string `json:"promoTag" form:"promoTag" gorm:"size:64;comment:Promotional tag, e.g. Save 8% / Limited Time"`
 	global.GVA_MODEL
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/catalog/request"
 	"github.com/mo7amed4522/tayara_api/model/catalog/response"
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
+	"github.com/mo7amed4522/tayara_api/model/engage"
 	"github.com/mo7amed4522/tayara_api/utils"
 	"gorm.io/gorm"
 )
@@ -45,6 +46,11 @@ func (p *PackageServices) CreatePackage(agentID uint, req request.PackageReq) (*
 		EstimatedPrice:       req.EstimatedPrice,
 		DiscountPercent:      req.DiscountPercent,
 		Status:               constants.PackageStatusDraft,
+		StatusTour:           req.StatusTour,
+		TimeDisplay:          req.TimeDisplay,
+		Destination:          req.Destination,
+		OriginalPrice:        req.OriginalPrice,
+		PromoTag:             req.PromoTag,
 	}
 	err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(pkg).Error; err != nil {
@@ -103,6 +109,11 @@ func (p *PackageServices) UpdatePackage(agentID uint, req request.PackageReq) (*
 		"display_price":          req.DisplayPrice,
 		"estimated_price":        req.EstimatedPrice,
 		"discount_percent":       req.DiscountPercent,
+		"status_tour":            req.StatusTour,
+		"time_display":           req.TimeDisplay,
+		"destination":            req.Destination,
+		"original_price":         req.OriginalPrice,
+		"promo_tag":              req.PromoTag,
 		"updated_at":             now,
 	}
 	err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
@@ -174,6 +185,14 @@ func (p *PackageServices) AdminListPackages(req request.PackagePageReq) ([]catal
 	return p.page(db, req)
 }
 
+// AdminGetPackageDetail returns a full package detail (header + children + reviews) for admin review.
+func (p *PackageServices) AdminGetPackageDetail(id uint) (*response.PackageDetail, error) {
+	if global.GVA_DB == nil {
+		return nil, errors.New("db not init")
+	}
+	return p.buildDetail(global.GVA_DB, id)
+}
+
 // AdminSetStatus applies an admin moderation action to a package (active|hidden|flagged|disabled|pending_approval).
 func (p *PackageServices) AdminSetStatus(adminID uint, req request.PackageAdminStatusReq) error {
 	if global.GVA_DB == nil {
@@ -214,12 +233,16 @@ func (p *PackageServices) buildDetail(scoped *gorm.DB, id uint) (*response.Packa
 		return nil, errors.New("package not found")
 	}
 	var (
-		hotels     []catalog.PackageHotel
-		activities []catalog.PackageActivity
-		addons     []catalog.PackageAddon
-		avail      []catalog.PackageAvailability
-		reqFields  []catalog.PackageRequiredField
-		docReqs    []catalog.PackageDocumentRequirement
+		hotels       []catalog.PackageHotel
+		activities   []catalog.PackageActivity
+		addons       []catalog.PackageAddon
+		avail        []catalog.PackageAvailability
+		reqFields    []catalog.PackageRequiredField
+		docReqs      []catalog.PackageDocumentRequirement
+		itinDays     []catalog.ItineraryDay
+		includes     []catalog.PackageInclusion
+		excludes     []catalog.PackageExclusion
+		highlights   []catalog.PackageHighlight
 	)
 	pid := pkg.ID
 	if err := global.GVA_DB.Where("package_id = ?", pid).Find(&hotels).Error; err != nil {
@@ -240,6 +263,25 @@ func (p *PackageServices) buildDetail(scoped *gorm.DB, id uint) (*response.Packa
 	if err := global.GVA_DB.Where("package_id = ?", pid).Find(&docReqs).Error; err != nil {
 		return nil, err
 	}
+	if err := global.GVA_DB.Where("package_id = ?", pid).Order("sort_order asc, day_number asc").Find(&itinDays).Error; err != nil {
+		return nil, err
+	}
+	for i := range itinDays {
+		var items []catalog.ItineraryItem
+		if err := global.GVA_DB.Where("itinerary_day_id = ?", itinDays[i].ID).Order("sort_order asc").Find(&items).Error; err != nil {
+			return nil, err
+		}
+		itinDays[i].Items = items
+	}
+	if err := global.GVA_DB.Where("package_id = ?", pid).Order("sort_order asc").Find(&includes).Error; err != nil {
+		return nil, err
+	}
+	if err := global.GVA_DB.Where("package_id = ?", pid).Order("sort_order asc").Find(&excludes).Error; err != nil {
+		return nil, err
+	}
+	if err := global.GVA_DB.Where("package_id = ?", pid).Order("sort_order asc").Find(&highlights).Error; err != nil {
+		return nil, err
+	}
 	return &response.PackageDetail{
 		Package:              pkg,
 		Hotels:               hotels,
@@ -248,7 +290,31 @@ func (p *PackageServices) buildDetail(scoped *gorm.DB, id uint) (*response.Packa
 		Availability:         avail,
 		RequiredFields:       reqFields,
 		DocumentRequirements: docReqs,
+		ItineraryDays:        itinDays,
+		Includes:             includes,
+		Excludes:             excludes,
+		Highlights:           highlights,
 	}, nil
+}
+
+// ListPackageReviews returns paginated reviews for a given package.
+func (p *PackageServices) ListPackageReviews(packageID uint, page, pageSize int) ([]engage.Review, int64, int64, error) {
+	if global.GVA_DB == nil {
+		return nil, 0, 0, errors.New("db not init")
+	}
+	var rows []engage.Review
+	var total int64
+	if err := global.GVA_DB.Model(&engage.Review{}).Where("package_id = ?", packageID).Count(&total).Error; err != nil {
+		return nil, 0, 0, err
+	}
+	db := global.GVA_DB.Where("package_id = ?", packageID).
+		Order("created_at desc").
+		Offset((page - 1) * pageSize).
+		Limit(pageSize)
+	if err := db.Find(&rows).Error; err != nil {
+		return nil, 0, 0, err
+	}
+	return rows, total, int64((int(total)+pageSize-1)/pageSize), nil
 }
 
 // page runs a paginated count+find on the given model scope.
@@ -279,6 +345,22 @@ func clearChildren(tx *gorm.DB, pkgID uint) error {
 		return err
 	}
 	if err := tx.Where("package_id = ?", pkgID).Delete(&catalog.PackageDocumentRequirement{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("package_id = ?", pkgID).Delete(&catalog.ItineraryDay{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("package_id = ?", pkgID).Delete(&catalog.PackageInclusion{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("package_id = ?", pkgID).Delete(&catalog.PackageExclusion{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("package_id = ?", pkgID).Delete(&catalog.PackageHighlight{}).Error; err != nil {
+		return err
+	}
+	// Itinerary items are children of ItineraryDay, but we also clear them here for safety.
+	if err := tx.Where("itinerary_day_id IN (SELECT id FROM catalog_itinerary_day WHERE package_id = ?)", pkgID).Delete(&catalog.ItineraryItem{}).Error; err != nil {
 		return err
 	}
 	return nil
@@ -342,6 +424,62 @@ func insertChildren(tx *gorm.DB, pkgID uint, req request.PackageReq) error {
 		for _, d := range req.DocumentRequirements {
 			rows = append(rows, catalog.PackageDocumentRequirement{PackageID: pkgID, DocumentTypeID: d.DocumentTypeID,
 				IsRequired: d.IsRequired, IsOptional: d.IsOptional, RequiredAfter: d.RequiredAfter, IsLocked: d.IsLocked, Notes: d.Notes})
+		}
+		if err := tx.Create(&rows).Error; err != nil {
+			return err
+		}
+	}
+	if len(req.ItineraryDays) > 0 {
+		for _, day := range req.ItineraryDays {
+			d := catalog.ItineraryDay{
+				PackageID:   pkgID,
+				DayNumber:   day.DayNumber,
+				Title:       day.Title,
+				Description: day.Description,
+				SortOrder:   day.SortOrder,
+			}
+			if err := tx.Create(&d).Error; err != nil {
+				return err
+			}
+			if len(day.Items) > 0 {
+				items := make([]catalog.ItineraryItem, 0, len(day.Items))
+				for _, it := range day.Items {
+					items = append(items, catalog.ItineraryItem{
+						ItineraryDayID: d.ID, Time: it.Time, Title: it.Title,
+						Description: it.Description, SortOrder: it.SortOrder,
+					})
+				}
+				if err := tx.Create(&items).Error; err != nil {
+					return err
+				}
+			}
+		}
+	}
+	if len(req.Includes) > 0 {
+		rows := make([]catalog.PackageInclusion, 0, len(req.Includes))
+		for _, inc := range req.Includes {
+			rows = append(rows, catalog.PackageInclusion{PackageID: pkgID, Category: inc.Category,
+				ItemText: inc.ItemText, SortOrder: inc.SortOrder})
+		}
+		if err := tx.Create(&rows).Error; err != nil {
+			return err
+		}
+	}
+	if len(req.Excludes) > 0 {
+		rows := make([]catalog.PackageExclusion, 0, len(req.Excludes))
+		for _, exc := range req.Excludes {
+			rows = append(rows, catalog.PackageExclusion{PackageID: pkgID, ItemText: exc.ItemText,
+				SortOrder: exc.SortOrder})
+		}
+		if err := tx.Create(&rows).Error; err != nil {
+			return err
+		}
+	}
+	if len(req.Highlights) > 0 {
+		rows := make([]catalog.PackageHighlight, 0, len(req.Highlights))
+		for _, h := range req.Highlights {
+			rows = append(rows, catalog.PackageHighlight{PackageID: pkgID, Name: h.Name,
+				IconURL: h.IconURL, SortOrder: h.SortOrder})
 		}
 		if err := tx.Create(&rows).Error; err != nil {
 			return err

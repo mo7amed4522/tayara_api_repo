@@ -23,4 +23,11 @@ func (r HomeRouter) InitHomeRouter(publicGroup, bxGroup *gin.RouterGroup) {
 	{
 		bxCustomer.GET("home/recommended", homeApi.RecommendedForYou)
 	}
+	// Package detail (duplicated on bx group for authenticated path)
+	{
+		customer.GET("packages/detail", packageDetailApi.GetPackageDetail)
+		customer.GET("packages/detail/reviews", packageDetailApi.ListPackageReviews)
+		bxCustomer.GET("packages/detail", packageDetailApi.GetPackageDetail)
+		bxCustomer.GET("packages/detail/reviews", packageDetailApi.ListPackageReviews)
+	}
 }

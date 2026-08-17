@@ -47,6 +47,9 @@ func (c *catalogInit) InitializeData(ctx context.Context) (context.Context, erro
 	if err := seedPackageChildren(db, packages); err != nil {
 		return ctx, err
 	}
+	if err := seedPackageExtras(db, packages); err != nil {
+		return ctx, err
+	}
 	if err := seedCustomTripTemplates(db); err != nil {
 		return ctx, err
 	}
@@ -101,6 +104,8 @@ func seedPackages(db *gorm.DB) ([]catmodel.Package, error) {
 			DestinationCountryID: countryByCode(db, "TR"), Location: "Istanbul", Category: "cultural",
 			DaysDuration: 5, AvailabilityType: "open_calendar", DisplayPrice: 320000, EstimatedPrice: 290000,
 			DiscountPercent: 400, Status: "active", ApprovedBy: uintPtr(1), ApprovedAt: &submitted,
+			StatusTour: "Cultural Tour", TimeDisplay: "5 Days / 4 Nights", Destination: "Istanbul City Tour",
+			OriginalPrice: 320000, PromoTag: "Save 10%",
 		},
 		{
 			PackageCode: "PK-1002", AgentID: agent, Type: "inbound",
@@ -109,6 +114,8 @@ func seedPackages(db *gorm.DB) ([]catmodel.Package, error) {
 			DestinationCountryID: countryByCode(db, "AE"), Location: "Dubai", Category: "beach",
 			DaysDuration: 4, AvailabilityType: "fixed_dates", DisplayPrice: 210000, EstimatedPrice: 195000,
 			DiscountPercent: 500, Status: "active", ApprovedBy: uintPtr(1), ApprovedAt: &submitted,
+			StatusTour: "City Tour", TimeDisplay: "4 Days / 3 Nights", Destination: "Dubai to Abu Dhabi",
+			OriginalPrice: 210000, PromoTag: "Limited Time",
 		},
 		{
 			PackageCode: "PK-1003", AgentID: agent2, Type: "outbound",
@@ -248,6 +255,84 @@ func seedPackageChildren(db *gorm.DB, _ []catmodel.Package) error {
 		{PackageID: bang, ViewDate: tAdd(now, -1*24), IP: "192.168.1.14", Session: "mobile"},
 	}
 	return db.Create(&views).Error
+}
+
+func seedPackageExtras(db *gorm.DB, _ []catmodel.Package) error {
+	ist := packageIDByCode(db, "PK-1001")
+	dub := packageIDByCode(db, "PK-1002")
+
+	// Itinerary days with items
+	itinDays := []catmodel.ItineraryDay{
+		{PackageID: ist, DayNumber: 1, Title: "Day 1: Istanbul Arrival & Old City", Description: "Arrival and guided tour of the city's most iconic landmarks", SortOrder: 1},
+		{PackageID: ist, DayNumber: 2, Title: "Day 2: Bosphorus Cruise & Culinary Tour", Description: "Scenic cruise along the Bosphorus followed by a local food experience", SortOrder: 2},
+		{PackageID: dub, DayNumber: 1, Title: "Day 1: Dubai City Arrival", Description: "Check-in and evening Dubai Marina walk", SortOrder: 1},
+		{PackageID: dub, DayNumber: 2, Title: "Day 2: Burj Khalifa & Desert Safari", Description: "Morning at the world's tallest building, afternoon desert adventure", SortOrder: 2},
+	}
+	if err := db.Create(&itinDays).Error; err != nil {
+		return err
+	}
+
+	// Itinerary items (nested under the seeded days)
+	items := []catmodel.ItineraryItem{
+		{ItineraryDayID: itinDays[0].ID, Time: "14:00", Title: "Airport Transfer", Description: "Private VIP transfer to hotel", SortOrder: 1},
+		{ItineraryDayID: itinDays[0].ID, Time: "16:00", Title: "Hagia Sophia Visit", Description: "Guided tour of the historic Hagia Sophia", SortOrder: 2},
+		{ItineraryDayID: itinDays[0].ID, Time: "18:00", Title: "Blue Mosque", Description: "Exterior and guided visit to the Blue Mosque", SortOrder: 3},
+		{ItineraryDayID: itinDays[0].ID, Time: "20:00", Title: "Welcome Dinner", Description: "Traditional Turkish dinner at a local restaurant", SortOrder: 4},
+		{ItineraryDayID: itinDays[1].ID, Time: "09:00", Title: "Topkapi Palace", Description: "Guided tour of the Ottoman sultan's palace", SortOrder: 1},
+		{ItineraryDayID: itinDays[1].ID, Time: "12:00", Title: "Spice Bazaar", Description: "Free time to explore the Grand Bazaar area", SortOrder: 2},
+		{ItineraryDayID: itinDays[1].ID, Time: "15:00", Title: "Bosphorus Cruise", Description: "2-hour scenic cruise between Europe and Asia", SortOrder: 3},
+		{ItineraryDayID: itinDays[1].ID, Time: "19:00", Title: "Food Tasting Tour", Description: "Street food tasting across Sultanahmet", SortOrder: 4},
+		{ItineraryDayID: itinDays[2].ID, Time: "15:00", Title: "Hotel Check-in", Description: "Drop bags and freshen up at the hotel", SortOrder: 1},
+		{ItineraryDayID: itinDays[2].ID, Time: "19:00", Title: "Dubai Marina Walk", Description: "Evening stroll along the Marina promenade", SortOrder: 2},
+		{ItineraryDayID: itinDays[3].ID, Time: "09:00", Title: "Burj Khalifa - At The Top", Description: "Skip-the-line tickets to the 124th floor", SortOrder: 1},
+		{ItineraryDayID: itinDays[3].ID, Time: "15:00", Title: "Desert Safari", Description: "Dune bashing, camel ride, and BBQ dinner", SortOrder: 2},
+	}
+	if err := db.Create(&items).Error; err != nil {
+		return err
+	}
+
+	// Highlights
+	highlights := []catmodel.PackageHighlight{
+		{PackageID: ist, Name: "Expert Guide", SortOrder: 1},
+		{PackageID: ist, Name: "City Center Hotels", SortOrder: 2},
+		{PackageID: ist, Name: "Cruise Included", SortOrder: 3},
+		{PackageID: dub, Name: "5-Star Accommodation", SortOrder: 1},
+		{PackageID: dub, Name: "All Meals Included", SortOrder: 2},
+		{PackageID: dub, Name: "VIP Transfers", SortOrder: 3},
+	}
+	if err := db.Create(&highlights).Error; err != nil {
+		return err
+	}
+
+	// Includes
+	includes := []catmodel.PackageInclusion{
+		{PackageID: ist, Category: "Accommodation", ItemText: "4 nights in a 4-star hotel in Sultanahmet", SortOrder: 1},
+		{PackageID: ist, Category: "Meals", ItemText: "Daily breakfast buffet at the hotel", SortOrder: 2},
+		{PackageID: ist, Category: "Tours", ItemText: "Guided old city tour with licensed Egyptologist", SortOrder: 3},
+		{PackageID: ist, Category: "Tours", ItemText: "Bosphorus sunset cruise (2 hours)", SortOrder: 4},
+		{PackageID: dub, Category: "Accommodation", ItemText: "3 nights in a 5-star downtown hotel", SortOrder: 1},
+		{PackageID: dub, Category: "Meals", ItemText: "All meals: 3 breakfasts, 2 lunches, 3 dinners", SortOrder: 2},
+		{PackageID: dub, Category: "Tours", ItemText: "Burj Khalifa At The Top tickets", SortOrder: 3},
+		{PackageID: dub, Category: "Tours", ItemText: "Desert safari with BBQ dinner and show", SortOrder: 4},
+	}
+	if err := db.Create(&includes).Error; err != nil {
+		return err
+	}
+
+	// Excludes
+	excludes := []catmodel.PackageExclusion{
+		{PackageID: ist, ItemText: "International flights to/from Istanbul", SortOrder: 1},
+		{PackageID: ist, ItemText: "Alcoholic beverages", SortOrder: 2},
+		{PackageID: ist, ItemText: "Personal expenses and tips", SortOrder: 3},
+		{PackageID: dub, ItemText: "International flights to/from Dubai", SortOrder: 1},
+		{PackageID: dub, ItemText: "Private rooms for single occupancy", SortOrder: 2},
+		{PackageID: dub, ItemText: "Spa and wellness treatments", SortOrder: 3},
+	}
+	if err := db.Create(&excludes).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func seedCustomTripTemplates(db *gorm.DB) error {

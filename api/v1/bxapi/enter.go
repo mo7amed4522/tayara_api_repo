@@ -7,6 +7,7 @@ type ApiGroup struct {
 	UserApi
 	HomeApi
 	AgentDetailApi
+	PackageDetailApi
 }
 
 // homeService reaches the bxapi services via the group var.
@@ -17,3 +18,6 @@ var userService = service.ServiceGroupApp.BxApiServiceGroup
 
 // agentDetailService reaches the bxapi services via the group var.
 var agentDetailService = service.ServiceGroupApp.BxApiServiceGroup
+
+// packageDetailService reaches the bxapi services via the group var.
+var packageDetailService = service.ServiceGroupApp.BxApiServiceGroup

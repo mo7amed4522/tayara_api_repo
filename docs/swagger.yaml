@@ -474,6 +474,36 @@ definitions:
       sortOrder:
         type: integer
     type: object
+  request.ItineraryDayReq:
+    properties:
+      dayNumber:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/request.ItineraryItemReq'
+        type: array
+      sortOrder:
+        type: integer
+      title:
+        type: string
+    type: object
+  request.ItineraryItemReq:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      sortOrder:
+        type: integer
+      time:
+        type: string
+      title:
+        type: string
+    type: object
   request.KYCReviewReq:
     properties:
       approve:
@@ -536,6 +566,37 @@ definitions:
     - code
     - name
     type: object
+  request.PackageExclusionReq:
+    properties:
+      id:
+        type: integer
+      itemText:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  request.PackageHighlightReq:
+    properties:
+      iconURL:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  request.PackageInclusionReq:
+    properties:
+      category:
+        type: string
+      id:
+        type: integer
+      itemText:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
   request.PackageReq:
     properties:
       activities:
@@ -547,6 +608,7 @@ definitions:
           $ref: '#/definitions/request.AddonReq'
         type: array
       availability:
+        description: Child items.
         items:
           $ref: '#/definitions/request.AvailabilityReq'
         type: array
@@ -560,6 +622,8 @@ definitions:
         type: integer
       description:
         type: string
+      destination:
+        type: string
       destinationCountryId:
         type: integer
       discountPercent:
@@ -572,8 +636,16 @@ definitions:
         type: array
       estimatedPrice:
         type: integer
+      excludes:
+        items:
+          $ref: '#/definitions/request.PackageExclusionReq'
+        type: array
       galleryImages:
         $ref: '#/definitions/common.JSONMap'
+      highlights:
+        items:
+          $ref: '#/definitions/request.PackageHighlightReq'
+        type: array
       hotels:
         items:
           $ref: '#/definitions/request.HotelReq'
@@ -581,14 +653,31 @@ definitions:
       id:
         description: 0 on create
         type: integer
+      includes:
+        items:
+          $ref: '#/definitions/request.PackageInclusionReq'
+        type: array
+      itineraryDays:
+        items:
+          $ref: '#/definitions/request.ItineraryDayReq'
+        type: array
       location:
         type: string
       name:
+        type: string
+      originalPrice:
+        type: integer
+      promoTag:
         type: string
       requiredFields:
         items:
           $ref: '#/definitions/request.RequiredFieldReq'
         type: array
+      statusTour:
+        description: Tour detail fields.
+        type: string
+      timeDisplay:
+        type: string
       type:
         type: string
     type: object
@@ -1984,6 +2073,24 @@ paths:
       summary: Admin lists all packages (moderation)
       tags:
       - Catalog
+  /api/v1/catalog/admin/packages/detail:
+    get:
+      parameters:
+      - description: package id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Admin gets full package detail (with children) for moderation review
+      tags:
+      - Catalog
   /api/v1/catalog/admin/packages/status:
     put:
       parameters:
@@ -2162,6 +2269,34 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Public detail of an active package
+      tags:
+      - Catalog
+  /api/v1/catalog/public/packages/detail/reviews:
+    get:
+      parameters:
+      - description: package id
+        in: query
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public paginated reviews for an active package
       tags:
       - Catalog
   /api/v1/catalog/templates:
@@ -2430,6 +2565,52 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Recommended packages for the authenticated user (wishlist + top picks)
+      tags:
+      - Customer
+  /api/v1/customer/packages/detail:
+    get:
+      parameters:
+      - description: package id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public detail of an active package
+      tags:
+      - Customer
+  /api/v1/customer/packages/detail/reviews:
+    get:
+      parameters:
+      - description: package id
+        in: query
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public paginated reviews for an active package
       tags:
       - Customer
   /api/v1/customer/search:

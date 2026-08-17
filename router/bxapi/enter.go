@@ -7,10 +7,12 @@ type RouterGroup struct {
 	UserRouter
 	HomeRouter
 	AgentDetailRouter
+	PackageDetailRouter
 }
 
 var (
-	userApi = api.ApiGroupApp.BxApiGroup.UserApi
-	homeApi = api.ApiGroupApp.BxApiGroup.HomeApi
-	agentDetailApi = api.ApiGroupApp.BxApiGroup.AgentDetailApi
+	userApi          = api.ApiGroupApp.BxApiGroup.UserApi
+	homeApi          = api.ApiGroupApp.BxApiGroup.HomeApi
+	agentDetailApi   = api.ApiGroupApp.BxApiGroup.AgentDetailApi
+	packageDetailApi = api.ApiGroupApp.BxApiGroup.PackageDetailApi
 )

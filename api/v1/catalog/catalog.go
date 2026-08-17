@@ -184,6 +184,37 @@ func (CatalogApi) GetPublicPackage(c *gin.Context) {
 	response.OkWithData(detail, c)
 }
 
+// ListPublicPackageReviews
+// @Tags Catalog
+// @Summary Public paginated reviews for an active package
+// @Produce application/json
+// @Param id query int true "package id"
+// @Param page query int false "page number" default(1)
+// @Param pageSize query int false "page size" default(10)
+// @Success 200 {object} response.Response
+// @Router /api/v1/catalog/public/packages/detail/reviews [get]
+func (CatalogApi) ListPublicPackageReviews(c *gin.Context) {
+	var idReq commonReq.GetById
+	if err := c.ShouldBindQuery(&idReq); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	page := utils.StringToInt(c.Query("page"))
+	pageSize := utils.StringToInt(c.Query("pageSize"))
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	rows, total, totalPage, err := catalogService.PackageServices.ListPackageReviews(uint(idReq.ID), page, pageSize)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(response.PageResult{List: rows, Total: total, TotalPage: totalPage, Page: page, PageSize: pageSize}, "ok", c)
+}
+
 // AdminListPackages
 // @Tags Catalog
 // @Summary Admin lists all packages (moderation)
@@ -200,6 +231,27 @@ func (CatalogApi) AdminListPackages(c *gin.Context) {
 		return
 	}
 	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+}
+
+// AdminGetPackageDetail
+// @Tags Catalog
+// @Summary Admin gets full package detail (with children) for moderation review
+// @Produce application/json
+// @Param id query int true "package id"
+// @Success 200 {object} response.Response
+// @Router /api/v1/catalog/admin/packages/detail [get]
+func (CatalogApi) AdminGetPackageDetail(c *gin.Context) {
+	var idReq commonReq.GetById
+	if err := c.ShouldBindQuery(&idReq); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	detail, err := catalogService.PackageServices.AdminGetPackageDetail(uint(idReq.ID))
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(detail, c)
 }
 
 // AdminSetStatus
