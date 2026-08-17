@@ -2286,6 +2286,180 @@ paths:
       summary: Agent sets custom-trip requirement profiles for a template+country
       tags:
       - Catalog
+  /api/v1/customer/agent/detail:
+    get:
+      parameters:
+      - description: agent id
+        in: query
+        name: agentId
+        required: true
+        type: integer
+      - description: filter packages by destination country
+        in: query
+        name: destinationCountryId
+        type: integer
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 12
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Customer agent detail page (public)
+      tags:
+      - Customer
+  /api/v1/customer/explore/trips:
+    get:
+      parameters:
+      - description: category filter
+        in: query
+        name: category
+        type: string
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 12
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public explore trips listing
+      tags:
+      - Customer
+  /api/v1/customer/home/ads:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public home top-banner ads
+      tags:
+      - Customer
+  /api/v1/customer/home/agents:
+    get:
+      parameters:
+      - default: 10
+        description: max results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public top rated agencies
+      tags:
+      - Customer
+  /api/v1/customer/home/deals:
+    get:
+      parameters:
+      - description: category filter
+        in: query
+        name: category
+        type: string
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 12
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public deals listing (discounted packages)
+      tags:
+      - Customer
+  /api/v1/customer/home/destinations:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public discover destinations
+      tags:
+      - Customer
+  /api/v1/customer/home/recommended:
+    get:
+      parameters:
+      - default: 10
+        description: max results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Recommended packages for the authenticated user (wishlist + top picks)
+      tags:
+      - Customer
+  /api/v1/customer/search:
+    get:
+      parameters:
+      - description: search keyword
+        in: query
+        name: keyword
+        required: true
+        type: string
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Public search across agents and packages
+      tags:
+      - Customer
   /api/v1/engage/admin/ads:
     get:
       parameters:
