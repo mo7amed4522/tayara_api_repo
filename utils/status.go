@@ -2,10 +2,10 @@ package utils
 
 // Define status bits
 const (
-	InitialStatus        int8 = 0b0000 // initial state
-	ImmediatePushSuccess int8 = 0b0001 // The status indicates a successful push notification. If the push notification fails, the status remains the initial state, but it will not be confused with the status of push notifications the following day. Instead, it can be described as an overlapping status.
-	SecondDayPushSuccess int8 = 0b0010 // The status indicates a successful push notification on the second day.
-	SecondDayPushFail    int8 = 0b0100 // The status indicates a failed push notification on the second day.
+	InitialStatus        int8 = 0  // initial state
+	ImmediatePushSuccess int8 = 1  // The status indicates a successful push notification. If the push notification fails, the status remains the initial state, but it will not be confused with the status of push notifications the following day. Instead, it can be described as an overlapping status.
+	SecondDayPushSuccess int8 = 2  // The status indicates a successful push notification on the second day.
+	SecondDayPushFail    int8 = 4  // The status indicates a failed push notification on the second day.
 )
 
 // SetStatus Set status
