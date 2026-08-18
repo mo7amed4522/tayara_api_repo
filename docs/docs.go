@@ -6332,8 +6332,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Full-stack development basic platform using gin for extremely fast development",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {
