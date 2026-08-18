@@ -5,4 +5,5 @@ type ServiceGroup struct {
 	UserServices
 	HomeServices
 	AgentDetailServices
+	PackageDetailServices
 }

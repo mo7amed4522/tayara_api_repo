@@ -237,6 +237,12 @@
           "response": []
         },
         {
+          "name": "Get Package Detail",
+          "description": "Full package detail with itinerary, includes, excludes, highlights, and reviews.",
+          "request": { "method": "GET", "header": [{ "key": "S-token", "value": "{{adminToken}}" }], "url": "{{baseUrl}}/api/v1/catalog/admin/packages/detail?id=1" },
+          "response": []
+        },
+        {
           "name": "Set Package Status",
           "description": "status: published | rejected | deactivated. On rejection pass flagIssueType/flagDetails.",
           "request": {
