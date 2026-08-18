@@ -6331,7 +6331,9 @@ var SwaggerInfo = &swag.Spec{
 	Title:            "Tayara Swagger API Interface Documentation",
 	Description:      "Full-stack development basic platform using gin for extremely fast development",
 	InfoInstanceName: "swagger",
-	SwaggerTemplate: docTemplate,
+	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {
