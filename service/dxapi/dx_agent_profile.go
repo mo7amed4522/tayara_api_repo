@@ -17,11 +17,11 @@ import (
 
 type DxAgentProfileService struct{}
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: Register
-// @description: Register
-// @param: u dxapi.DxAgentProfile
-// @return: agent dxapi.DxAgentProfile, err error
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		Register
+//	@description:	Register
+//	@param:			u dxapi.DxAgentProfile
+//	@return:		agent dxapi.DxAgentProfile, err error
 func (dxAgentProfileService DxAgentProfileService) Register(req request.DxCreateAgentProfileRequest, headerImage *multipart.FileHeader) (res dxapi.DxAgentProfile, err error) {
 	var agent dxapi.DxAgentProfile
 	if !errors.Is(global.GVA_DB.Where("business_email = ?", req.BusinessEmail).First(&agent).Error, gorm.ErrRecordNotFound) { // Check if the username is registered
@@ -58,11 +58,11 @@ func (dxAgentProfileService DxAgentProfileService) Register(req request.DxCreate
 	return
 }
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: Login
-// @description: Login
-// @param: u *dxapi.DxAgentProfile
-// @return: err error, res *dxapi.DxAgentProfile
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		Login
+//	@description:	Login
+//	@param:			u *dxapi.DxAgentProfile
+//	@return:		err error, res *dxapi.DxAgentProfile
 func (dxAgentProfileService DxAgentProfileService) Login(req request.DxLoginAgentRequest) (res *response.DxAgentLoginResponse, err error) {
 	if nil == global.GVA_DB {
 		return nil, fmt.Errorf("db not init")

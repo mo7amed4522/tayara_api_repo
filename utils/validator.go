@@ -60,11 +60,11 @@ func NotEmpty() string {
 	return "notEmpty"
 }
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: RegexpMatch
-// @description: Regex validation; check if the input item satisfies the regular expression
-// @param:  rule string
-// @return: string
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		RegexpMatch
+//	@description:	Regex validation; check if the input item satisfies the regular expression
+//	@param:			rule string
+//	@return:		string
 
 func RegexpMatch(rule string) string {
 	return "regexp=" + rule

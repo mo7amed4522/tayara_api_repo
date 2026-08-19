@@ -9,11 +9,11 @@ import (
 type AnalyticsApi struct{}
 
 // AdminUsers
-// @Tags Analytics
-// @Summary Admin Users dashboard card
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/analytics/admin/users [get]
+//	@Tags		Analytics
+//	@Summary	Admin Users dashboard card
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/analytics/admin/users [get]
 func (AnalyticsApi) AdminUsers(c *gin.Context) {
 	card, err := analyticsService.AnalyticsServices.AdminUsersCard()
 	if err != nil {
@@ -24,11 +24,11 @@ func (AnalyticsApi) AdminUsers(c *gin.Context) {
 }
 
 // AdminAgents
-// @Tags Analytics
-// @Summary Admin Agents dashboard card
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/analytics/admin/agents [get]
+//	@Tags		Analytics
+//	@Summary	Admin Agents dashboard card
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/analytics/admin/agents [get]
 func (AnalyticsApi) AdminAgents(c *gin.Context) {
 	card, err := analyticsService.AnalyticsServices.AdminAgentsCard()
 	if err != nil {
@@ -39,11 +39,11 @@ func (AnalyticsApi) AdminAgents(c *gin.Context) {
 }
 
 // AdminBusiness
-// @Tags Analytics
-// @Summary Admin Business dashboard card (GMV, commission, payouts, refunds, net profit)
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/analytics/admin/business [get]
+//	@Tags		Analytics
+//	@Summary	Admin Business dashboard card (GMV, commission, payouts, refunds, net profit)
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/analytics/admin/business [get]
 func (AnalyticsApi) AdminBusiness(c *gin.Context) {
 	card, err := analyticsService.AnalyticsServices.AdminBusinessCard()
 	if err != nil {
@@ -54,11 +54,11 @@ func (AnalyticsApi) AdminBusiness(c *gin.Context) {
 }
 
 // AgentOverview
-// @Tags Analytics
-// @Summary Agent dashboard card (revenue, bookings, views, avg confirmation time)
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/analytics/agent [get]
+//	@Tags		Analytics
+//	@Summary	Agent dashboard card (revenue, bookings, views, avg confirmation time)
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/analytics/agent [get]
 func (AnalyticsApi) AgentOverview(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	card, err := analyticsService.AnalyticsServices.AgentCard(agentID)

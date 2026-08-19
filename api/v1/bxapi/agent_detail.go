@@ -9,15 +9,15 @@ import (
 type AgentDetailApi struct{}
 
 // CustomerAgentDetail
-// @Tags Customer
-// @Summary Customer agent detail page (public)
-// @Produce application/json
-// @Param agentId query int true "agent id"
-// @Param destinationCountryId query int false "filter packages by destination country"
-// @Param page query int false "page number" default(1)
-// @Param pageSize query int false "page size" default(12)
-// @Success 200 {object} response.Response
-// @Router /api/v1/customer/agent/detail [get]
+//	@Tags		Customer
+//	@Summary	Customer agent detail page (public)
+//	@Produce	application/json
+//	@Param		agentId					query		int	true	"agent id"
+//	@Param		destinationCountryId	query		int	false	"filter packages by destination country"
+//	@Param		page					query		int	false	"page number"	default(1)
+//	@Param		pageSize				query		int	false	"page size"		default(12)
+//	@Success	200						{object}	response.Response
+//	@Router		/api/v1/customer/agent/detail [get]
 func (api AgentDetailApi) CustomerAgentDetail(c *gin.Context) {
 	var req bxapiReq.CustomerAgentDetailReq
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -34,7 +34,7 @@ func (api AgentDetailApi) CustomerAgentDetail(c *gin.Context) {
 		response.FailWithMessage("agentId is required", c)
 		return
 	}
-	result, err := agentDetailService.AgentDetailServices.CustomerAgentDetail(req)
+	result, err := bxapiSvc.AgentDetailServices.CustomerAgentDetail(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return

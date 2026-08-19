@@ -13,12 +13,12 @@ import (
 type BookingApi struct{}
 
 // CreateBooking
-// @Tags Booking
-// @Summary User creates a booking (package or custom trip)
-// @Produce application/json
-// @Param data body bookingReq.CreateBookingReq true "booking payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking [post]
+//	@Tags		Booking
+//	@Summary	User creates a booking (package or custom trip)
+//	@Produce	application/json
+//	@Param		data	body		bookingReq.CreateBookingReq	true	"booking payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking [post]
 func (BookingApi) CreateBooking(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	if userID == 0 {
@@ -39,12 +39,12 @@ func (BookingApi) CreateBooking(c *gin.Context) {
 }
 
 // GetOwnBooking
-// @Tags Booking
-// @Summary User gets one of their own bookings (with detail)
-// @Produce application/json
-// @Param id query int true "booking id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/detail [get]
+//	@Tags		Booking
+//	@Summary	User gets one of their own bookings (with detail)
+//	@Produce	application/json
+//	@Param		id	query		int	true	"booking id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/booking/detail [get]
 func (BookingApi) GetOwnBooking(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var idReq commonReq.GetById
@@ -61,12 +61,12 @@ func (BookingApi) GetOwnBooking(c *gin.Context) {
 }
 
 // ListOwnBookings
-// @Tags Booking
-// @Summary User lists their own bookings (paginated)
-// @Produce application/json
-// @Param data query bookingReq.BookingPageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking [get]
+//	@Tags		Booking
+//	@Summary	User lists their own bookings (paginated)
+//	@Produce	application/json
+//	@Param		data	query		bookingReq.BookingPageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking [get]
 func (BookingApi) ListOwnBookings(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req bookingReq.BookingPageReq
@@ -80,12 +80,12 @@ func (BookingApi) ListOwnBookings(c *gin.Context) {
 }
 
 // CancelBooking
-// @Tags Booking
-// @Summary User cancels their own booking (before confirmation)
-// @Produce application/json
-// @Param data body bookingReq.CancelBookingReq true "cancel payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/cancel [post]
+//	@Tags		Booking
+//	@Summary	User cancels their own booking (before confirmation)
+//	@Produce	application/json
+//	@Param		data	body		bookingReq.CancelBookingReq	true	"cancel payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/cancel [post]
 func (BookingApi) CancelBooking(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req bookingReq.CancelBookingReq
@@ -101,12 +101,12 @@ func (BookingApi) CancelBooking(c *gin.Context) {
 }
 
 // ListAgentBookings
-// @Tags Booking
-// @Summary Agent lists their bookings (paginated)
-// @Produce application/json
-// @Param data query bookingReq.BookingPageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/manage [get]
+//	@Tags		Booking
+//	@Summary	Agent lists their bookings (paginated)
+//	@Produce	application/json
+//	@Param		data	query		bookingReq.BookingPageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/manage [get]
 func (BookingApi) ListAgentBookings(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req bookingReq.BookingPageReq
@@ -120,12 +120,12 @@ func (BookingApi) ListAgentBookings(c *gin.Context) {
 }
 
 // GetAgentBooking
-// @Tags Booking
-// @Summary Agent gets one of their bookings
-// @Produce application/json
-// @Param id query int true "booking id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/manage/detail [get]
+//	@Tags		Booking
+//	@Summary	Agent gets one of their bookings
+//	@Produce	application/json
+//	@Param		id	query		int	true	"booking id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/booking/manage/detail [get]
 func (BookingApi) GetAgentBooking(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var idReq commonReq.GetById
@@ -142,12 +142,12 @@ func (BookingApi) GetAgentBooking(c *gin.Context) {
 }
 
 // ReviewBooking
-// @Tags Booking
-// @Summary Agent starts reviewing a booking
-// @Produce application/json
-// @Param data body bookingReq.CancelBookingReq true "booking id + note"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/manage/review [post]
+//	@Tags		Booking
+//	@Summary	Agent starts reviewing a booking
+//	@Produce	application/json
+//	@Param		data	body		bookingReq.CancelBookingReq	true	"booking id + note"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/manage/review [post]
 func (BookingApi) ReviewBooking(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req bookingReq.CancelBookingReq
@@ -163,12 +163,12 @@ func (BookingApi) ReviewBooking(c *gin.Context) {
 }
 
 // SubmitOffer
-// @Tags Booking
-// @Summary Agent submits the final price offer
-// @Produce application/json
-// @Param data body bookingReq.SubmitOfferReq true "offer payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/manage/offer [post]
+//	@Tags		Booking
+//	@Summary	Agent submits the final price offer
+//	@Produce	application/json
+//	@Param		data	body		bookingReq.SubmitOfferReq	true	"offer payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/manage/offer [post]
 func (BookingApi) SubmitOffer(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req bookingReq.SubmitOfferReq
@@ -185,12 +185,12 @@ func (BookingApi) SubmitOffer(c *gin.Context) {
 }
 
 // RejectBooking
-// @Tags Booking
-// @Summary Agent rejects/modifies a booking with alternative dates
-// @Produce application/json
-// @Param data body bookingReq.RejectBookingReq true "reject payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/manage/reject [post]
+//	@Tags		Booking
+//	@Summary	Agent rejects/modifies a booking with alternative dates
+//	@Produce	application/json
+//	@Param		data	body		bookingReq.RejectBookingReq	true	"reject payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/manage/reject [post]
 func (BookingApi) RejectBooking(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req bookingReq.RejectBookingReq
@@ -206,12 +206,12 @@ func (BookingApi) RejectBooking(c *gin.Context) {
 }
 
 // ListAllBookings
-// @Tags Booking
-// @Summary Admin lists all bookings
-// @Produce application/json
-// @Param data query bookingReq.BookingPageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/admin [get]
+//	@Tags		Booking
+//	@Summary	Admin lists all bookings
+//	@Produce	application/json
+//	@Param		data	query		bookingReq.BookingPageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/admin [get]
 func (BookingApi) ListAllBookings(c *gin.Context) {
 	var req bookingReq.BookingPageReq
 	_ = c.ShouldBindQuery(&req)
@@ -224,12 +224,12 @@ func (BookingApi) ListAllBookings(c *gin.Context) {
 }
 
 // ForceCancel
-// @Tags Booking
-// @Summary Admin force-cancels a booking
-// @Produce application/json
-// @Param data body bookingReq.CancelBookingReq true "cancel payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/admin/force-cancel [post]
+//	@Tags		Booking
+//	@Summary	Admin force-cancels a booking
+//	@Produce	application/json
+//	@Param		data	body		bookingReq.CancelBookingReq	true	"cancel payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/admin/force-cancel [post]
 func (BookingApi) ForceCancel(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req bookingReq.CancelBookingReq
@@ -245,13 +245,13 @@ func (BookingApi) ForceCancel(c *gin.Context) {
 }
 
 // SetHold
-// @Tags Booking
-// @Summary Agent/admin opens/extends a reservation hold (pay window) on a booking
-// @Produce application/json
-// @Param id query int true "booking id"
-// @Param hours query int true "hold hours"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/manage/hold [post]
+//	@Tags		Booking
+//	@Summary	Agent/admin opens/extends a reservation hold (pay window) on a booking
+//	@Produce	application/json
+//	@Param		id		query		int	true	"booking id"
+//	@Param		hours	query		int	true	"hold hours"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/manage/hold [post]
 func (BookingApi) SetHold(c *gin.Context) {
 	var idReq commonReq.GetById
 	if err := c.ShouldBindQuery(&idReq); err != nil {
@@ -269,12 +269,12 @@ func (BookingApi) SetHold(c *gin.Context) {
 }
 
 // HoldStatus
-// @Tags Booking
-// @Summary Check whether a booking's reservation hold is live
-// @Produce application/json
-// @Param id query int true "booking id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/manage/hold/status [get]
+//	@Tags		Booking
+//	@Summary	Check whether a booking's reservation hold is live
+//	@Produce	application/json
+//	@Param		id	query		int	true	"booking id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/booking/manage/hold/status [get]
 func (BookingApi) HoldStatus(c *gin.Context) {
 	var idReq commonReq.GetById
 	if err := c.ShouldBindQuery(&idReq); err != nil {

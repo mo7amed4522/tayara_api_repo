@@ -5,11 +5,11 @@ import (
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
+	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
 	"github.com/mo7amed4522/tayara_api/model/bxapi/response"
 	"github.com/mo7amed4522/tayara_api/model/catalog"
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
 	"github.com/mo7amed4522/tayara_api/model/engage"
-	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
 )
 
 // HomeServices owns the public/buyer-facing home-screen data aggregations.
@@ -55,7 +55,7 @@ func (s *HomeServices) CustomerSearch(req bxapiReq.CustomerSearchReq) (*response
 	return &response.CustomerSearchResult{
 		Keyword:    req.Keyword,
 		Agents:     s.buildAgentHits(agents),
-		Packages:   s.buildPackageHits(packages, false),
+		Packages:   s.buildPackageHits(packages),
 		TopExplore: s.buildExploreHits(topExplore),
 	}, nil
 }
@@ -170,18 +170,18 @@ func (s *HomeServices) ListTopRatedAgents(limit int) ([]response.CustomerAgentCa
 		return nil, errors.New("db not init")
 	}
 	type agentRatingRow struct {
-		AgentID       uint     `gorm:"column:agent_id"`
-		CompanyName   string   `gorm:"column:company_name"`
-		HeaderImg     string   `gorm:"column:header_img"`
-		Phone         string   `gorm:"column:phone"`
-		PhoneCountryCode string `gorm:"column:phone_country_code"`
-		BusinessEmail string   `gorm:"column:business_email"`
-		Country       string   `gorm:"column:country"`
-		CompanyAddress string  `gorm:"column:company_address"`
-		LicenseNumber string   `gorm:"column:license_number"`
-		Status        string   `gorm:"column:status"`
-		AvgRating     float64  `gorm:"column:avg_rating"`
-		ReviewCount   int      `gorm:"column:review_count"`
+		AgentID          uint    `gorm:"column:agent_id"`
+		CompanyName      string  `gorm:"column:company_name"`
+		HeaderImg        string  `gorm:"column:header_img"`
+		Phone            string  `gorm:"column:phone"`
+		PhoneCountryCode string  `gorm:"column:phone_country_code"`
+		BusinessEmail    string  `gorm:"column:business_email"`
+		Country          string  `gorm:"column:country"`
+		CompanyAddress   string  `gorm:"column:company_address"`
+		LicenseNumber    string  `gorm:"column:license_number"`
+		Status           string  `gorm:"column:status"`
+		AvgRating        float64 `gorm:"column:avg_rating"`
+		ReviewCount      int     `gorm:"column:review_count"`
 	}
 	query := `
 		SELECT
@@ -237,48 +237,100 @@ func (s *HomeServices) RecommendedForYou(userID uint, limit int) ([]response.Cus
 		return nil, errors.New("db not init")
 	}
 
-	// 1) wishlisted packages
+	// 1) wishlisted packages (ordered by created_at desc)
 	var wishItems []engage.Wishlist
 	if err := global.GVA_DB.Where("user_id = ?", userID).
 		Order("created_at desc").Limit(limit).Find(&wishItems).Error; err != nil {
 		return nil, err
 	}
 
-	seen := make(map[uint]bool)
-	out := make([]response.CustomerRecommendedResult, 0, limit)
-
+	// Collect unique package IDs from wishlist, preserving order
+	seenPkg := make(map[uint]bool)
+	var pkgIDs []uint
 	for _, w := range wishItems {
-		var pkg catalog.Package
-		if err := global.GVA_DB.Where("id = ? AND status = ?", w.PackageID, constants.PackageStatusActive).
-			First(&pkg).Error; err != nil {
-			continue
+		if !seenPkg[w.PackageID] {
+			seenPkg[w.PackageID] = true
+			pkgIDs = append(pkgIDs, w.PackageID)
 		}
-		seen[pkg.ID] = true
-		res := response.CustomerRecommendedResult{
-			Package:    pkg,
-			Wishlisted: true,
-		}
-		res.AgentName, res.AgentLogo = s.agentNameAndLogo(pkg.AgentID)
-		s.fillRatingInto(&res)
-		out = append(out, res)
 	}
 
-	// 2) fill remainder with top approved packages the user hasn't wishlisted
+	// 2) Batch load wishlisted packages (only active ones)
+	var wishPkgs []catalog.Package
+	if err := global.GVA_DB.Where("id IN ? AND status = ?", pkgIDs, constants.PackageStatusActive).
+		Find(&wishPkgs).Error; err != nil {
+		return nil, err
+	}
+	pkgByID := make(map[uint]catalog.Package, len(wishPkgs))
+	for _, p := range wishPkgs {
+		pkgByID[p.ID] = p
+	}
+
+	// 3) Batch load agent info and ratings for wishlisted packages
+	var wishAgentIDs []uint
+	wishAgentSet := make(map[uint]bool)
+	for _, p := range wishPkgs {
+		if !wishAgentSet[p.AgentID] {
+			wishAgentSet[p.AgentID] = true
+			wishAgentIDs = append(wishAgentIDs, p.AgentID)
+		}
+	}
+	wishAgentInfo := s.batchAgentNamesAndLogos(wishAgentIDs)
+	wishPkgRatings, wishPkgCounts := s.batchPackageRatings(pkgIDs)
+
+	// 4) Build wishlisted results (preserving wish order)
+	seen := make(map[uint]bool)
+	out := make([]response.CustomerRecommendedResult, 0, limit)
+	for _, w := range wishItems {
+		pkg, ok := pkgByID[w.PackageID]
+		if !ok {
+			continue // package not found or not active
+		}
+		seen[pkg.ID] = true
+		info, _ := wishAgentInfo[pkg.AgentID]
+		out = append(out, response.CustomerRecommendedResult{
+			Package:     pkg,
+			AgentName:   info.name,
+			AgentLogo:   info.logo,
+			Rating:      wishPkgRatings[pkg.ID],
+			ReviewCount: wishPkgCounts[pkg.ID],
+			Wishlisted:  true,
+		})
+	}
+
+	// 5) Fill remainder with top approved packages not in wishlist
+	//    Reuses pkgIDs from step 1 — no extra wishlist query needed.
 	if len(out) < limit {
 		var extra []catalog.Package
-		if err := global.GVA_DB.Where("status = ? AND id NOT IN ?", constants.PackageStatusActive,
-			s.wishlistPackageIDs(userID)).
+		if err := global.GVA_DB.Where("status = ? AND id NOT IN ?", constants.PackageStatusActive, pkgIDs).
 			Order("approved_at desc").Limit(limit - len(out)).Find(&extra).Error; err != nil {
 			return nil, err
 		}
-		for _, pkg := range extra {
-			res := response.CustomerRecommendedResult{
-				Package:    pkg,
-				Wishlisted: seen[pkg.ID],
+		// Batch load agent info and ratings for extras
+		var extraAgentIDs []uint
+		extraAgentSet := make(map[uint]bool)
+		for _, p := range extra {
+			if !extraAgentSet[p.AgentID] {
+				extraAgentSet[p.AgentID] = true
+				extraAgentIDs = append(extraAgentIDs, p.AgentID)
 			}
-			res.AgentName, res.AgentLogo = s.agentNameAndLogo(pkg.AgentID)
-			s.fillRatingInto(&res)
-			out = append(out, res)
+		}
+		extraAgentInfo := s.batchAgentNamesAndLogos(extraAgentIDs)
+		var extraPkgIDs []uint
+		for _, p := range extra {
+			extraPkgIDs = append(extraPkgIDs, p.ID)
+		}
+		extraPkgRatings, extraPkgCounts := s.batchPackageRatings(extraPkgIDs)
+
+		for _, p := range extra {
+			info, _ := extraAgentInfo[p.AgentID]
+			out = append(out, response.CustomerRecommendedResult{
+				Package:     p,
+				AgentName:   info.name,
+				AgentLogo:   info.logo,
+				Rating:      extraPkgRatings[p.ID],
+				ReviewCount: extraPkgCounts[p.ID],
+				Wishlisted:  seen[p.ID],
+			})
 		}
 	}
 
@@ -320,43 +372,150 @@ func (s *HomeServices) ActiveHomeAds() ([]response.AdBannerResult, error) {
 }
 
 // ---------------------------------------------------------------------------
-// Private helpers
+// Private helpers — batch loading
+// ---------------------------------------------------------------------------
+
+// agentInfo holds the name and logo loaded for a single agent.
+type agentInfo struct {
+	name string
+	logo string
+}
+
+// batchAgentRatings loads avg rating and review count for multiple agents in one query.
+func (s *HomeServices) batchAgentRatings(agentIDs []uint) (ratings map[uint]float64, counts map[uint]int) {
+	ratings = make(map[uint]float64)
+	counts = make(map[uint]int)
+	if len(agentIDs) == 0 {
+		return
+	}
+	type row struct {
+		AgentID uint    `gorm:"column:agent_id"`
+		Avg     float64 `gorm:"column:avg"`
+		Cnt     int64   `gorm:"column:cnt"`
+	}
+	var rows []row
+	if err := global.GVA_DB.Model(&engage.Review{}).
+		Where("agent_id IN ?", agentIDs).
+		Where("review_status = ?", constants.ReviewStatusActive).
+		Select("agent_id, ROUND(AVG(rating), 2) AS avg, COUNT(*) AS cnt").
+		Group("agent_id").
+		Scan(&rows).Error; err != nil {
+		return
+	}
+	for _, r := range rows {
+		ratings[r.AgentID] = r.Avg
+		counts[r.AgentID] = int(r.Cnt)
+	}
+	return
+}
+
+// batchPackageRatings loads avg rating and review count for multiple packages in one query.
+func (s *HomeServices) batchPackageRatings(pkgIDs []uint) (ratings map[uint]float64, counts map[uint]int) {
+	ratings = make(map[uint]float64)
+	counts = make(map[uint]int)
+	if len(pkgIDs) == 0 {
+		return
+	}
+	type row struct {
+		PackageID uint    `gorm:"column:package_id"`
+		Avg       float64 `gorm:"column:avg"`
+		Cnt       int64   `gorm:"column:cnt"`
+	}
+	var rows []row
+	if err := global.GVA_DB.Model(&engage.Review{}).
+		Where("package_id IN ?", pkgIDs).
+		Where("review_status = ?", constants.ReviewStatusActive).
+		Select("package_id, ROUND(AVG(rating), 2) AS avg, COUNT(*) AS cnt").
+		Group("package_id").
+		Scan(&rows).Error; err != nil {
+		return
+	}
+	for _, r := range rows {
+		ratings[r.PackageID] = r.Avg
+		counts[r.PackageID] = int(r.Cnt)
+	}
+	return
+}
+
+// batchAgentNamesAndLogos loads company name and header image for multiple agents in one query.
+func (s *HomeServices) batchAgentNamesAndLogos(agentIDs []uint) map[uint]agentInfo {
+	out := make(map[uint]agentInfo, len(agentIDs))
+	if len(agentIDs) == 0 {
+		return out
+	}
+	type row struct {
+		ID          uint   `gorm:"column:id"`
+		CompanyName string `gorm:"column:company_name"`
+		HeaderImg   string `gorm:"column:header_img"`
+	}
+	var rows []row
+	if err := global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
+		Where("id IN ?", agentIDs).
+		Select("id, company_name, header_img").
+		Scan(&rows).Error; err != nil {
+		return out
+	}
+	for _, r := range rows {
+		out[r.ID] = agentInfo{name: r.CompanyName, logo: r.HeaderImg}
+	}
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Private helpers — result builders
 // ---------------------------------------------------------------------------
 
 func (s *HomeServices) buildAgentHits(agents []dxapi.DxAgentProfile) []response.CustomerAgentResult {
+	var agentIDs []uint
+	for _, a := range agents {
+		agentIDs = append(agentIDs, a.ID)
+	}
+	ratings, counts := s.batchAgentRatings(agentIDs)
+
 	out := make([]response.CustomerAgentResult, 0, len(agents))
 	for _, a := range agents {
-		rating, count := s.agentRating(a.ID)
 		out = append(out, response.CustomerAgentResult{
 			ID:          a.ID,
 			CompanyName: a.CompanyName,
 			HeaderImg:   a.HeaderImg,
-			Rating:      rating,
-			ReviewCount: count,
+			Rating:      ratings[a.ID],
+			ReviewCount: counts[a.ID],
 			Status:      a.Status,
 		})
 	}
 	return out
 }
 
-func (s *HomeServices) buildPackageHits(packages []catalog.Package, withDesc bool) []response.CustomerPackageResult {
+func (s *HomeServices) buildPackageHits(packages []catalog.Package) []response.CustomerPackageResult {
+	var agentIDs []uint
+	var pkgIDs []uint
+	agentSet := make(map[uint]bool)
+	for _, p := range packages {
+		pkgIDs = append(pkgIDs, p.ID)
+		if !agentSet[p.AgentID] {
+			agentSet[p.AgentID] = true
+			agentIDs = append(agentIDs, p.AgentID)
+		}
+	}
+	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
+	pkgRatings, pkgCounts := s.batchPackageRatings(pkgIDs)
+
 	out := make([]response.CustomerPackageResult, 0, len(packages))
 	for _, p := range packages {
-		rating, count := s.packageRating(p.ID)
-		agentName, _ := s.agentNameAndLogo(p.AgentID)
+		info, _ := agentInfo[p.AgentID]
 		out = append(out, response.CustomerPackageResult{
 			ID:              p.ID,
 			PackageCode:     p.PackageCode,
 			AgentID:         p.AgentID,
-			CompanyName:     agentName,
+			CompanyName:     info.name,
 			Name:            p.Name,
 			CoverImageURL:   p.CoverImageURL,
 			Category:        p.Category,
 			DaysDuration:    p.DaysDuration,
 			DisplayPrice:    p.DisplayPrice,
 			DiscountPercent: p.DiscountPercent,
-			Rating:          rating,
-			ReviewCount:     count,
+			Rating:          pkgRatings[p.ID],
+			ReviewCount:     pkgCounts[p.ID],
 			Status:          p.Status,
 		})
 	}
@@ -364,15 +523,27 @@ func (s *HomeServices) buildPackageHits(packages []catalog.Package, withDesc boo
 }
 
 func (s *HomeServices) buildExploreHits(packages []catalog.Package) []response.CustomerExploreResult {
+	var agentIDs []uint
+	var pkgIDs []uint
+	agentSet := make(map[uint]bool)
+	for _, p := range packages {
+		pkgIDs = append(pkgIDs, p.ID)
+		if !agentSet[p.AgentID] {
+			agentSet[p.AgentID] = true
+			agentIDs = append(agentIDs, p.AgentID)
+		}
+	}
+	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
+	pkgRatings, pkgCounts := s.batchPackageRatings(pkgIDs)
+
 	out := make([]response.CustomerExploreResult, 0, len(packages))
 	for _, p := range packages {
-		rating, count := s.packageRating(p.ID)
-		agentName, _ := s.agentNameAndLogo(p.AgentID)
+		info, _ := agentInfo[p.AgentID]
 		out = append(out, response.CustomerExploreResult{
 			ID:              p.ID,
 			PackageCode:     p.PackageCode,
 			AgentID:         p.AgentID,
-			CompanyName:     agentName,
+			CompanyName:     info.name,
 			Name:            p.Name,
 			CoverImageURL:   p.CoverImageURL,
 			Category:        p.Category,
@@ -380,8 +551,8 @@ func (s *HomeServices) buildExploreHits(packages []catalog.Package) []response.C
 			DisplayPrice:    p.DisplayPrice,
 			DiscountPercent: p.DiscountPercent,
 			Description:     s.truncateDesc(p.Description, 120),
-			Rating:          rating,
-			ReviewCount:     count,
+			Rating:          pkgRatings[p.ID],
+			ReviewCount:     pkgCounts[p.ID],
 			Status:          p.Status,
 		})
 	}
@@ -389,23 +560,35 @@ func (s *HomeServices) buildExploreHits(packages []catalog.Package) []response.C
 }
 
 func (s *HomeServices) buildExploreTripCards(packages []catalog.Package) []response.CustomerExploreTripCard {
+	var agentIDs []uint
+	var pkgIDs []uint
+	agentSet := make(map[uint]bool)
+	for _, p := range packages {
+		pkgIDs = append(pkgIDs, p.ID)
+		if !agentSet[p.AgentID] {
+			agentSet[p.AgentID] = true
+			agentIDs = append(agentIDs, p.AgentID)
+		}
+	}
+	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
+	pkgRatings, pkgCounts := s.batchPackageRatings(pkgIDs)
+
 	out := make([]response.CustomerExploreTripCard, 0, len(packages))
 	for _, p := range packages {
-		rating, count := s.packageRating(p.ID)
-		agentName, _ := s.agentNameAndLogo(p.AgentID)
+		info, _ := agentInfo[p.AgentID]
 		out = append(out, response.CustomerExploreTripCard{
 			ID:              p.ID,
 			PackageCode:     p.PackageCode,
 			AgentID:         p.AgentID,
-			CompanyName:     agentName,
+			CompanyName:     info.name,
 			Name:            p.Name,
 			CoverImageURL:   p.CoverImageURL,
 			Category:        p.Category,
 			DaysDuration:    p.DaysDuration,
 			DisplayPrice:    p.DisplayPrice,
 			DiscountPercent: p.DiscountPercent,
-			Rating:          rating,
-			ReviewCount:     count,
+			Rating:          pkgRatings[p.ID],
+			ReviewCount:     pkgCounts[p.ID],
 			Status:          p.Status,
 		})
 	}
@@ -413,73 +596,28 @@ func (s *HomeServices) buildExploreTripCards(packages []catalog.Package) []respo
 }
 
 func (s *HomeServices) buildDealResults(packages []catalog.Package) []response.CustomerDealResult {
+	var agentIDs []uint
+	agentSet := make(map[uint]bool)
+	for _, p := range packages {
+		if !agentSet[p.AgentID] {
+			agentSet[p.AgentID] = true
+			agentIDs = append(agentIDs, p.AgentID)
+		}
+	}
+	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
+
 	out := make([]response.CustomerDealResult, 0, len(packages))
 	for _, p := range packages {
-		agentName, agentLogo := s.agentNameAndLogo(p.AgentID)
+		info, _ := agentInfo[p.AgentID]
 		out = append(out, response.CustomerDealResult{
 			Package:           p,
-			AgentName:         agentName,
-			AgentLogo:         agentLogo,
+			AgentName:         info.name,
+			AgentLogo:         info.logo,
 			DiscountPercent:   p.DiscountPercent,
 			ViewCount:         0, // view count not tracked yet; field reserved
 		})
 	}
 	return out
-}
-
-func (s *HomeServices) fillRatingInto(res *response.CustomerRecommendedResult) {
-	rating, count := s.packageRating(res.ID)
-	res.Rating = rating
-	res.ReviewCount = count
-}
-
-func (s *HomeServices) agentRating(agentID uint) (float64, int) {
-	var avg *float64
-	var count int64
-	if err := global.GVA_DB.Model(&engage.Review{}).
-		Where("agent_id = ? AND review_status = ?", agentID, constants.ReviewStatusActive).
-		Select("AVG(rating) as avg, COUNT(*) as cnt").
-		Row().Scan(&avg, &count); err != nil {
-		return 0, 0
-	}
-	r := 0.0
-	if avg != nil {
-		r = *avg
-	}
-	return r, int(count)
-}
-
-func (s *HomeServices) packageRating(packageID uint) (float64, int) {
-	var avg *float64
-	var count int64
-	if err := global.GVA_DB.Model(&engage.Review{}).
-		Where("package_id = ? AND review_status = ?", packageID, constants.ReviewStatusActive).
-		Select("AVG(rating) as avg, COUNT(*) as cnt").
-		Row().Scan(&avg, &count); err != nil {
-		return 0, 0
-	}
-	r := 0.0
-	if avg != nil {
-		r = *avg
-	}
-	return r, int(count)
-}
-
-func (s *HomeServices) agentNameAndLogo(agentID uint) (name, logo string) {
-	var a dxapi.DxAgentProfile
-	if err := global.GVA_DB.Select("company_name, header_img").
-		Where("id = ?", agentID).First(&a).Error; err != nil {
-		return "", ""
-	}
-	return a.CompanyName, a.HeaderImg
-}
-
-func (s *HomeServices) wishlistPackageIDs(userID uint) []uint {
-	var ids []uint
-	_ = global.GVA_DB.Model(&engage.Wishlist{}).
-		Where("user_id = ?", userID).
-		Pluck("package_id", &ids).Error
-	return ids
 }
 
 func (s *HomeServices) truncateDesc(text string, max int) string {

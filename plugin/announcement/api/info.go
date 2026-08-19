@@ -14,14 +14,14 @@ var Info = new(info)
 type info struct{}
 
 // CreateInfo Create announcement
-// @Tags Info
-// @Summary Create announcement
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data body model.Info true "Create announcement"
-// @Success 200 {object} response.Response{msg=string} "Create success"
-// @Router /info/createInfo [post]
+//	@Tags		Info
+//	@Summary	Create announcement
+//	@Security	ApiKeyAuth
+//	@accept		application/json
+//	@Produce	application/json
+//	@Param		data	body		model.Info						true	"Create announcement"
+//	@Success	200		{object}	response.Response{msg=string}	"Create success"
+//	@Router		/info/createInfo [post]
 func (a *info) CreateInfo(c *gin.Context) {
 	var info model.Info
 	err := c.ShouldBindJSON(&info)
@@ -39,14 +39,14 @@ func (a *info) CreateInfo(c *gin.Context) {
 }
 
 // DeleteInfo Delete announcement
-// @Tags Info
-// @Summary Delete announcement
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data body model.Info true "Delete announcement"
-// @Success 200 {object} response.Response{msg=string} "Delete success"
-// @Router /info/deleteInfo [delete]
+//	@Tags		Info
+//	@Summary	Delete announcement
+//	@Security	ApiKeyAuth
+//	@accept		application/json
+//	@Produce	application/json
+//	@Param		data	body		model.Info						true	"Delete announcement"
+//	@Success	200		{object}	response.Response{msg=string}	"Delete success"
+//	@Router		/info/deleteInfo [delete]
 func (a *info) DeleteInfo(c *gin.Context) {
 	ID := c.Query("ID")
 	err := serviceInfo.DeleteInfo(ID)
@@ -59,13 +59,13 @@ func (a *info) DeleteInfo(c *gin.Context) {
 }
 
 // DeleteInfoByIds Batch delete announcement
-// @Tags Info
-// @Summary Batch delete announcement
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Success 200 {object} response.Response{msg=string} "Batch delete success"
-// @Router /info/deleteInfoByIds [delete]
+//	@Tags		Info
+//	@Summary	Batch delete announcement
+//	@Security	ApiKeyAuth
+//	@accept		application/json
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response{msg=string}	"Batch delete success"
+//	@Router		/info/deleteInfoByIds [delete]
 func (a *info) DeleteInfoByIds(c *gin.Context) {
 	IDs := c.QueryArray("IDs[]")
 	if err := serviceInfo.DeleteInfoByIds(IDs); err != nil {
@@ -77,14 +77,14 @@ func (a *info) DeleteInfoByIds(c *gin.Context) {
 }
 
 // UpdateInfo Update announcement
-// @Tags Info
-// @Summary Update announcement
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data body model.Info true "Update announcement"
-// @Success 200 {object} response.Response{msg=string} "Update success"
-// @Router /info/updateInfo [put]
+//	@Tags		Info
+//	@Summary	Update announcement
+//	@Security	ApiKeyAuth
+//	@accept		application/json
+//	@Produce	application/json
+//	@Param		data	body		model.Info						true	"Update announcement"
+//	@Success	200		{object}	response.Response{msg=string}	"Update success"
+//	@Router		/info/updateInfo [put]
 func (a *info) UpdateInfo(c *gin.Context) {
 	var info model.Info
 	err := c.ShouldBindJSON(&info)
@@ -102,14 +102,14 @@ func (a *info) UpdateInfo(c *gin.Context) {
 }
 
 // FindInfo Use id to query announcement
-// @Tags Info
-// @Summary Use id to query announcement
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data query model.Info true "Use id to query announcement"
-// @Success 200 {object} response.Response{data=model.Info,msg=string} "Find success"
-// @Router /info/findInfo [get]
+//	@Tags		Info
+//	@Summary	Use id to query announcement
+//	@Security	ApiKeyAuth
+//	@accept		application/json
+//	@Produce	application/json
+//	@Param		data	query		model.Info										true	"Use id to query announcement"
+//	@Success	200		{object}	response.Response{data=model.Info,msg=string}	"Find success"
+//	@Router		/info/findInfo [get]
 func (a *info) FindInfo(c *gin.Context) {
 	ID := c.Query("ID")
 	reinfo, err := serviceInfo.GetInfo(ID)
@@ -122,14 +122,14 @@ func (a *info) FindInfo(c *gin.Context) {
 }
 
 // GetInfoList Get announcement list by page
-// @Tags Info
-// @Summary Get announcement list by page
-// @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Param data query request.InfoSearch true "Get announcement list by page"
-// @Success 200 {object} response.Response{data=response.PageResult,msg=string} "Get success"
-// @Router /info/getInfoList [get]
+//	@Tags		Info
+//	@Summary	Get announcement list by page
+//	@Security	ApiKeyAuth
+//	@accept		application/json
+//	@Produce	application/json
+//	@Param		data	query		request.InfoSearch										true	"Get announcement list by page"
+//	@Success	200		{object}	response.Response{data=response.PageResult,msg=string}	"Get success"
+//	@Router		/info/getInfoList [get]
 func (a *info) GetInfoList(c *gin.Context) {
 	var pageInfo request.InfoSearch
 	err := c.ShouldBindQuery(&pageInfo)
@@ -152,12 +152,12 @@ func (a *info) GetInfoList(c *gin.Context) {
 }
 
 // GetInfoDataSource Get Info data source
-// @Tags Info
-// @Summary Get Info data source
-// @accept application/json
-// @Produce application/json
-// @Success 200 {object} response.Response{data=object,msg=string} "Find success"
-// @Router /info/getInfoDataSource [get]
+//	@Tags		Info
+//	@Summary	Get Info data source
+//	@accept		application/json
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response{data=object,msg=string}	"Find success"
+//	@Router		/info/getInfoDataSource [get]
 func (a *info) GetInfoDataSource(c *gin.Context) {
 	// This interface is to define the data source
 	dataSource, err := serviceInfo.GetInfoDataSource()
@@ -170,13 +170,13 @@ func (a *info) GetInfoDataSource(c *gin.Context) {
 }
 
 // GetInfoPublic Announcement interface without authentication
-// @Tags Info
-// @Summary Announcement interface without authentication
-// @accept application/json
-// @Produce application/json
-// @Param data query request.InfoSearch true "Get announcement list by page"
-// @Success 200 {object} response.Response{data=object,msg=string} "Get success"
-// @Router /info/getInfoPublic [get]
+//	@Tags		Info
+//	@Summary	Announcement interface without authentication
+//	@accept		application/json
+//	@Produce	application/json
+//	@Param		data	query		request.InfoSearch							true	"Get announcement list by page"
+//	@Success	200		{object}	response.Response{data=object,msg=string}	"Get success"
+//	@Router		/info/getInfoPublic [get]
 func (a *info) GetInfoPublic(c *gin.Context) {
 	// This interface does not need authentication The example is a fixed message interface, generally this interface is used for C-end services, and the business logic needs to be implemented by yourself
 	response.OkWithDetailed(gin.H{"info": "Announcement interface without authentication information"}, "Get success", c)

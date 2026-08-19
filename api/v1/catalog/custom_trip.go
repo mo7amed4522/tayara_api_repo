@@ -11,12 +11,12 @@ import (
 type CustomTripApi struct{}
 
 // CreateTemplate
-// @Tags Catalog
-// @Summary Agent creates a custom-trip builder template
-// @Produce application/json
-// @Param data body catalogReq.CustomTripTemplateReq true "template payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/templates [post]
+//	@Tags		Catalog
+//	@Summary	Agent creates a custom-trip builder template
+//	@Produce	application/json
+//	@Param		data	body		catalogReq.CustomTripTemplateReq	true	"template payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/templates [post]
 func (CustomTripApi) CreateTemplate(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	if agentID == 0 {
@@ -37,12 +37,12 @@ func (CustomTripApi) CreateTemplate(c *gin.Context) {
 }
 
 // UpdateTemplate
-// @Tags Catalog
-// @Summary Agent updates one of their own templates
-// @Produce application/json
-// @Param data body catalogReq.CustomTripTemplateReq true "template payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/templates [put]
+//	@Tags		Catalog
+//	@Summary	Agent updates one of their own templates
+//	@Produce	application/json
+//	@Param		data	body		catalogReq.CustomTripTemplateReq	true	"template payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/templates [put]
 func (CustomTripApi) UpdateTemplate(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req catalogReq.CustomTripTemplateReq
@@ -59,11 +59,11 @@ func (CustomTripApi) UpdateTemplate(c *gin.Context) {
 }
 
 // ListOwnTemplates
-// @Tags Catalog
-// @Summary Agent lists their own custom-trip templates
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/templates [get]
+//	@Tags		Catalog
+//	@Summary	Agent lists their own custom-trip templates
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/catalog/templates [get]
 func (CustomTripApi) ListOwnTemplates(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	list, err := catalogService.CustomTripServices.ListOwnTemplates(agentID)
@@ -75,12 +75,12 @@ func (CustomTripApi) ListOwnTemplates(c *gin.Context) {
 }
 
 // GetOwnTemplate
-// @Tags Catalog
-// @Summary Agent gets one of their own templates
-// @Produce application/json
-// @Param id query int true "template id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/templates/detail [get]
+//	@Tags		Catalog
+//	@Summary	Agent gets one of their own templates
+//	@Produce	application/json
+//	@Param		id	query		int	true	"template id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/catalog/templates/detail [get]
 func (CustomTripApi) GetOwnTemplate(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var idReq commonReq.GetById
@@ -97,12 +97,12 @@ func (CustomTripApi) GetOwnTemplate(c *gin.Context) {
 }
 
 // DeleteTemplate
-// @Tags Catalog
-// @Summary Agent deletes one of their own templates
-// @Produce application/json
-// @Param id query int true "template id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/templates [delete]
+//	@Tags		Catalog
+//	@Summary	Agent deletes one of their own templates
+//	@Produce	application/json
+//	@Param		id	query		int	true	"template id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/catalog/templates [delete]
 func (CustomTripApi) DeleteTemplate(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var idReq commonReq.GetById

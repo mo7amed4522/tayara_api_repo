@@ -10,12 +10,12 @@ import (
 type RequirementApi struct{}
 
 // SetProfiles
-// @Tags Catalog
-// @Summary Agent sets custom-trip requirement profiles for a template+country
-// @Produce application/json
-// @Param data body catReq.SetRequirementProfilesReq true "profiles payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/templates/requirements [post]
+//	@Tags		Catalog
+//	@Summary	Agent sets custom-trip requirement profiles for a template+country
+//	@Produce	application/json
+//	@Param		data	body		catReq.SetRequirementProfilesReq	true	"profiles payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/templates/requirements [post]
 func (RequirementApi) SetProfiles(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req catReq.SetRequirementProfilesReq
@@ -31,12 +31,12 @@ func (RequirementApi) SetProfiles(c *gin.Context) {
 }
 
 // GetProfiles
-// @Tags Catalog
-// @Summary Agent gets custom-trip requirement profiles for a template+country
-// @Produce application/json
-// @Param data query catReq.SetRequirementProfilesReq true "template + country"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/templates/requirements [get]
+//	@Tags		Catalog
+//	@Summary	Agent gets custom-trip requirement profiles for a template+country
+//	@Produce	application/json
+//	@Param		data	query		catReq.SetRequirementProfilesReq	true	"template + country"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/templates/requirements [get]
 func (RequirementApi) GetProfiles(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req catReq.SetRequirementProfilesReq

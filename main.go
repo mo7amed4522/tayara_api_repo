@@ -16,13 +16,13 @@ import (
 //go:generate go mod tidy
 //go:generate go mod download
 
-// @title                       Tayara Swagger API Interface Documentation
-// @version                     v2.7.7
-// @description                 Full-stack development basic platform using gin for extremely fast development
-// @securityDefinitions.apikey  ApiKeyAuth
-// @in                          header
-// @name                        x-token
-// @BasePath                    /
+//	@title						Tayara Swagger API Interface Documentation
+//	@version					v2.7.7
+//	@description				Full-stack development basic platform using gin for extremely fast development
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						x-token
+//	@BasePath					/
 func main() {
 	global.GVA_VP = core.Viper() // Initialize Viper
 	initialize.OtherInit()

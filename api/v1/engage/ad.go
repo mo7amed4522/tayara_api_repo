@@ -13,12 +13,12 @@ import (
 type AdApi struct{}
 
 // CreateAd
-// @Tags Engage
-// @Summary Admin creates an ad creative (draft)
-// @Produce application/json
-// @Param data body engageReq.AdCreativeReq true "ad payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/ads [post]
+//	@Tags		Engage
+//	@Summary	Admin creates an ad creative (draft)
+//	@Produce	application/json
+//	@Param		data	body		engageReq.AdCreativeReq	true	"ad payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/ads [post]
 func (AdApi) CreateAd(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req engageReq.AdCreativeReq
@@ -35,12 +35,12 @@ func (AdApi) CreateAd(c *gin.Context) {
 }
 
 // UpdateAd
-// @Tags Engage
-// @Summary Admin updates an ad creative
-// @Produce application/json
-// @Param data body engageReq.AdCreativeReq true "ad payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/ads [put]
+//	@Tags		Engage
+//	@Summary	Admin updates an ad creative
+//	@Produce	application/json
+//	@Param		data	body		engageReq.AdCreativeReq	true	"ad payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/ads [put]
 func (AdApi) UpdateAd(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req engageReq.AdCreativeReq
@@ -57,12 +57,12 @@ func (AdApi) UpdateAd(c *gin.Context) {
 }
 
 // SetStatus
-// @Tags Engage
-// @Summary Admin activates/disables an ad
-// @Produce application/json
-// @Param data body engageReq.AdSetStatusReq true "status action"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/ads/status [put]
+//	@Tags		Engage
+//	@Summary	Admin activates/disables an ad
+//	@Produce	application/json
+//	@Param		data	body		engageReq.AdSetStatusReq	true	"status action"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/ads/status [put]
 func (AdApi) SetStatus(c *gin.Context) {
 	var req engageReq.AdSetStatusReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -77,12 +77,12 @@ func (AdApi) SetStatus(c *gin.Context) {
 }
 
 // DeleteAd
-// @Tags Engage
-// @Summary Admin deletes an ad (draft/disabled only)
-// @Produce application/json
-// @Param query query commonReq.GetById true "ad id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/ads [delete]
+//	@Tags		Engage
+//	@Summary	Admin deletes an ad (draft/disabled only)
+//	@Produce	application/json
+//	@Param		query	query		commonReq.GetById	true	"ad id"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/ads [delete]
 func (AdApi) DeleteAd(c *gin.Context) {
 	var idReq commonReq.GetById
 	if err := c.ShouldBindQuery(&idReq); err != nil {
@@ -97,12 +97,12 @@ func (AdApi) DeleteAd(c *gin.Context) {
 }
 
 // ListAds
-// @Tags Engage
-// @Summary Admin lists ads with CTR (filterable by placement/status)
-// @Produce application/json
-// @Param data query engageReq.AdCreativePageReq true "filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/admin/ads [get]
+//	@Tags		Engage
+//	@Summary	Admin lists ads with CTR (filterable by placement/status)
+//	@Produce	application/json
+//	@Param		data	query		engageReq.AdCreativePageReq	true	"filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/admin/ads [get]
 func (AdApi) ListAds(c *gin.Context) {
 	var req engageReq.AdCreativePageReq
 	_ = c.ShouldBindQuery(&req)
@@ -115,12 +115,12 @@ func (AdApi) ListAds(c *gin.Context) {
 }
 
 // ActiveAds
-// @Tags Engage
-// @Summary Public list of currently-active ads for a placement
-// @Produce application/json
-// @Param placement query string true "placement"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/public/ads [get]
+//	@Tags		Engage
+//	@Summary	Public list of currently-active ads for a placement
+//	@Produce	application/json
+//	@Param		placement	query		string	true	"placement"
+//	@Success	200			{object}	response.Response
+//	@Router		/api/v1/engage/public/ads [get]
 func (AdApi) ActiveAds(c *gin.Context) {
 	placement := c.Query("placement")
 	if placement == "" {
@@ -136,12 +136,12 @@ func (AdApi) ActiveAds(c *gin.Context) {
 }
 
 // RecordImpression
-// @Tags Engage
-// @Summary Public records an ad impression
-// @Produce application/json
-// @Param data body commonReq.GetById true "ad id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/public/ads/impression [post]
+//	@Tags		Engage
+//	@Summary	Public records an ad impression
+//	@Produce	application/json
+//	@Param		data	body		commonReq.GetById	true	"ad id"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/public/ads/impression [post]
 func (AdApi) RecordImpression(c *gin.Context) {
 	var req commonReq.GetById
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -156,13 +156,13 @@ func (AdApi) RecordImpression(c *gin.Context) {
 }
 
 // GroupedAnalytics
-// @Tags Engage
-// @Summary Admin ad impression/CTR analytics grouped by placement
-// @Produce application/json
-// @Param from query string false "from (RFC3339)"
-// @Param to query string false "to (RFC3339)"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/admin/ads/analytics [get]
+//	@Tags		Engage
+//	@Summary	Admin ad impression/CTR analytics grouped by placement
+//	@Produce	application/json
+//	@Param		from	query		string	false	"from (RFC3339)"
+//	@Param		to		query		string	false	"to (RFC3339)"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/admin/ads/analytics [get]
 func (AdApi) GroupedAnalytics(c *gin.Context) {
 	from, errFrom := time.Parse(time.RFC3339, c.Query("from"))
 	to, errTo := time.Parse(time.RFC3339, c.Query("to"))
@@ -182,12 +182,12 @@ func (AdApi) GroupedAnalytics(c *gin.Context) {
 }
 
 // RecordClick
-// @Tags Engage
-// @Summary Admin clicks an ad
-// @Produce application/json
-// @Param data body engageReq.AdClickReq true "click payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/public/ads/click [post]
+//	@Tags		Engage
+//	@Summary	Admin clicks an ad
+//	@Produce	application/json
+//	@Param		data	body		engageReq.AdClickReq	true	"click payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/public/ads/click [post]
 func (AdApi) RecordClick(c *gin.Context) {
 	var req engageReq.AdClickReq
 	if err := c.ShouldBindJSON(&req); err != nil {

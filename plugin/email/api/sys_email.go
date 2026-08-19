@@ -12,12 +12,12 @@ import (
 type EmailApi struct{}
 
 // EmailTest
-// @Tags      System
-// @Summary   Send test email
-// @Security  ApiKeyAuth
-// @Produce   application/json
-// @Success   200  {string}  string  "{"success":true,"data":{},"msg":"Send success"}"
-// @Router    /email/emailTest [post]
+//	@Tags		System
+//	@Summary	Send test email
+//	@Security	ApiKeyAuth
+//	@Produce	application/json
+//	@Success	200	{string}	string	"{"success":true,"data":{},"msg":"Send success"}"
+//	@Router		/email/emailTest [post]
 func (s *EmailApi) EmailTest(c *gin.Context) {
 	err := service.ServiceGroupApp.EmailTest()
 	if err != nil {
@@ -29,13 +29,13 @@ func (s *EmailApi) EmailTest(c *gin.Context) {
 }
 
 // SendEmail
-// @Tags      System
-// @Summary   Send email
-// @Security  ApiKeyAuth
-// @Produce   application/json
-// @Param     data  body      email_response.Email  true  "The parameters required for sending email"
-// @Success   200   {string}  string                "{"success":true,"data":{},"msg":"Send success"}"
-// @Router    /email/sendEmail [post]
+//	@Tags		System
+//	@Summary	Send email
+//	@Security	ApiKeyAuth
+//	@Produce	application/json
+//	@Param		data	body		email_response.Email	true									"The parameters required for sending email"
+//	@Success	200		{string}	string					"{"success":true,"data":{},"msg":"Send success"}"
+//	@Router		/email/sendEmail [post]
 func (s *EmailApi) SendEmail(c *gin.Context) {
 	var email email_response.Email
 	err := c.ShouldBindJSON(&email)

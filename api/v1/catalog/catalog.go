@@ -11,12 +11,12 @@ import (
 type CatalogApi struct{}
 
 // CreatePackage
-// @Tags Catalog
-// @Summary Agent creates a package (draft)
-// @Produce application/json
-// @Param data body catalogReq.PackageReq true "package payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/packages [post]
+//	@Tags		Catalog
+//	@Summary	Agent creates a package (draft)
+//	@Produce	application/json
+//	@Param		data	body		catalogReq.PackageReq	true	"package payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/packages [post]
 func (CatalogApi) CreatePackage(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	if agentID == 0 {
@@ -37,12 +37,12 @@ func (CatalogApi) CreatePackage(c *gin.Context) {
 }
 
 // UpdatePackage
-// @Tags Catalog
-// @Summary Agent updates one of their own packages
-// @Produce application/json
-// @Param data body catalogReq.PackageReq true "package payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/packages [put]
+//	@Tags		Catalog
+//	@Summary	Agent updates one of their own packages
+//	@Produce	application/json
+//	@Param		data	body		catalogReq.PackageReq	true	"package payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/packages [put]
 func (CatalogApi) UpdatePackage(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	if agentID == 0 {
@@ -63,12 +63,12 @@ func (CatalogApi) UpdatePackage(c *gin.Context) {
 }
 
 // SubmitForApproval
-// @Tags Catalog
-// @Summary Agent submits a draft package for approval
-// @Produce application/json
-// @Param id query int true "package id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/packages/submit [post]
+//	@Tags		Catalog
+//	@Summary	Agent submits a draft package for approval
+//	@Produce	application/json
+//	@Param		id	query		int	true	"package id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/catalog/packages/submit [post]
 func (CatalogApi) SubmitForApproval(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var idReq commonReq.GetById
@@ -84,12 +84,12 @@ func (CatalogApi) SubmitForApproval(c *gin.Context) {
 }
 
 // DeletePackage
-// @Tags Catalog
-// @Summary Agent deletes one of their own packages
-// @Produce application/json
-// @Param id query int true "package id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/packages [delete]
+//	@Tags		Catalog
+//	@Summary	Agent deletes one of their own packages
+//	@Produce	application/json
+//	@Param		id	query		int	true	"package id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/catalog/packages [delete]
 func (CatalogApi) DeletePackage(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var idReq commonReq.GetById
@@ -105,12 +105,12 @@ func (CatalogApi) DeletePackage(c *gin.Context) {
 }
 
 // GetOwnPackage
-// @Tags Catalog
-// @Summary Agent gets one of their own packages (with children)
-// @Produce application/json
-// @Param id query int true "package id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/packages/detail [get]
+//	@Tags		Catalog
+//	@Summary	Agent gets one of their own packages (with children)
+//	@Produce	application/json
+//	@Param		id	query		int	true	"package id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/catalog/packages/detail [get]
 func (CatalogApi) GetOwnPackage(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var idReq commonReq.GetById
@@ -127,12 +127,12 @@ func (CatalogApi) GetOwnPackage(c *gin.Context) {
 }
 
 // ListOwnPackages
-// @Tags Catalog
-// @Summary Agent lists their own packages (paginated)
-// @Produce application/json
-// @Param data query catalogReq.PackagePageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/packages [get]
+//	@Tags		Catalog
+//	@Summary	Agent lists their own packages (paginated)
+//	@Produce	application/json
+//	@Param		data	query		catalogReq.PackagePageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/packages [get]
 func (CatalogApi) ListOwnPackages(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req catalogReq.PackagePageReq
@@ -146,12 +146,12 @@ func (CatalogApi) ListOwnPackages(c *gin.Context) {
 }
 
 // ListPublicPackages
-// @Tags Catalog
-// @Summary Public list of active packages
-// @Produce application/json
-// @Param data query catalogReq.PackagePageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/public/packages [get]
+//	@Tags		Catalog
+//	@Summary	Public list of active packages
+//	@Produce	application/json
+//	@Param		data	query		catalogReq.PackagePageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/public/packages [get]
 func (CatalogApi) ListPublicPackages(c *gin.Context) {
 	var req catalogReq.PackagePageReq
 	_ = c.ShouldBindQuery(&req)
@@ -164,12 +164,12 @@ func (CatalogApi) ListPublicPackages(c *gin.Context) {
 }
 
 // GetPublicPackage
-// @Tags Catalog
-// @Summary Public detail of an active package
-// @Produce application/json
-// @Param id query int true "package id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/public/packages/detail [get]
+//	@Tags		Catalog
+//	@Summary	Public detail of an active package
+//	@Produce	application/json
+//	@Param		id	query		int	true	"package id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/catalog/public/packages/detail [get]
 func (CatalogApi) GetPublicPackage(c *gin.Context) {
 	var idReq commonReq.GetById
 	if err := c.ShouldBindQuery(&idReq); err != nil {
@@ -185,14 +185,14 @@ func (CatalogApi) GetPublicPackage(c *gin.Context) {
 }
 
 // ListPublicPackageReviews
-// @Tags Catalog
-// @Summary Public paginated reviews for an active package
-// @Produce application/json
-// @Param id query int true "package id"
-// @Param page query int false "page number" default(1)
-// @Param pageSize query int false "page size" default(10)
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/public/packages/detail/reviews [get]
+//	@Tags		Catalog
+//	@Summary	Public paginated reviews for an active package
+//	@Produce	application/json
+//	@Param		id			query		int	true	"package id"
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
+//	@Router		/api/v1/catalog/public/packages/detail/reviews [get]
 func (CatalogApi) ListPublicPackageReviews(c *gin.Context) {
 	var idReq commonReq.GetById
 	if err := c.ShouldBindQuery(&idReq); err != nil {
@@ -216,12 +216,12 @@ func (CatalogApi) ListPublicPackageReviews(c *gin.Context) {
 }
 
 // AdminListPackages
-// @Tags Catalog
-// @Summary Admin lists all packages (moderation)
-// @Produce application/json
-// @Param data query catalogReq.PackagePageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/admin/packages [get]
+//	@Tags		Catalog
+//	@Summary	Admin lists all packages (moderation)
+//	@Produce	application/json
+//	@Param		data	query		catalogReq.PackagePageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/admin/packages [get]
 func (CatalogApi) AdminListPackages(c *gin.Context) {
 	var req catalogReq.PackagePageReq
 	_ = c.ShouldBindQuery(&req)
@@ -234,12 +234,12 @@ func (CatalogApi) AdminListPackages(c *gin.Context) {
 }
 
 // AdminGetPackageDetail
-// @Tags Catalog
-// @Summary Admin gets full package detail (with children) for moderation review
-// @Produce application/json
-// @Param id query int true "package id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/admin/packages/detail [get]
+//	@Tags		Catalog
+//	@Summary	Admin gets full package detail (with children) for moderation review
+//	@Produce	application/json
+//	@Param		id	query		int	true	"package id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/catalog/admin/packages/detail [get]
 func (CatalogApi) AdminGetPackageDetail(c *gin.Context) {
 	var idReq commonReq.GetById
 	if err := c.ShouldBindQuery(&idReq); err != nil {
@@ -255,12 +255,12 @@ func (CatalogApi) AdminGetPackageDetail(c *gin.Context) {
 }
 
 // AdminSetStatus
-// @Tags Catalog
-// @Summary Admin moderates a package (approve/hide/flag/disable)
-// @Produce application/json
-// @Param data body catalogReq.PackageAdminStatusReq true "status action"
-// @Success 200 {object} response.Response
-// @Router /api/v1/catalog/admin/packages/status [put]
+//	@Tags		Catalog
+//	@Summary	Admin moderates a package (approve/hide/flag/disable)
+//	@Produce	application/json
+//	@Param		data	body		catalogReq.PackageAdminStatusReq	true	"status action"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/catalog/admin/packages/status [put]
 func (CatalogApi) AdminSetStatus(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req catalogReq.PackageAdminStatusReq

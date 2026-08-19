@@ -17,13 +17,13 @@ import (
 type SysAdminProfileApi struct{}
 
 // Register
-// @Tags SystemAuth
-// @Summary Register system admin (requires X-Admin-Key header)
-// @Produce application/json
-// @Param X-Admin-Key header string true "Super-admin secret key"
-// @Param data body req.SysRegisterReq true "register"
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/register [post]
+//	@Tags		SystemAuth
+//	@Summary	Register system admin (requires X-Admin-Key header)
+//	@Produce	application/json
+//	@Param		X-Admin-Key	header		string				true	"Super-admin secret key"
+//	@Param		data		body		req.SysRegisterReq	true	"register"
+//	@Success	200			{object}	response.Response
+//	@Router		/api/v1/system/register [post]
 func (SysAdminProfileApi) Register(c *gin.Context) {
 	// Check admin key. Fail closed: if no key is configured, admin registration is
 	// disabled entirely rather than left open. Set `system.super-admin-key` to enable it.
@@ -70,12 +70,12 @@ func (SysAdminProfileApi) Register(c *gin.Context) {
 }
 
 // Login
-// @Tags SystemAuth
-// @Summary System login
-// @Produce application/json
-// @Param data body req.SysLoginReq true "login"
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/login [post]
+//	@Tags		SystemAuth
+//	@Summary	System login
+//	@Produce	application/json
+//	@Param		data	body		req.SysLoginReq	true	"login"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/system/login [post]
 func (sysAdminProfileApi SysAdminProfileApi) Login(c *gin.Context) {
 	var req req.SysLoginReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -91,13 +91,13 @@ func (sysAdminProfileApi SysAdminProfileApi) Login(c *gin.Context) {
 }
 
 // ChangePassword
-// @Tags SystemAuth
-// @Summary Change system password
-// @Security ApiKeyAuth
-// @Produce application/json
-// @Param data body req.SysChangePasswordReq true "password"
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/change-password [post]
+//	@Tags		SystemAuth
+//	@Summary	Change system password
+//	@Security	ApiKeyAuth
+//	@Produce	application/json
+//	@Param		data	body		req.SysChangePasswordReq	true	"password"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/system/change-password [post]
 func (sysAdminProfileApi SysAdminProfileApi) ChangePassword(c *gin.Context) {
 	var req req.SysChangePasswordReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -113,12 +113,12 @@ func (sysAdminProfileApi SysAdminProfileApi) ChangePassword(c *gin.Context) {
 }
 
 // ForgotPassword
-// @Tags SystemAuth
-// @Summary Request a password-reset email for an admin
-// @Produce application/json
-// @Param data body req.SysForgotPasswordReq true "email"
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/forgot-password [post]
+//	@Tags		SystemAuth
+//	@Summary	Request a password-reset email for an admin
+//	@Produce	application/json
+//	@Param		data	body		req.SysForgotPasswordReq	true	"email"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/system/forgot-password [post]
 func (sysAdminProfileApi SysAdminProfileApi) ForgotPassword(c *gin.Context) {
 	var req req.SysForgotPasswordReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -133,12 +133,12 @@ func (sysAdminProfileApi SysAdminProfileApi) ForgotPassword(c *gin.Context) {
 }
 
 // ResetPassword
-// @Tags SystemAuth
-// @Summary Reset an admin password using a one-time emailed token
-// @Produce application/json
-// @Param data body req.SysResetPasswordReq true "token + new password"
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/reset-password [post]
+//	@Tags		SystemAuth
+//	@Summary	Reset an admin password using a one-time emailed token
+//	@Produce	application/json
+//	@Param		data	body		req.SysResetPasswordReq	true	"token + new password"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/system/reset-password [post]
 func (sysAdminProfileApi SysAdminProfileApi) ResetPassword(c *gin.Context) {
 	var req req.SysResetPasswordReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -153,11 +153,11 @@ func (sysAdminProfileApi SysAdminProfileApi) ResetPassword(c *gin.Context) {
 }
 
 // JobRegistry
-// @Tags System
-// @Summary Admin views the platform's scheduled jobs (cron registry)
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/jobs [get]
+//	@Tags		System
+//	@Summary	Admin views the platform's scheduled jobs (cron registry)
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/system/jobs [get]
 func (sysAdminProfileApi SysAdminProfileApi) JobRegistry(c *gin.Context) {
 	jobs := sysAdminProfile.SystemConfigService.JobRegistry()
 	response.OkWithData(jobs, c)

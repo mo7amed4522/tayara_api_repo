@@ -2,7 +2,10 @@ package base
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -240,4 +243,212 @@ func (s LookupServices) ResetSection(ctx context.Context, adminID uint, section 
 		return nil
 	})
 	return updated, err
+}
+
+// --- config key enumeration ---
+
+// ConfigKeyValue represents a single editable config key with its current value and section.
+type ConfigKeyValue struct {
+	Section string `json:"section"`
+	Key     string `json:"key"`
+	Value   string `json:"value"`
+}
+
+// ListAllConfigKeys enumerates every leaf key in config.yaml and returns them with their current
+// values (DB overrides take precedence over the YAML default). The returned list is sorted by
+// section then key for stable frontend rendering.
+func (s LookupServices) ListAllConfigKeys() ([]ConfigKeyValue, error) {
+	// Build a quick lookup of DB overrides keyed by "section.key".
+	dbOverrides := make(map[string]string)
+	var rows []base.SystemSetting
+	if err := global.GVA_DB.Where("is_active = ?", true).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	for _, r := range rows {
+		dbOverrides[r.Section+"."+r.Key] = r.Value
+	}
+
+	// Walk the config struct via reflection and collect every leaf.
+	parsed := global.GVA_CONFIG
+	leaves := reflectValueTree("", "", parsed)
+
+	// Merge with DB overrides and build the result.
+	out := make([]ConfigKeyValue, 0, len(leaves))
+	for _, leaf := range leaves {
+		composite := leaf.section + "." + leaf.key
+		val := leaf.value
+		if override, ok := dbOverrides[composite]; ok {
+			val = override
+		}
+		out = append(out, ConfigKeyValue{Section: leaf.section, Key: leaf.key, Value: val})
+	}
+	// Stable sort by section then key.
+	sortConfigKeys(out)
+	return out, nil
+}
+
+type leaf struct {
+	section string
+	key     string
+	value   string
+}
+
+// reflectValueTree walks a struct and produces every leaf key-path as a section+key pair.
+// topSection is the config top-level key (e.g. "jwt", "travel"); topKey is unused at the top
+// level and only populated for nested structs inside a section.
+func reflectValueTree(topSection, topKey string, v interface{}) []leaf {
+	var out []leaf
+	rv := reflect.ValueOf(v)
+	// Dereference pointer if needed.
+	for rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return out
+	}
+	rt := rv.Type()
+	for i := 0; i < rt.NumField(); i++ {
+		field := rt.Field(i)
+		val := rv.Field(i)
+
+		// Skip unexported fields.
+		if field.PkgPath != "" {
+			continue
+		}
+
+		tag := field.Tag.Get("yaml")
+		if tag == "" || tag == "-" {
+			continue
+		}
+		keyName := tag
+
+		// Build the path segment.
+		var pathSeg string
+		if topSection != "" {
+			pathSeg = topSection + "." + keyName
+		} else {
+			pathSeg = keyName
+		}
+
+		// Handle slices of structs (e.g. RedisList, DBList) — flatten each element under the same key prefix.
+		if val.Kind() == reflect.Slice {
+			for j := 0; j < val.Len(); j++ {
+				elem := val.Index(j)
+				for elem.Kind() == reflect.Ptr {
+					elem = elem.Elem()
+				}
+				if elem.Kind() == reflect.Struct {
+					sectionPrefix := pathSeg
+					if topKey != "" {
+						sectionPrefix = topSection + "." + topKey
+					}
+					out = append(out, reflectValueTree(sectionPrefix, keyName, elem.Interface())...)
+				} else {
+					out = append(out, leaf{
+						section: pathSeg,
+						key:     fmt.Sprintf("[%d]", j),
+						value:   formatValue(elem.Interface()),
+					})
+				}
+			}
+			continue
+		}
+
+		// Recurse into nested structs.
+		if val.Kind() == reflect.Ptr {
+			if val.IsNil() {
+				continue
+			}
+			val = val.Elem()
+		}
+		if val.Kind() == reflect.Struct {
+			// Determine the effective section for nested structs.
+			section := pathSeg
+			if topSection == "" {
+				// Top-level struct field: the field name itself becomes the section.
+				section = keyName
+			}
+			out = append(out, reflectValueTree(section, keyName, val.Interface())...)
+			continue
+		}
+
+		// Leaf primitive value.
+		out = append(out, leaf{
+			section: pathSeg,
+			key:     keyName,
+			value:   formatValue(val.Interface()),
+		})
+	}
+	return out
+}
+
+// formatValue converts a Go value to its string representation for storage in the settings table.
+func formatValue(v interface{}) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case bool:
+		return strconv.FormatBool(val)
+	case int:
+		return strconv.Itoa(val)
+	case int8:
+		return strconv.FormatInt(int64(val), 10)
+	case int16:
+		return strconv.FormatInt(int64(val), 10)
+	case int32:
+		return strconv.FormatInt(int64(val), 10)
+	case int64:
+		return strconv.FormatInt(val, 10)
+	case uint:
+		return strconv.FormatUint(uint64(val), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(val), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(val), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(val), 10)
+	case uint64:
+		return strconv.FormatUint(val, 10)
+	case float32:
+		return strconv.FormatFloat(float64(val), 'f', -1, 32)
+	case float64:
+		return strconv.FormatFloat(val, 'f', -1, 64)
+	case []byte:
+		return string(val)
+	case nil:
+		return ""
+	default:
+		// Fallback: marshal to JSON.
+		b, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("%v", v)
+		}
+		return string(b)
+	}
+}
+
+// sortConfigKeys sorts in-place by section ascending, then key ascending.
+func sortConfigKeys(keys []ConfigKeyValue) {
+	for i := 1; i < len(keys); i++ {
+		for j := i; j > 0 && (keys[j].Section < keys[j-1].Section || (keys[j].Section == keys[j-1].Section && keys[j].Key < keys[j-1].Key)); j-- {
+			keys[j], keys[j-1] = keys[j-1], keys[j]
+		}
+	}
+}
+
+// DeleteSetting removes a setting override from the database, causing the system to fall back to
+// the config.yaml default on the next read. Soft-delete (set is_active=false) preserves audit
+// history; hard-delete is NOT used so that change-history records remain valid.
+func (s LookupServices) DeleteSetting(key string) error {
+	if global.GVA_DB == nil {
+		return errors.New("db not init")
+	}
+	result := global.GVA_DB.Model(&base.SystemSetting{}).Where("key = ?", key).Update("is_active", false)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

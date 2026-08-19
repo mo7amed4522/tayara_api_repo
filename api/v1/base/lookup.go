@@ -2,8 +2,11 @@ package base
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mo7amed4522/tayara_api/constants"
+	"gorm.io/gorm"
 	baseReq "github.com/mo7amed4522/tayara_api/model/base/request"
 	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
 	"github.com/mo7amed4522/tayara_api/model/common/response"
@@ -12,13 +15,26 @@ import (
 
 type LookupApi struct{}
 
+// requireSuperAdmin returns 403 if the caller is not a platform super admin (authorityId == 1).
+// All settings management endpoints are super-admin-only; non-super-admin system users (agents, etc.)
+// are rejected before any DB access occurs.
+func requireSuperAdmin(c *gin.Context) bool {
+	authorityID := utils.GetUserAuthorityId(c)
+	if authorityID != constants.AuthoritySystem {
+		response.FailWithMessage("forbidden: super-admin only", c)
+		c.Abort()
+		return false
+	}
+	return true
+}
+
 // UpsertCategory
-// @Tags Base
-// @Summary Admin creates/updates a package category
-// @Produce application/json
-// @Param data body baseReq.PackageCategoryReq true "category payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/base/categories [post]
+//	@Tags		Base
+//	@Summary	Admin creates/updates a package category
+//	@Produce	application/json
+//	@Param		data	body		baseReq.PackageCategoryReq	true	"category payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/base/categories [post]
 func (LookupApi) UpsertCategory(c *gin.Context) {
 	var req baseReq.PackageCategoryReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -34,11 +50,11 @@ func (LookupApi) UpsertCategory(c *gin.Context) {
 }
 
 // ListCategories
-// @Tags Base
-// @Summary Public list of active package categories
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/base/categories [get]
+//	@Tags		Base
+//	@Summary	Public list of active package categories
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/base/categories [get]
 func (LookupApi) ListCategories(c *gin.Context) {
 	list, err := baseServiceApp.LookupServices.ListCategories()
 	if err != nil {
@@ -49,12 +65,12 @@ func (LookupApi) ListCategories(c *gin.Context) {
 }
 
 // DeleteCategory
-// @Tags Base
-// @Summary Admin deletes a package category
-// @Produce application/json
-// @Param query query commonReq.GetById true "category id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/base/categories [delete]
+//	@Tags		Base
+//	@Summary	Admin deletes a package category
+//	@Produce	application/json
+//	@Param		query	query		commonReq.GetById	true	"category id"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/base/categories [delete]
 func (LookupApi) DeleteCategory(c *gin.Context) {
 	var idReq commonReq.GetById
 	if err := c.ShouldBindQuery(&idReq); err != nil {
@@ -69,12 +85,12 @@ func (LookupApi) DeleteCategory(c *gin.Context) {
 }
 
 // RecordSettingChange
-// @Tags Base
-// @Summary Admin records a system-settings edit (audit trail)
-// @Produce application/json
-// @Param data body baseReq.SettingChangeReq true "change payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/base/settings/history [post]
+//	@Tags		Base
+//	@Summary	Admin records a system-settings edit (audit trail)
+//	@Produce	application/json
+//	@Param		data	body		baseReq.SettingChangeReq	true	"change payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/base/settings/history [post]
 func (LookupApi) RecordSettingChange(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req baseReq.SettingChangeReq
@@ -90,12 +106,12 @@ func (LookupApi) RecordSettingChange(c *gin.Context) {
 }
 
 // SettingHistory
-// @Tags Base
-// @Summary Admin views the system-settings change history
-// @Produce application/json
-// @Param data query baseReq.SettingHistoryPageReq true "filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/base/settings/history [get]
+//	@Tags		Base
+//	@Summary	Admin views the system-settings change history
+//	@Produce	application/json
+//	@Param		data	query		baseReq.SettingHistoryPageReq	true	"filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/base/settings/history [get]
 func (LookupApi) SettingHistory(c *gin.Context) {
 	var req baseReq.SettingHistoryPageReq
 	_ = c.ShouldBindQuery(&req)
@@ -108,12 +124,15 @@ func (LookupApi) SettingHistory(c *gin.Context) {
 }
 
 // Settings
-// @Tags Base
-// @Summary Admin views all system settings grouped by section
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/base/settings [get]
+//	@Tags		Base
+//	@Summary	Super-admin views all system settings grouped by section
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/base/settings [get]
 func (LookupApi) Settings(c *gin.Context) {
+	if !requireSuperAdmin(c) {
+		return
+	}
 	sections, err := baseServiceApp.LookupServices.SettingsBySection()
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -122,14 +141,45 @@ func (LookupApi) Settings(c *gin.Context) {
 	response.OkWithData(sections, c)
 }
 
+// GetSetting
+//	@Tags		Base
+//	@Summary	Super-admin retrieves a single system setting by key
+//	@Produce	application/json
+//	@Param		key	path		string	true	"setting key"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/base/settings/{key} [get]
+func (LookupApi) GetSetting(c *gin.Context) {
+	if !requireSuperAdmin(c) {
+		return
+	}
+	key := c.Param("key")
+	if key == "" {
+		response.FailWithMessage("key required", c)
+		return
+	}
+	setting, err := baseServiceApp.LookupServices.GetSetting(key)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.FailWithMessage("setting not found", c)
+			return
+		}
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(setting, c)
+}
+
 // UpdateSetting
-// @Tags Base
-// @Summary Admin updates a system setting (audited)
-// @Produce application/json
-// @Param data body baseReq.SettingUpdateReq true "setting payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/base/settings [put]
+//	@Tags		Base
+//	@Summary	Super-admin updates or creates a system setting (audited)
+//	@Produce	application/json
+//	@Param		data	body		baseReq.SettingUpdateReq	true	"setting payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/base/settings [put]
 func (LookupApi) UpdateSetting(c *gin.Context) {
+	if !requireSuperAdmin(c) {
+		return
+	}
 	adminID := utils.GetUserID(c)
 	var req baseReq.SettingUpdateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -145,14 +195,62 @@ func (LookupApi) UpdateSetting(c *gin.Context) {
 	response.OkWithData(updated, c)
 }
 
+// DeleteSetting
+//	@Tags		Base
+//	@Summary	Super-admin deletes a system setting override (reverts to config default)
+//	@Produce	application/json
+//	@Param		key	path		string	true	"setting key"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/base/settings/{key} [delete]
+func (LookupApi) DeleteSetting(c *gin.Context) {
+	if !requireSuperAdmin(c) {
+		return
+	}
+	key := c.Param("key")
+	if key == "" {
+		response.FailWithMessage("key required", c)
+		return
+	}
+	if err := baseServiceApp.LookupServices.DeleteSetting(key); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.FailWithMessage("setting not found", c)
+			return
+		}
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("setting deleted", c)
+}
+
+// ConfigKeys
+//	@Tags		Base
+//	@Summary	Super-admin lists every config.yaml key that can be edited at runtime
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/base/settings/keys [get]
+func (LookupApi) ConfigKeys(c *gin.Context) {
+	if !requireSuperAdmin(c) {
+		return
+	}
+	keys, err := baseServiceApp.LookupServices.ListAllConfigKeys()
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(keys, c)
+}
+
 // ResetSection
-// @Tags Base
-// @Summary Admin resets a settings section to its seeded defaults
-// @Produce application/json
-// @Param section query string true "settings section"
-// @Success 200 {object} response.Response
-// @Router /api/v1/base/settings/reset [post]
+//	@Tags		Base
+//	@Summary	Super-admin resets a settings section to its seeded defaults
+//	@Produce	application/json
+//	@Param		section	query		string	true	"settings section"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/base/settings/reset [post]
 func (LookupApi) ResetSection(c *gin.Context) {
+	if !requireSuperAdmin(c) {
+		return
+	}
 	adminID := utils.GetUserID(c)
 	section := c.Query("section")
 	if section == "" {

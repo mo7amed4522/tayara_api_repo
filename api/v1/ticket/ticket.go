@@ -12,11 +12,11 @@ import (
 type TicketApi struct{}
 
 // Download
-// @Tags Ticket
-// @Summary Generate + download a booking e-ticket PDF
-// @Produce application/pdf
-// @Param id path uint true "booking id"
-// @Router /api/v1/admin/tickets/{id}/pdf [get]
+//	@Tags		Ticket
+//	@Summary	Generate + download a booking e-ticket PDF
+//	@Produce	application/pdf
+//	@Param		id	path	uint	true	"booking id"
+//	@Router		/api/v1/admin/tickets/{id}/pdf [get]
 func (TicketApi) Download(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
@@ -35,11 +35,11 @@ func (TicketApi) Download(c *gin.Context) {
 }
 
 // Send
-// @Tags Ticket
-// @Summary Admin emails a booking e-ticket PDF to the buyer
-// @Produce application/json
-// @Param id path uint true "booking id"
-// @Router /api/v1/admin/tickets/{id}/send [post]
+//	@Tags		Ticket
+//	@Summary	Admin emails a booking e-ticket PDF to the buyer
+//	@Produce	application/json
+//	@Param		id	path	uint	true	"booking id"
+//	@Router		/api/v1/admin/tickets/{id}/send [post]
 func (TicketApi) Send(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
