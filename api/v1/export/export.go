@@ -26,11 +26,11 @@ func csvFilename(prefix string) string {
 }
 
 // ExportUsers
-// @Tags Export
-// @Summary Admin exports users to CSV
-// @Produce text/csv
-// @Param status query string false "status filter"
-// @Router /api/v1/admin/export/users [get]
+//	@Tags		Export
+//	@Summary	Admin exports users to CSV
+//	@Produce	text/csv
+//	@Param		status	query	string	false	"status filter"
+//	@Router		/api/v1/admin/export/users [get]
 func (ExportApi) Users(c *gin.Context) {
 	data, err := exportService.ExportServices.Users(c.Query("status"))
 	if err != nil {
@@ -41,11 +41,11 @@ func (ExportApi) Users(c *gin.Context) {
 }
 
 // AgentsAdmin
-// @Tags Export
-// @Summary Admin exports agents to CSV
-// @Produce text/csv
-// @Param status query string false "status filter"
-// @Router /api/v1/admin/export/agents [get]
+//	@Tags		Export
+//	@Summary	Admin exports agents to CSV
+//	@Produce	text/csv
+//	@Param		status	query	string	false	"status filter"
+//	@Router		/api/v1/admin/export/agents [get]
 func (ExportApi) Agents(c *gin.Context) {
 	data, err := exportService.ExportServices.Agents(c.Query("status"))
 	if err != nil {
@@ -56,11 +56,11 @@ func (ExportApi) Agents(c *gin.Context) {
 }
 
 // Bookings
-// @Tags Export
-// @Summary Admin exports bookings to CSV
-// @Produce text/csv
-// @Param status query string false "booking status filter"
-// @Router /api/v1/admin/export/bookings [get]
+//	@Tags		Export
+//	@Summary	Admin exports bookings to CSV
+//	@Produce	text/csv
+//	@Param		status	query	string	false	"booking status filter"
+//	@Router		/api/v1/admin/export/bookings [get]
 func (ExportApi) Bookings(c *gin.Context) {
 	data, err := exportService.ExportServices.Bookings(c.Query("status"))
 	if err != nil {
@@ -71,11 +71,11 @@ func (ExportApi) Bookings(c *gin.Context) {
 }
 
 // Payments
-// @Tags Export
-// @Summary Admin exports payment transactions to CSV
-// @Produce text/csv
-// @Param status query string false "status filter"
-// @Router /api/v1/admin/export/payments [get]
+//	@Tags		Export
+//	@Summary	Admin exports payment transactions to CSV
+//	@Produce	text/csv
+//	@Param		status	query	string	false	"status filter"
+//	@Router		/api/v1/admin/export/payments [get]
 func (ExportApi) Payments(c *gin.Context) {
 	data, err := exportService.ExportServices.Payments(c.Query("status"))
 	if err != nil {

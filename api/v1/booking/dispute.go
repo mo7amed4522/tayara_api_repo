@@ -11,12 +11,12 @@ import (
 type DisputeApi struct{}
 
 // Create
-// @Tags Booking
-// @Summary User or agent opens a dispute on a booking
-// @Produce application/json
-// @Param data body bkReq.CreateDisputeReq true "dispute payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/disputes [post]
+//	@Tags		Booking
+//	@Summary	User or agent opens a dispute on a booking
+//	@Produce	application/json
+//	@Param		data	body		bkReq.CreateDisputeReq	true	"dispute payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/disputes [post]
 func (DisputeApi) Create(c *gin.Context) {
 	raisedBy := "user"
 	var raiserID uint
@@ -44,12 +44,12 @@ func (DisputeApi) Create(c *gin.Context) {
 }
 
 // List
-// @Tags Booking
-// @Summary Admin lists disputes (filterable by booking/status)
-// @Produce application/json
-// @Param data query bkReq.DisputePageReq true "filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/admin/disputes [get]
+//	@Tags		Booking
+//	@Summary	Admin lists disputes (filterable by booking/status)
+//	@Produce	application/json
+//	@Param		data	query		bkReq.DisputePageReq	true	"filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/admin/disputes [get]
 func (DisputeApi) List(c *gin.Context) {
 	var req bkReq.DisputePageReq
 	_ = c.ShouldBindQuery(&req)
@@ -62,12 +62,12 @@ func (DisputeApi) List(c *gin.Context) {
 }
 
 // Resolve
-// @Tags Booking
-// @Summary Admin resolves/closes a dispute
-// @Produce application/json
-// @Param data body bkReq.ResolveDisputeReq true "resolve payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/admin/disputes/resolve [post]
+//	@Tags		Booking
+//	@Summary	Admin resolves/closes a dispute
+//	@Produce	application/json
+//	@Param		data	body		bkReq.ResolveDisputeReq	true	"resolve payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/booking/admin/disputes/resolve [post]
 func (DisputeApi) Resolve(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req bkReq.ResolveDisputeReq
@@ -84,12 +84,12 @@ func (DisputeApi) Resolve(c *gin.Context) {
 }
 
 // ListForBooking
-// @Tags Booking
-// @Summary User/agent lists disputes for their own booking
-// @Produce application/json
-// @Param id query int true "booking id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/booking/disputes [get]
+//	@Tags		Booking
+//	@Summary	User/agent lists disputes for their own booking
+//	@Produce	application/json
+//	@Param		id	query		int	true	"booking id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/booking/disputes [get]
 func (DisputeApi) ListForBooking(c *gin.Context) {
 	var idReq commonReq.GetById
 	if err := c.ShouldBindQuery(&idReq); err != nil {

@@ -11,12 +11,12 @@ import (
 type ReviewApi struct{}
 
 // CreateReview
-// @Tags Engage
-// @Summary User reviews a completed booking (rating + text)
-// @Produce application/json
-// @Param data body engageReq.ReviewReq true "review payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/reviews [post]
+//	@Tags		Engage
+//	@Summary	User reviews a completed booking (rating + text)
+//	@Produce	application/json
+//	@Param		data	body		engageReq.ReviewReq	true	"review payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/reviews [post]
 func (ReviewApi) CreateReview(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.ReviewReq
@@ -33,12 +33,12 @@ func (ReviewApi) CreateReview(c *gin.Context) {
 }
 
 // ListReviews
-// @Tags Review
-// @Summary Public list of active reviews (filterable)
-// @Produce application/json
-// @Param data query engageReq.ReviewPageReq true "filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/public/reviews [get]
+//	@Tags		Review
+//	@Summary	Public list of active reviews (filterable)
+//	@Produce	application/json
+//	@Param		data	query		engageReq.ReviewPageReq	true	"filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/public/reviews [get]
 func (ReviewApi) ListReviews(c *gin.Context) {
 	var req engageReq.ReviewPageReq
 	_ = c.ShouldBindQuery(&req)
@@ -51,12 +51,12 @@ func (ReviewApi) ListReviews(c *gin.Context) {
 }
 
 // AdminListReviews
-// @Tags Review
-// @Summary Admin lists all reviews (incl. disabled) for moderation
-// @Produce application/json
-// @Param data query engageReq.ReviewPageReq true "filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/admin/reviews [get]
+//	@Tags		Review
+//	@Summary	Admin lists all reviews (incl. disabled) for moderation
+//	@Produce	application/json
+//	@Param		data	query		engageReq.ReviewPageReq	true	"filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/admin/reviews [get]
 func (ReviewApi) AdminListReviews(c *gin.Context) {
 	var req engageReq.ReviewPageReq
 	_ = c.ShouldBindQuery(&req)
@@ -69,13 +69,13 @@ func (ReviewApi) AdminListReviews(c *gin.Context) {
 }
 
 // SetStatus
-// @Tags Review
-// @Summary Admin moderates a review status (active/disabled)
-// @Produce application/json
-// @Param query query commonReq.GetById true "review id"
-// @Param status query string true "target status"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/admin/reviews/status [put]
+//	@Tags		Review
+//	@Summary	Admin moderates a review status (active/disabled)
+//	@Produce	application/json
+//	@Param		query	query		commonReq.GetById	true	"review id"
+//	@Param		status	query		string				true	"target status"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/admin/reviews/status [put]
 func (ReviewApi) SetStatus(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var idReq commonReq.GetById

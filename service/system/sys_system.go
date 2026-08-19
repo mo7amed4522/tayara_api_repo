@@ -21,7 +21,7 @@ func (systemConfigService *SystemConfigService) GetSystemConfig() (conf config.S
 	return global.GVA_CONFIG, nil
 }
 
-// @description   set system config,
+//	@description	set system config,
 //@author: [mo7amed4522](https://github.com/mo7amed4522)
 //@function: SetSystemConfig
 //@description: Set configuration file

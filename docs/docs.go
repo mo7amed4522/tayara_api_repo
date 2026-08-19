@@ -617,7 +617,7 @@ const docTemplate = `{
                 "tags": [
                     "Base"
                 ],
-                "summary": "Admin views all system settings grouped by section",
+                "summary": "Super-admin views all system settings grouped by section",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -634,7 +634,7 @@ const docTemplate = `{
                 "tags": [
                     "Base"
                 ],
-                "summary": "Admin updates a system setting (audited)",
+                "summary": "Super-admin updates or creates a system setting (audited)",
                 "parameters": [
                     {
                         "description": "setting payload",
@@ -727,6 +727,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/base/settings/keys": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Super-admin lists every config.yaml key that can be edited at runtime",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/base/settings/reset": {
             "post": {
                 "produces": [
@@ -735,13 +754,67 @@ const docTemplate = `{
                 "tags": [
                     "Base"
                 ],
-                "summary": "Admin resets a settings section to its seeded defaults",
+                "summary": "Super-admin resets a settings section to its seeded defaults",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "settings section",
                         "name": "section",
                         "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/base/settings/{key}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Super-admin retrieves a single system setting by key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "setting key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Super-admin deletes a system setting override (reverts to config default)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "setting key",
+                        "name": "key",
+                        "in": "path",
                         "required": true
                     }
                 ],

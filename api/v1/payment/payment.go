@@ -13,12 +13,12 @@ import (
 type PaymentApi struct{}
 
 // CreatePayment
-// @Tags Payment
-// @Summary User opens a payment for a booking (returns client secret / BNPL session)
-// @Produce application/json
-// @Param data body paymentReq.CreatePaymentReq true "payment payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment [post]
+//	@Tags		Payment
+//	@Summary	User opens a payment for a booking (returns client secret / BNPL session)
+//	@Produce	application/json
+//	@Param		data	body		paymentReq.CreatePaymentReq	true	"payment payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/payment [post]
 func (PaymentApi) CreatePayment(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	if userID == 0 {
@@ -39,12 +39,12 @@ func (PaymentApi) CreatePayment(c *gin.Context) {
 }
 
 // Capture
-// @Tags Payment
-// @Summary Admin/system captures an authorized payment
-// @Produce application/json
-// @Param data body paymentReq.CaptureReq true "capture payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment/capture [post]
+//	@Tags		Payment
+//	@Summary	Admin/system captures an authorized payment
+//	@Produce	application/json
+//	@Param		data	body		paymentReq.CaptureReq	true	"capture payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/payment/capture [post]
 func (PaymentApi) Capture(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req paymentReq.CaptureReq
@@ -61,12 +61,12 @@ func (PaymentApi) Capture(c *gin.Context) {
 }
 
 // Refund
-// @Tags Payment
-// @Summary Admin refunds a captured payment (full/partial)
-// @Produce application/json
-// @Param data body paymentReq.RefundReq true "refund payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment/refund [post]
+//	@Tags		Payment
+//	@Summary	Admin refunds a captured payment (full/partial)
+//	@Produce	application/json
+//	@Param		data	body		paymentReq.RefundReq	true	"refund payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/payment/refund [post]
 func (PaymentApi) Refund(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req paymentReq.RefundReq
@@ -83,11 +83,11 @@ func (PaymentApi) Refund(c *gin.Context) {
 }
 
 // StripeWebhook
-// @Tags Payment
-// @Summary Stripe webhook (payment authorization events)
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment/webhook/stripe [post]
+//	@Tags		Payment
+//	@Summary	Stripe webhook (payment authorization events)
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/payment/webhook/stripe [post]
 func (PaymentApi) StripeWebhook(c *gin.Context) {
 	payload, err := io.ReadAll(c.Request.Body)
 	if err != nil {

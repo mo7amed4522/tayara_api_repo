@@ -19,12 +19,12 @@ type CasbinApi struct{}
 var casbinSvc = sysAdminProfile.CasbinService
 
 // ListPolicies
-// @Tags SystemCasbin
-// @Summary Admin lists the permission matrix (routes) for a role
-// @Produce application/json
-// @Param id query uint true "authority id"
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/casbin/policies [get]
+//	@Tags		SystemCasbin
+//	@Summary	Admin lists the permission matrix (routes) for a role
+//	@Produce	application/json
+//	@Param		id	query		uint	true	"authority id"
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/system/casbin/policies [get]
 func (CasbinApi) ListPolicies(c *gin.Context) {
 	// Optional ?id=<authorityId> override (admin acting for another role). If omitted, fall back
 	// to the caller's own authority id from the JWT — so a bare authenticated call (just an
@@ -49,12 +49,12 @@ func (CasbinApi) ListPolicies(c *gin.Context) {
 }
 
 // SyncPolicies
-// @Tags SystemCasbin
-// @Summary Admin replaces the route-authority matrix for a role
-// @Produce application/json
-// @Param data body sysReq.CasbinInReceive true "authority + policies"
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/casbin/policies [put]
+//	@Tags		SystemCasbin
+//	@Summary	Admin replaces the route-authority matrix for a role
+//	@Produce	application/json
+//	@Param		data	body		sysReq.CasbinInReceive	true	"authority + policies"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/system/casbin/policies [put]
 func (CasbinApi) SyncPolicies(c *gin.Context) {
 	var req sysReq.CasbinSyncReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -78,12 +78,12 @@ func (CasbinApi) SyncPolicies(c *gin.Context) {
 }
 
 // UpdatePolicy
-// @Tags SystemCasbin
-// @Summary Admin updates a single route rule for a role
-// @Produce application/json
-// @Param data body sysReq.CasbinUpdateReq true "old + new path/method"
-// @Success 200 {object} response.Response
-// @Router /api/v1/system/casbin/policy [put]
+//	@Tags		SystemCasbin
+//	@Summary	Admin updates a single route rule for a role
+//	@Produce	application/json
+//	@Param		data	body		sysReq.CasbinUpdateReq	true	"old + new path/method"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/system/casbin/policy [put]
 func (CasbinApi) UpdatePolicy(c *gin.Context) {
 	var req sysReq.CasbinUpdateReq
 	if err := c.ShouldBindJSON(&req); err != nil {

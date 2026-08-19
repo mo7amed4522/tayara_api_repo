@@ -12,11 +12,11 @@ import (
 type PayoutApi struct{}
 
 // PreparePayouts
-// @Tags Payment
-// @Summary Admin scans bookings and prepares payout records (eligible -> pending)
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment/payouts/prepare [post]
+//	@Tags		Payment
+//	@Summary	Admin scans bookings and prepares payout records (eligible -> pending)
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/payment/payouts/prepare [post]
 func (PayoutApi) PreparePayouts(c *gin.Context) {
 	_, err := paymentService.PaymentServices.PreparePayouts()
 	if err != nil {
@@ -27,12 +27,12 @@ func (PayoutApi) PreparePayouts(c *gin.Context) {
 }
 
 // PayAgent
-// @Tags Payment
-// @Summary Admin pays a pending payout for an eligible booking
-// @Produce application/json
-// @Param data body paymentReq.PayAgentReq true "payout payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment/payouts/pay [post]
+//	@Tags		Payment
+//	@Summary	Admin pays a pending payout for an eligible booking
+//	@Produce	application/json
+//	@Param		data	body		paymentReq.PayAgentReq	true	"payout payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/payment/payouts/pay [post]
 func (PayoutApi) PayAgent(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req paymentReq.PayAgentReq
@@ -49,12 +49,12 @@ func (PayoutApi) PayAgent(c *gin.Context) {
 }
 
 // ListAdminPayouts
-// @Tags Payment
-// @Summary Admin lists all payouts (paginated)
-// @Produce application/json
-// @Param data query paymentReq.PayoutPageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment/payouts [get]
+//	@Tags		Payment
+//	@Summary	Admin lists all payouts (paginated)
+//	@Produce	application/json
+//	@Param		data	query		paymentReq.PayoutPageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/payment/payouts [get]
 func (PayoutApi) ListAdminPayouts(c *gin.Context) {
 	var req paymentReq.PayoutPageReq
 	_ = c.ShouldBindQuery(&req)
@@ -67,12 +67,12 @@ func (PayoutApi) ListAdminPayouts(c *gin.Context) {
 }
 
 // ListAgentPayouts
-// @Tags Payment
-// @Summary Agent lists their own payouts (paginated)
-// @Produce application/json
-// @Param data query paymentReq.PayoutPageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment/payouts/manage [get]
+//	@Tags		Payment
+//	@Summary	Agent lists their own payouts (paginated)
+//	@Produce	application/json
+//	@Param		data	query		paymentReq.PayoutPageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/payment/payouts/manage [get]
 func (PayoutApi) ListAgentPayouts(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	var req paymentReq.PayoutPageReq
@@ -86,11 +86,11 @@ func (PayoutApi) ListAgentPayouts(c *gin.Context) {
 }
 
 // AgentEarnings
-// @Tags Payment
-// @Summary Agent views their earnings dashboard
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/payment/payouts/earnings [get]
+//	@Tags		Payment
+//	@Summary	Agent views their earnings dashboard
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/payment/payouts/earnings [get]
 func (PayoutApi) AgentEarnings(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
 	out, err := paymentService.PaymentServices.AgentEarnings(agentID)

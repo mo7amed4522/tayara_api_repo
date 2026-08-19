@@ -20,11 +20,11 @@ var jwtService = &JwtService{}
 
 var SysAdminProfileServiceApp = new(SysAdminProfileServices)
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: Register
-// @description: Register
-// @param: u model.SysAdminProfile
-// @return: admin system.SysAdminProfile, err error
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		Register
+//	@description:	Register
+//	@param:			u model.SysAdminProfile
+//	@return:		admin system.SysAdminProfile, err error
 func (sysAdminProfileServices *SysAdminProfileServices) Register(u request.SysRegisterReq, headerImage *multipart.FileHeader) (userInter system.SysAdminProfile, err error) {
 	var user system.SysAdminProfile
 	if !errors.Is(global.GVA_DB.Where("email = ?", u.Email).First(&user).Error, gorm.ErrRecordNotFound) { // Check if the username is registered
@@ -54,11 +54,11 @@ func (sysAdminProfileServices *SysAdminProfileServices) Register(u request.SysRe
 	return
 }
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: Login
-// @description: Login
-// @param: u *model.SysAdminProfile
-// @return: err error, adminInter *model.SysAdminProfile
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		Login
+//	@description:	Login
+//	@param:			u *model.SysAdminProfile
+//	@return:		err error, adminInter *model.SysAdminProfile
 // dummyPasswordHash is a valid bcrypt hash used only to keep login timing uniform
 // when the email does not exist, so attackers cannot enumerate accounts by timing.
 var dummyPasswordHash = utils.BcryptHash("invalid-account-timing")
@@ -82,11 +82,11 @@ func (sysAdminProfileServices *SysAdminProfileServices) Login(u request.SysLogin
 	return nil, errors.New("invalid email or password")
 }
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: ChangePassword
-// @description: Change password
-// @param: u *model.SysAdminProfile
-// @return: userInter *model.SysAdminProfile,err error
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		ChangePassword
+//	@description:	Change password
+//	@param:			u *model.SysAdminProfile
+//	@return:		userInter *model.SysAdminProfile,err error
 func (sysAdminProfileServices *SysAdminProfileServices) ChangePassword(u *request.SysChangePasswordReq) (err error) {
 	var user system.SysAdminProfile
 	if err = global.GVA_DB.Where("id = ?", u.ID).First(&user).Error; err != nil {
@@ -101,11 +101,11 @@ func (sysAdminProfileServices *SysAdminProfileServices) ChangePassword(u *reques
 
 }
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: UpdatePassword
-// @description: Update password
-// @param: u *model.SysAdminProfile, newPassword string
-// @return: userInter *model.SysAdminProfile,err error
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		UpdatePassword
+//	@description:	Update password
+//	@param:			u *model.SysAdminProfile, newPassword string
+//	@return:		userInter *model.SysAdminProfile,err error
 func (sysAdminProfileServices *SysAdminProfileServices) UpdatePassword(u *system.SysAdminProfile, newPassword string) (userInter *system.SysAdminProfile, err error) {
 	var user system.SysAdminProfile
 	if err = global.GVA_DB.Where("id = ?", u.ID).First(&user).Error; err != nil {
@@ -117,33 +117,33 @@ func (sysAdminProfileServices *SysAdminProfileServices) UpdatePassword(u *system
 
 }
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: SetSelfInfo
-// @description: Set user info
-// @param: reqUser model.SysAdminProfile
-// @return: err error, user system.SysAdminProfile
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		SetSelfInfo
+//	@description:	Set user info
+//	@param:			reqUser model.SysAdminProfile
+//	@return:		err error, user system.SysAdminProfile
 func (sysAdminProfileServices *SysAdminProfileServices) SetSelfInfo(req system.SysAdminProfile) error {
 	return global.GVA_DB.Model(&system.SysAdminProfile{}).
 		Where("id=?", req.ID).
 		Updates(req).Error
 }
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: FindUserById
-// @description: Get user info by id
-// @param: id int
-// @return: err error, user *system.SysAdminProfile
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		FindUserById
+//	@description:	Get user info by id
+//	@param:			id int
+//	@return:		err error, user *system.SysAdminProfile
 func (sysAdminProfileServices *SysAdminProfileServices) FindUserById(id int) (user *system.SysAdminProfile, err error) {
 	var u system.SysAdminProfile
 	err = global.GVA_DB.Where("id = ?", id).First(&u).Error
 	return &u, err
 }
 
-// @author: [mo7amed4522](https://github.com/mo7amed4522)
-// @function: Logout
-// @description: Logout user
-// @param: username string
-// @return: err error
+//	@author:		[mo7amed4522](https://github.com/mo7amed4522)
+//	@function:		Logout
+//	@description:	Logout user
+//	@param:			username string
+//	@return:		err error
 func (sysAdminProfileServices *SysAdminProfileServices) Logout(username string) error {
 	if username == "" {
 		return errors.New("username cannot be empty")

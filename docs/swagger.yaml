@@ -1413,7 +1413,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Admin views all system settings grouped by section
+      summary: Super-admin views all system settings grouped by section
       tags:
       - Base
     put:
@@ -1431,7 +1431,42 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Admin updates a system setting (audited)
+      summary: Super-admin updates or creates a system setting (audited)
+      tags:
+      - Base
+  /api/v1/base/settings/{key}:
+    delete:
+      parameters:
+      - description: setting key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Super-admin deletes a system setting override (reverts to config default)
+      tags:
+      - Base
+    get:
+      parameters:
+      - description: setting key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Super-admin retrieves a single system setting by key
       tags:
       - Base
   /api/v1/base/settings/history:
@@ -1479,6 +1514,18 @@ paths:
       summary: Admin records a system-settings edit (audit trail)
       tags:
       - Base
+  /api/v1/base/settings/keys:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Super-admin lists every config.yaml key that can be edited at runtime
+      tags:
+      - Base
   /api/v1/base/settings/reset:
     post:
       parameters:
@@ -1494,7 +1541,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Admin resets a settings section to its seeded defaults
+      summary: Super-admin resets a settings section to its seeded defaults
       tags:
       - Base
   /api/v1/booking:

@@ -12,14 +12,14 @@ import (
 type HomeApi struct{}
 
 // CustomerSearch
-// @Tags Customer
-// @Summary Public search across agents and packages
-// @Produce application/json
-// @Param keyword query string true "search keyword"
-// @Param page query int false "page number" default(1)
-// @Param pageSize query int false "page size" default(10)
-// @Success 200 {object} response.Response
-// @Router /api/v1/customer/search [get]
+//	@Tags		Customer
+//	@Summary	Public search across agents and packages
+//	@Produce	application/json
+//	@Param		keyword		query		string	true	"search keyword"
+//	@Param		page		query		int		false	"page number"	default(1)
+//	@Param		pageSize	query		int		false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
+//	@Router		/api/v1/customer/search [get]
 func (HomeApi) CustomerSearch(c *gin.Context) {
 	var req bxapiReq.CustomerSearchReq
 	if err := c.ShouldBindQuery(&req); err != nil || req.Keyword == "" {
@@ -32,7 +32,7 @@ func (HomeApi) CustomerSearch(c *gin.Context) {
 	if req.PageSize <= 0 {
 		req.PageSize = 10
 	}
-	res, err := homeService.HomeServices.CustomerSearch(req)
+	res, err := bxapiSvc.HomeServices.CustomerSearch(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -41,14 +41,14 @@ func (HomeApi) CustomerSearch(c *gin.Context) {
 }
 
 // ListExploreTrips
-// @Tags Customer
-// @Summary Public explore trips listing
-// @Produce application/json
-// @Param category query string false "category filter"
-// @Param page query int false "page number" default(1)
-// @Param pageSize query int false "page size" default(12)
-// @Success 200 {object} response.Response
-// @Router /api/v1/customer/explore/trips [get]
+//	@Tags		Customer
+//	@Summary	Public explore trips listing
+//	@Produce	application/json
+//	@Param		category	query		string	false	"category filter"
+//	@Param		page		query		int		false	"page number"	default(1)
+//	@Param		pageSize	query		int		false	"page size"		default(12)
+//	@Success	200			{object}	response.Response
+//	@Router		/api/v1/customer/explore/trips [get]
 func (HomeApi) ListExploreTrips(c *gin.Context) {
 	var req bxapiReq.CustomerHomeExploreReq
 	_ = c.ShouldBindQuery(&req)
@@ -58,7 +58,7 @@ func (HomeApi) ListExploreTrips(c *gin.Context) {
 	if req.PageSize <= 0 {
 		req.PageSize = 12
 	}
-	list, total, err := homeService.HomeServices.ListExploreTrips(req)
+	list, total, err := bxapiSvc.HomeServices.ListExploreTrips(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -67,13 +67,13 @@ func (HomeApi) ListExploreTrips(c *gin.Context) {
 }
 
 // ListDestinations
-// @Tags Customer
-// @Summary Public discover destinations
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/customer/home/destinations [get]
+//	@Tags		Customer
+//	@Summary	Public discover destinations
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/customer/home/destinations [get]
 func (HomeApi) ListDestinations(c *gin.Context) {
-	list, err := homeService.HomeServices.ListDestinations()
+	list, err := bxapiSvc.HomeServices.ListDestinations()
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -82,14 +82,14 @@ func (HomeApi) ListDestinations(c *gin.Context) {
 }
 
 // ListDeals
-// @Tags Customer
-// @Summary Public deals listing (discounted packages)
-// @Produce application/json
-// @Param category query string false "category filter"
-// @Param page query int false "page number" default(1)
-// @Param pageSize query int false "page size" default(12)
-// @Success 200 {object} response.Response
-// @Router /api/v1/customer/home/deals [get]
+//	@Tags		Customer
+//	@Summary	Public deals listing (discounted packages)
+//	@Produce	application/json
+//	@Param		category	query		string	false	"category filter"
+//	@Param		page		query		int		false	"page number"	default(1)
+//	@Param		pageSize	query		int		false	"page size"		default(12)
+//	@Success	200			{object}	response.Response
+//	@Router		/api/v1/customer/home/deals [get]
 func (HomeApi) ListDeals(c *gin.Context) {
 	var req bxapiReq.CustomerHomeDealsReq
 	_ = c.ShouldBindQuery(&req)
@@ -99,7 +99,7 @@ func (HomeApi) ListDeals(c *gin.Context) {
 	if req.PageSize <= 0 {
 		req.PageSize = 12
 	}
-	list, total, err := homeService.HomeServices.ListDeals(req)
+	list, total, err := bxapiSvc.HomeServices.ListDeals(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -108,12 +108,12 @@ func (HomeApi) ListDeals(c *gin.Context) {
 }
 
 // ListTopRatedAgents
-// @Tags Customer
-// @Summary Public top rated agencies
-// @Produce application/json
-// @Param limit query int false "max results" default(10)
-// @Success 200 {object} response.Response
-// @Router /api/v1/customer/home/agents [get]
+//	@Tags		Customer
+//	@Summary	Public top rated agencies
+//	@Produce	application/json
+//	@Param		limit	query		int	false	"max results"	default(10)
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/customer/home/agents [get]
 func (HomeApi) ListTopRatedAgents(c *gin.Context) {
 	limit := 10
 	if l := c.Query("limit"); l != "" {
@@ -122,7 +122,7 @@ func (HomeApi) ListTopRatedAgents(c *gin.Context) {
 			limit = n
 		}
 	}
-	list, err := homeService.HomeServices.ListTopRatedAgents(limit)
+	list, err := bxapiSvc.HomeServices.ListTopRatedAgents(limit)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -131,12 +131,12 @@ func (HomeApi) ListTopRatedAgents(c *gin.Context) {
 }
 
 // RecommendedForYou
-// @Tags Customer
-// @Summary Recommended packages for the authenticated user (wishlist + top picks)
-// @Produce application/json
-// @Param limit query int false "max results" default(10)
-// @Success 200 {object} response.Response
-// @Router /api/v1/customer/home/recommended [get]
+//	@Tags		Customer
+//	@Summary	Recommended packages for the authenticated user (wishlist + top picks)
+//	@Produce	application/json
+//	@Param		limit	query		int	false	"max results"	default(10)
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/customer/home/recommended [get]
 func (HomeApi) RecommendedForYou(c *gin.Context) {
 	limit := 10
 	if l := c.Query("limit"); l != "" {
@@ -146,7 +146,7 @@ func (HomeApi) RecommendedForYou(c *gin.Context) {
 		}
 	}
 	userID := utils.GetBxUserID(c)
-	list, err := homeService.HomeServices.RecommendedForYou(userID, limit)
+	list, err := bxapiSvc.HomeServices.RecommendedForYou(userID, limit)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -155,13 +155,13 @@ func (HomeApi) RecommendedForYou(c *gin.Context) {
 }
 
 // ActiveHomeAds
-// @Tags Customer
-// @Summary Public home top-banner ads
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/customer/home/ads [get]
+//	@Tags		Customer
+//	@Summary	Public home top-banner ads
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/customer/home/ads [get]
 func (HomeApi) ActiveHomeAds(c *gin.Context) {
-	list, err := homeService.HomeServices.ActiveHomeAds()
+	list, err := bxapiSvc.HomeServices.ActiveHomeAds()
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return

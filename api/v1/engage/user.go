@@ -10,12 +10,12 @@ import (
 type UserEngageApi struct{}
 
 // ToggleWishlist
-// @Tags Engage
-// @Summary User adds/removes a package from their wishlist
-// @Produce application/json
-// @Param data body engageReq.WishlistToggleReq true "wishlist payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/wishlist [post]
+//	@Tags		Engage
+//	@Summary	User adds/removes a package from their wishlist
+//	@Produce	application/json
+//	@Param		data	body		engageReq.WishlistToggleReq	true	"wishlist payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/wishlist [post]
 func (UserEngageApi) ToggleWishlist(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.WishlistToggleReq
@@ -32,11 +32,11 @@ func (UserEngageApi) ToggleWishlist(c *gin.Context) {
 }
 
 // ListWishlist
-// @Tags Engage
-// @Summary User lists their saved packages
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/wishlist [get]
+//	@Tags		Engage
+//	@Summary	User lists their saved packages
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/engage/wishlist [get]
 func (UserEngageApi) ListWishlist(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	list, err := engageService.UserEngageServices.ListWishlist(userID)
@@ -48,12 +48,12 @@ func (UserEngageApi) ListWishlist(c *gin.Context) {
 }
 
 // RecordShare
-// @Tags Engage
-// @Summary User records a share of a package
-// @Produce application/json
-// @Param data body engageReq.ShareReq true "share payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/share [post]
+//	@Tags		Engage
+//	@Summary	User records a share of a package
+//	@Produce	application/json
+//	@Param		data	body		engageReq.ShareReq	true	"share payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/share [post]
 func (UserEngageApi) RecordShare(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.ShareReq
@@ -70,12 +70,12 @@ func (UserEngageApi) RecordShare(c *gin.Context) {
 }
 
 // CreateCoupon
-// @Tags Engage
-// @Summary Admin creates a coupon
-// @Produce application/json
-// @Param data body engageReq.CouponReq true "coupon payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/admin/coupons [post]
+//	@Tags		Engage
+//	@Summary	Admin creates a coupon
+//	@Produce	application/json
+//	@Param		data	body		engageReq.CouponReq	true	"coupon payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/admin/coupons [post]
 func (UserEngageApi) CreateCoupon(c *gin.Context) {
 	var req engageReq.CouponReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -91,12 +91,12 @@ func (UserEngageApi) CreateCoupon(c *gin.Context) {
 }
 
 // ListCoupons
-// @Tags Engage
-// @Summary User lists their coupons
-// @Produce application/json
-// @Param data query engageReq.CouponPageReq true "filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/coupons [get]
+//	@Tags		Engage
+//	@Summary	User lists their coupons
+//	@Produce	application/json
+//	@Param		data	query		engageReq.CouponPageReq	true	"filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/coupons [get]
 func (UserEngageApi) ListCoupons(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.CouponPageReq
@@ -110,12 +110,12 @@ func (UserEngageApi) ListCoupons(c *gin.Context) {
 }
 
 // AdminListCoupons
-// @Tags Engage
-// @Summary Admin lists all coupons
-// @Produce application/json
-// @Param data query engageReq.CouponPageReq true "filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/admin/coupons [get]
+//	@Tags		Engage
+//	@Summary	Admin lists all coupons
+//	@Produce	application/json
+//	@Param		data	query		engageReq.CouponPageReq	true	"filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/admin/coupons [get]
 func (UserEngageApi) AdminListCoupons(c *gin.Context) {
 	var req engageReq.CouponPageReq
 	_ = c.ShouldBindQuery(&req)
@@ -128,12 +128,12 @@ func (UserEngageApi) AdminListCoupons(c *gin.Context) {
 }
 
 // ApplyCoupon
-// @Tags Engage
-// @Summary User applies a coupon to a booking (discount + marks used)
-// @Produce application/json
-// @Param data body engageReq.ApplyCouponReq true "coupon apply payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/coupons/apply [post]
+//	@Tags		Engage
+//	@Summary	User applies a coupon to a booking (discount + marks used)
+//	@Produce	application/json
+//	@Param		data	body		engageReq.ApplyCouponReq	true	"coupon apply payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/coupons/apply [post]
 func (UserEngageApi) ApplyCoupon(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.ApplyCouponReq
@@ -150,12 +150,12 @@ func (UserEngageApi) ApplyCoupon(c *gin.Context) {
 }
 
 // RegisterDeviceToken
-// @Tags Engage
-// @Summary User registers a push device token (FCM)
-// @Produce application/json
-// @Param data body engageReq.DeviceTokenReq true "device token payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/devices [post]
+//	@Tags		Engage
+//	@Summary	User registers a push device token (FCM)
+//	@Produce	application/json
+//	@Param		data	body		engageReq.DeviceTokenReq	true	"device token payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/devices [post]
 func (UserEngageApi) RegisterDeviceToken(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.DeviceTokenReq
@@ -172,11 +172,11 @@ func (UserEngageApi) RegisterDeviceToken(c *gin.Context) {
 }
 
 // ListDeviceTokens
-// @Tags Engage
-// @Summary User lists their registered push devices
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/devices [get]
+//	@Tags		Engage
+//	@Summary	User lists their registered push devices
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/engage/devices [get]
 func (UserEngageApi) ListDeviceTokens(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	list, err := engageService.UserEngageServices.ListDeviceTokens(userID)
@@ -188,12 +188,12 @@ func (UserEngageApi) ListDeviceTokens(c *gin.Context) {
 }
 
 // RemoveDeviceToken
-// @Tags Engage
-// @Summary User deactivates a push device token
-// @Produce application/json
-// @Param data body engageReq.DeviceTokenReq true "device token payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/engage/devices/remove [post]
+//	@Tags		Engage
+//	@Summary	User deactivates a push device token
+//	@Produce	application/json
+//	@Param		data	body		engageReq.DeviceTokenReq	true	"device token payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/engage/devices/remove [post]
 func (UserEngageApi) RemoveDeviceToken(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req engageReq.DeviceTokenReq

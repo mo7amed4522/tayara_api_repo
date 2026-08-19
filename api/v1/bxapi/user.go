@@ -10,19 +10,19 @@ import (
 type UserApi struct{}
 
 // Register
-// @Tags User
-// @Summary Public end-user registration
-// @Produce application/json
-// @Param data body bxapiReq.UserRegisterReq true "user payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/user/register [post]
+//	@Tags		User
+//	@Summary	Public end-user registration
+//	@Produce	application/json
+//	@Param		data	body		bxapiReq.UserRegisterReq	true	"user payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/user/register [post]
 func (UserApi) Register(c *gin.Context) {
 	var req bxapiReq.UserRegisterReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	user, err := userService.UserServices.Register(req)
+	user, err := bxapiSvc.UserServices.Register(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -31,19 +31,19 @@ func (UserApi) Register(c *gin.Context) {
 }
 
 // Login
-// @Tags User
-// @Summary User login (returns X-token)
-// @Produce application/json
-// @Param data body bxapiReq.UserLoginReq true "login"
-// @Success 200 {object} response.Response
-// @Router /api/v1/user/login [post]
+//	@Tags		User
+//	@Summary	User login (returns X-token)
+//	@Produce	application/json
+//	@Param		data	body		bxapiReq.UserLoginReq	true	"login"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/user/login [post]
 func (UserApi) Login(c *gin.Context) {
 	var req bxapiReq.UserLoginReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	res, err := userService.UserServices.Login(req)
+	res, err := bxapiSvc.UserServices.Login(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -52,19 +52,19 @@ func (UserApi) Login(c *gin.Context) {
 }
 
 // FirebaseLogin
-// @Tags User
-// @Summary User login/register via Firebase (Google / Apple / Phone)
-// @Produce application/json
-// @Param data body bxapiReq.FirebaseLoginReq true "firebase id token"
-// @Success 200 {object} response.Response
-// @Router /api/v1/user/firebase-login [post]
+//	@Tags		User
+//	@Summary	User login/register via Firebase (Google / Apple / Phone)
+//	@Produce	application/json
+//	@Param		data	body		bxapiReq.FirebaseLoginReq	true	"firebase id token"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/user/firebase-login [post]
 func (UserApi) FirebaseLogin(c *gin.Context) {
 	var req bxapiReq.FirebaseLoginReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	res, err := userService.UserServices.FirebaseLogin(c.Request.Context(), req)
+	res, err := bxapiSvc.UserServices.FirebaseLogin(c.Request.Context(), req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -73,14 +73,14 @@ func (UserApi) FirebaseLogin(c *gin.Context) {
 }
 
 // GetProfile
-// @Tags User
-// @Summary User gets their own profile
-// @Produce application/json
-// @Success 200 {object} response.Response
-// @Router /api/v1/user/profile [get]
+//	@Tags		User
+//	@Summary	User gets their own profile
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/user/profile [get]
 func (UserApi) GetProfile(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
-	user, err := userService.UserServices.GetProfile(userID)
+	user, err := bxapiSvc.UserServices.GetProfile(userID)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -89,12 +89,12 @@ func (UserApi) GetProfile(c *gin.Context) {
 }
 
 // ChangePassword
-// @Tags User
-// @Summary User changes their own password
-// @Produce application/json
-// @Param data body bxapiReq.ChangeUserPasswordReq true "password change"
-// @Success 200 {object} response.Response
-// @Router /api/v1/user/change-password [post]
+//	@Tags		User
+//	@Summary	User changes their own password
+//	@Produce	application/json
+//	@Param		data	body		bxapiReq.ChangeUserPasswordReq	true	"password change"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/user/change-password [post]
 func (UserApi) ChangePassword(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
 	var req bxapiReq.ChangeUserPasswordReq
@@ -102,7 +102,7 @@ func (UserApi) ChangePassword(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	if err := userService.UserServices.ChangePassword(userID, req); err != nil {
+	if err := bxapiSvc.UserServices.ChangePassword(userID, req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
@@ -110,16 +110,16 @@ func (UserApi) ChangePassword(c *gin.Context) {
 }
 
 // ListUsers
-// @Tags User
-// @Summary Admin lists users (paginated, filterable by status)
-// @Produce application/json
-// @Param data query bxapiReq.UserPageReq true "page filter"
-// @Success 200 {object} response.Response
-// @Router /api/v1/user/admin [get]
+//	@Tags		User
+//	@Summary	Admin lists users (paginated, filterable by status)
+//	@Produce	application/json
+//	@Param		data	query		bxapiReq.UserPageReq	true	"page filter"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/user/admin [get]
 func (UserApi) ListUsers(c *gin.Context) {
 	var req bxapiReq.UserPageReq
 	_ = c.ShouldBindQuery(&req)
-	list, total, totalPage, err := userService.UserServices.List(req)
+	list, total, totalPage, err := bxapiSvc.UserServices.List(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -128,12 +128,12 @@ func (UserApi) ListUsers(c *gin.Context) {
 }
 
 // Block
-// @Tags User
-// @Summary Admin blocks/unblocks a user
-// @Produce application/json
-// @Param data body bxapiReq.UserBlockReq true "block payload"
-// @Success 200 {object} response.Response
-// @Router /api/v1/user/admin/block [post]
+//	@Tags		User
+//	@Summary	Admin blocks/unblocks a user
+//	@Produce	application/json
+//	@Param		data	body		bxapiReq.UserBlockReq	true	"block payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/user/admin/block [post]
 func (UserApi) Block(c *gin.Context) {
 	adminID := utils.GetUserID(c)
 	var req bxapiReq.UserBlockReq
@@ -141,7 +141,7 @@ func (UserApi) Block(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	user, err := userService.UserServices.Block(adminID, req)
+	user, err := bxapiSvc.UserServices.Block(adminID, req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
