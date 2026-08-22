@@ -206,7 +206,7 @@ require (
 	github.com/stripe/stripe-go/v82 v82.5.1
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1
-	github.com/tencentyun/cos-go-sdk-v5 v0.7.74
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.75
 	github.com/unrolled/secure v1.17.0
 	go.uber.org/automaxprocs v1.6.0
 	go.uber.org/multierr v1.10.0 // indirect
