@@ -76,7 +76,7 @@ jobs:
 
       - name: Copy binary + config to host
         if: steps.configured.outputs.enabled == 'true'
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
