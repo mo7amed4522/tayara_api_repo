@@ -195,7 +195,7 @@ require (
 	github.com/minio/minio-go/v7 v7.2.1
 	github.com/mojocn/base64Captcha v1.3.8
 	github.com/pkg/errors v0.9.1
-	github.com/qiniu/go-sdk/v7 v7.26.17
+	github.com/qiniu/go-sdk/v7 v7.27.0
 	github.com/qiniu/qmgo v1.1.10
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/robfig/cron/v3 v3.0.1
