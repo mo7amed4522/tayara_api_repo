@@ -6,7 +6,7 @@
 #     -v $(pwd)/config.yaml:/app/config.yaml \
 #     ghcr.io/<org>/tayara_api:latest
 
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 WORKDIR /workspace
 COPY . .
