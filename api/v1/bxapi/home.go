@@ -158,13 +158,26 @@ func (HomeApi) RecommendedForYou(c *gin.Context) {
 //	@Tags		Customer
 //	@Summary	Public home top-banner ads
 //	@Produce	application/json
-//	@Success	200	{object}	response.Response
+//	@Param		page		query		int		false	"page number"	default(1)
+//	@Param		pageSize	query		int		false	"page size"	default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/customer/home/ads [get]
 func (HomeApi) ActiveHomeAds(c *gin.Context) {
-	list, err := bxapiSvc.HomeServices.ActiveHomeAds()
+	var req bxapiReq.CustomerHomeAdsReq
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 10
+	}
+	list, total, err := bxapiSvc.HomeServices.ActiveHomeAds(req.Page, req.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }

@@ -71,11 +71,11 @@ captcha:
 # mysql connect configuration
 mysql:
     path: localhost                       # MySQL host
-    port: "3307"                          # MySQL port
+    port: "3306"                          # MySQL port
     config: charset=utf8mb4&parseTime=True&loc=Local # Connection parameters
     db-name: tayara                       # Database name
     username: root                        # MySQL username
-    password: tayara_2026                 # MySQL password
+    password: 544523695                 # MySQL password
     max-idle-conns: 10                    # Max idle connections
     max-open-conns: 100                   # Max open connections
     log-mode: error                       # GORM log level

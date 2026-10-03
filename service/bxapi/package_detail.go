@@ -7,6 +7,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/catalog"
 	"github.com/mo7amed4522/tayara_api/model/catalog/response"
 	"github.com/mo7amed4522/tayara_api/model/engage"
+	"github.com/mo7amed4522/tayara_api/utils"
 	"gorm.io/gorm"
 )
 
@@ -43,18 +44,23 @@ func (s *PackageDetailServices) ListPackageReviewsDirect(packageID uint, page, p
 		return nil, 0, 0, errors.New("db not init")
 	}
 	var rows []engage.Review
-	var total int64
-	if err := global.GVA_DB.Model(&engage.Review{}).Where("package_id = ?", packageID).Count(&total).Error; err != nil {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	countDB := global.GVA_DB.Model(&engage.Review{}).Where("package_id = ?", packageID)
+	queryDB := global.GVA_DB.Model(&engage.Review{}).Where("package_id = ?", packageID).Order("created_at desc")
+
+	paginateResult, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &rows)
+	if err != nil {
 		return nil, 0, 0, err
 	}
-	db := global.GVA_DB.Where("package_id = ?", packageID).
-		Order("created_at desc").
-		Offset((page - 1) * pageSize).
-		Limit(pageSize)
-	if err := db.Find(&rows).Error; err != nil {
-		return nil, 0, 0, err
-	}
-	return rows, total, int64((int(total)+pageSize-1)/pageSize), nil
+	total := paginateResult.Total
+	totalPage := paginateResult.TotalPage
+	return rows, total, int64(totalPage), nil
 }
 
 func (s *PackageDetailServices) buildDetail(scoped *gorm.DB, id uint) (*response.PackageDetail, error) {
