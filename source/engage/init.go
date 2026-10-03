@@ -31,7 +31,7 @@ func (e *engageInit) DataInserted(ctx context.Context) bool {
 		return false
 	}
 	var n int64
-	return db.Model(&engmodel.Notification{}).Count(&n).Error == nil && n > 0
+	return db.Model(&engmodel.AdCreative{}).Count(&n).Error == nil && n > 0
 }
 
 func (e *engageInit) InitializeData(ctx context.Context) (context.Context, error) {
@@ -103,7 +103,7 @@ func seedNotificationTemplates() []engmodel.NotificationTemplate {
 	}
 }
 
-func seedNotifications(now time.Time, uAhmed, uOmar uint) []engmodel.Notification {
+func seedNotifications(_ time.Time, uAhmed, uOmar uint) []engmodel.Notification {
 	return []engmodel.Notification{
 		{NotificationCode: "NT-7001", EventType: "booking_request", RecipientType: "agent", RecipientID: 1, Channel: "push", Status: "sent", Title: "New booking request", Body: "BK-2001 requested"},
 		{NotificationCode: "NT-7002", EventType: "price_confirmed", RecipientType: "user", RecipientID: uAhmed, Channel: "push", Status: "sent", Title: "Price confirmed", Body: "BK-2001 price confirmed"},
@@ -127,20 +127,56 @@ func seedAds(db *gorm.DB, now time.Time) []engmodel.AdCreative {
 	activeEnd := tAdd(now, 20*24)
 	schedStart := tAdd(now, 3*24)
 	schedEnd := tAdd(now, 30*24)
+	expiredStart := tAdd(now, -60*24)
+	expiredEnd := tAdd(now, -20*24)
 	return []engmodel.AdCreative{
 		{
 			AdCode: "AD-5001", Title: "Summer in Istanbul", Placement: "home_top_banner", Status: "active",
 			DisplayOrder: 1, StartDatetime: activeStart, EndDatetime: activeEnd,
-			BannerImageURL: "https://files.tayara.test/ad/istanbul.jpg", OverlayTitle: "Istanbul",
-			OverlaySubtitle: "From AED 3,200", CtaLabel: "Explore", RedirectType: "packages_by_destination",
-			TargetCountryID: uintPtr(countryIDByCode(db, "TR")), CreatedBy: 1,
+			BannerImageURL: "https://img.magnific.com/free-psd/travel-tourism-social-media-post-template_47987-29099.jpg?semt=ais_hybrid&w=740&q=80",
+			OverlayTitle:   "Istanbul", OverlaySubtitle: "From AED 3,200", CtaLabel: "Explore",
+			RedirectType:    "packages_by_destination",
+			TargetCountryID: uintPtr(countryIDByCode(db, "TR")), Impressions: 1284, Clicks: 96, CreatedBy: 1,
 		},
 		{
-			AdCode: "AD-5002", Title: "Escape to Bali", Placement: "explore_top_banner", Status: "scheduled",
+			AdCode: "AD-5002", Title: "Dubai City Break", Placement: "home_top_banner", Status: "active",
+			DisplayOrder: 2, StartDatetime: activeStart, EndDatetime: activeEnd,
+			BannerImageURL: "https://d1csarkz8obe9u.cloudfront.net/posterpreviews/travel-agency-ad-design-template-b7db8661374e0eb66fad2ff933f59835_screen.jpg?ts=1653886566",
+			OverlayTitle:   "Dubai", OverlaySubtitle: "From AED 1,950", CtaLabel: "View deals",
+			RedirectType:    "packages_by_destination",
+			TargetCountryID: uintPtr(countryIDByCode(db, "AE")), Impressions: 872, Clicks: 41, CreatedBy: 1,
+		},
+		{
+			AdCode: "AD-5003", Title: "Maldives Honeymoon", Placement: "home_top_banner", Status: "active",
+			DisplayOrder: 3, StartDatetime: activeStart, EndDatetime: activeEnd,
+			BannerImageURL: "https://img.magnific.com/free-psd/tour-travel-agency-instagram-post-social-media-post-web-banner-template-design_84443-25291.jpg?semt=ais_hybrid&w=740&q=80",
+			OverlayTitle:   "Maldives", OverlaySubtitle: "Honeymoon specials", CtaLabel: "Book now",
+			RedirectType:    "packages_by_destination",
+			TargetCountryID: uintPtr(countryIDByCode(db, "MV")), Impressions: 645, Clicks: 58, CreatedBy: 1,
+		},
+		{
+			AdCode: "AD-5004", Title: "Escape to Bali", Placement: "explore_top_banner", Status: "scheduled",
 			DisplayOrder: 1, StartDatetime: schedStart, EndDatetime: schedEnd,
-			BannerImageURL: "https://files.tayara.test/ad/bali.jpg", OverlayTitle: "Bali",
-			OverlaySubtitle: "Adventure awaits", CtaLabel: "Book now", RedirectType: "single_agent_packages",
+			BannerImageURL: "https://img.magnific.com/free-psd/travel-tourism-instagram-post-social-media-post-template_106176-2392.jpg",
+			OverlayTitle:   "Bali", OverlaySubtitle: "Adventure awaits", CtaLabel: "Book now",
+			RedirectType:    "single_agent_packages",
 			TargetPackageID: uintPtr(packageIDByCode(db, "PK-1003")), CreatedBy: 1,
+		},
+		{
+			AdCode: "AD-5005", Title: "Paris Spring Getaway", Placement: "explore_top_banner", Status: "disabled",
+			DisplayOrder: 2, StartDatetime: activeStart, EndDatetime: activeEnd,
+			BannerImageURL: "https://www.shutterstock.com/image-vector/travel-promo-vector-design-tour-260nw-2172252889.jpg",
+			OverlayTitle:   "Paris", OverlaySubtitle: "Cherry blossom season", CtaLabel: "Explore",
+			RedirectType:    "packages_by_destination",
+			TargetCountryID: uintPtr(countryIDByCode(db, "FR")), Impressions: 120, Clicks: 9, CreatedBy: 2,
+		},
+		{
+			AdCode: "AD-5006", Title: "Bangkok Street Food Fest", Placement: "home_top_banner", Status: "expired",
+			DisplayOrder: 4, StartDatetime: expiredStart, EndDatetime: expiredEnd,
+			BannerImageURL: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXRrGOt_cVkV4rlhQMvNUSNXTXDUZq0m1PWPuaeOa3rIyR-ub7nHtZZ4E&s=10",
+			OverlayTitle:   "Bangkok", OverlaySubtitle: "Street food festival", CtaLabel: "Explore",
+			RedirectType:    "packages_by_destination",
+			TargetCountryID: uintPtr(countryIDByCode(db, "TH")), Impressions: 3120, Clicks: 205, CreatedBy: 1,
 		},
 	}
 }

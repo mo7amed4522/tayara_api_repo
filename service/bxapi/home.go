@@ -10,6 +10,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/catalog"
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
 	"github.com/mo7amed4522/tayara_api/model/engage"
+	"github.com/mo7amed4522/tayara_api/utils"
 )
 
 // HomeServices owns the public/buyer-facing home-screen data aggregations.
@@ -341,17 +342,32 @@ func (s *HomeServices) RecommendedForYou(userID uint, limit int) ([]response.Cus
 // Ads (home top banner)
 // ---------------------------------------------------------------------------
 
-// ActiveHomeAds returns active ad creatives for the home top banner placement.
-func (s *HomeServices) ActiveHomeAds() ([]response.AdBannerResult, error) {
+// ActiveHomeAds returns active ad creatives for the home top banner placement with pagination.
+func (s *HomeServices) ActiveHomeAds(page, pageSize int) ([]response.AdBannerResult, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, errors.New("db not init")
+		return nil, 0, errors.New("db not init")
+	}
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
 	}
 	var ads []engage.AdCreative
-	if err := global.GVA_DB.Where("placement = ? AND status = ?",
+	var total int64
+
+	countDB := global.GVA_DB.Model(&engage.AdCreative{}).Where("placement = ? AND status = ?",
+		constants.AdPlacementHomeTopBanner, constants.AdStatusActive)
+	queryDB := global.GVA_DB.Model(&engage.AdCreative{}).Where("placement = ? AND status = ?",
 		constants.AdPlacementHomeTopBanner, constants.AdStatusActive).
-		Order("display_order asc").Find(&ads).Error; err != nil {
-		return nil, err
+		Order("display_order asc")
+
+	paginateResult, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &ads)
+	if err != nil {
+		return nil, 0, err
 	}
+	total = paginateResult.Total
+
 	out := make([]response.AdBannerResult, 0, len(ads))
 	for _, ad := range ads {
 		out = append(out, response.AdBannerResult{
@@ -368,7 +384,7 @@ func (s *HomeServices) ActiveHomeAds() ([]response.AdBannerResult, error) {
 			CreatedAt:       ad.CreatedAt,
 		})
 	}
-	return out, nil
+	return out, total, nil
 }
 
 // ---------------------------------------------------------------------------

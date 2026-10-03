@@ -19,3 +19,8 @@ type CustomerHomeExploreReq struct {
 	commonReq.PageInfo
 	Category string `json:"category" form:"category"`
 }
+
+// CustomerHomeAdsReq paginated ads listing for home top-banner placement.
+type CustomerHomeAdsReq struct {
+	commonReq.PageInfo
+}
