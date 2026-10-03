@@ -2529,6 +2529,17 @@ paths:
       - Customer
   /api/v1/customer/home/ads:
     get:
+      parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
