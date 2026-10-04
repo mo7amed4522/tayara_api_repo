@@ -5,7 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
-	"github.com/mo7amed4522/tayara_api/model/common/response"
+	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
+	response "github.com/mo7amed4522/tayara_api/model/common/response"
 	"github.com/mo7amed4522/tayara_api/utils"
 )
 
@@ -70,15 +71,37 @@ func (HomeApi) ListExploreTrips(c *gin.Context) {
 //	@Tags		Customer
 //	@Summary	Public discover destinations
 //	@Produce	application/json
-//	@Success	200	{object}	response.Response
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/customer/home/destinations [get]
 func (HomeApi) ListDestinations(c *gin.Context) {
-	list, err := bxapiSvc.HomeServices.ListDestinations()
+	var req bxapiReq.CustomerHomeDestinationsReq
+	_ = c.ShouldBindQuery(&req)
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 10
+	}
+	paginateResult, err := bxapiSvc.HomeServices.ListDestinations(req.Page, req.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	// Extract list from paginateResult.Data
+	list, ok := paginateResult.Data.([]bxapiResp.CustomerDestinationCard)
+	if !ok {
+		list = []bxapiResp.CustomerDestinationCard{}
+	}
+	// Build page result with calculated total pages
+	response.OkWithDetailed(response.PageResult{
+		List:       list,
+		Total:      paginateResult.Total,
+		TotalPage:  paginateResult.TotalPage,
+		Page:       paginateResult.Page,
+		PageSize:   paginateResult.PageSize,
+	}, "ok", c)
 }
 
 // ListDeals

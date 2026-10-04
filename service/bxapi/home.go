@@ -2,6 +2,7 @@ package bxapi
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
@@ -92,7 +93,7 @@ func (s *HomeServices) ListExploreTrips(req bxapiReq.CustomerHomeExploreReq) ([]
 
 // ListDestinations returns countries that have at least one active package, with package count
 // and the lowest display price available.
-func (s *HomeServices) ListDestinations() ([]response.CustomerDestinationCard, error) {
+func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
@@ -105,7 +106,19 @@ func (s *HomeServices) ListDestinations() ([]response.CustomerDestinationCard, e
 		MinDisplayPrice int64 `gorm:"column:min_display_price"`
 	}
 	var rows []destRow
-	query := `
+
+	// Count query (subquery)
+	countSQL := `
+		SELECT COUNT(*)
+		FROM (
+			SELECT c.id, c.name_en, c.code, c.flag_url, COUNT(p.id) AS package_count, MIN(p.display_price) AS min_display_price
+			FROM base_country c
+			INNER JOIN catalog_package p ON p.destination_country_id = c.id AND p.status = 'active'
+			GROUP BY c.id, c.name_en, c.code, c.flag_url
+		) as sub
+	`
+	offset := (page - 1) * pageSize
+	dataSQL := fmt.Sprintf(`
 		SELECT
 			c.id AS country_id,
 			c.name_en AS country_name,
@@ -117,11 +130,19 @@ func (s *HomeServices) ListDestinations() ([]response.CustomerDestinationCard, e
 		INNER JOIN catalog_package p ON p.destination_country_id = c.id AND p.status = 'active'
 		GROUP BY c.id, c.name_en, c.code, c.flag_url
 		ORDER BY package_count DESC, min_display_price ASC
-		LIMIT 20
-	`
-	if err := global.GVA_DB.Raw(query).Scan(&rows).Error; err != nil {
+		LIMIT %d OFFSET %d
+	`, pageSize, offset)
+
+	countDB := global.GVA_DB.Raw(countSQL)
+	dataDB := global.GVA_DB.Raw(dataSQL)
+
+	// Paginate
+	paginateResult, err := utils.PaginateWithCustomQuery(countDB, dataDB, page, pageSize, &rows)
+	if err != nil {
 		return nil, err
 	}
+
+	// Convert raw rows into response cards
 	out := make([]response.CustomerDestinationCard, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, response.CustomerDestinationCard{
@@ -133,7 +154,9 @@ func (s *HomeServices) ListDestinations() ([]response.CustomerDestinationCard, e
 			MinDisplayPrice: r.MinDisplayPrice,
 		})
 	}
-	return out, nil
+	paginateResult.Data = out
+
+	return paginateResult, nil
 }
 
 // ---------------------------------------------------------------------------

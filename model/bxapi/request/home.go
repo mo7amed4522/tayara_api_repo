@@ -24,3 +24,8 @@ type CustomerHomeExploreReq struct {
 type CustomerHomeAdsReq struct {
 	commonReq.PageInfo
 }
+
+// CustomerHomeDestinationsReq paginated destinations listing.
+type CustomerHomeDestinationsReq struct {
+	commonReq.PageInfo
+}
