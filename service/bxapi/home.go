@@ -29,20 +29,21 @@ func (s *HomeServices) CustomerSearch(req bxapiReq.CustomerSearchReq) (*response
 	}
 	kw := "%" + req.Keyword + "%"
 
-	// agents: active agents whose company name matches
+	// agents: active agents whose company/responsible name OR country matches
 	var agents []dxapi.DxAgentProfile
 	if err := global.GVA_DB.Where(
-		"status = ? AND (company_name LIKE ? OR responsible_name LIKE ?)",
-		constants.AgentStatusActive, kw, kw,
+		"status = ? AND (company_name LIKE ? OR responsible_name LIKE ? OR country LIKE ?)",
+		constants.AgentStatusActive, kw, kw, kw,
 	).Order("created_at desc").Limit(10).Find(&agents).Error; err != nil {
 		return nil, err
 	}
 
-	// packages: active packages whose name or category matches
+	// packages: active packages whose name, category, location OR destination country name matches
 	var packages []catalog.Package
 	if err := global.GVA_DB.Where(
-		"status = ? AND (name LIKE ? OR category LIKE ?)",
-		constants.PackageStatusActive, kw, kw,
+		"status = ? AND (name LIKE ? OR category LIKE ? OR location LIKE ? OR destination_country_id IN "+
+			"(SELECT id FROM base_country WHERE name_en LIKE ? OR name_ar LIKE ?))",
+		constants.PackageStatusActive, kw, kw, kw, kw, kw,
 	).Order("updated_at desc").Limit(20).Find(&packages).Error; err != nil {
 		return nil, err
 	}
