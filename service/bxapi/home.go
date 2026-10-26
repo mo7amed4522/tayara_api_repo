@@ -6,6 +6,7 @@ import (
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
+	"github.com/mo7amed4522/tayara_api/model/base"
 	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
 	"github.com/mo7amed4522/tayara_api/model/bxapi/response"
 	"github.com/mo7amed4522/tayara_api/model/catalog"
@@ -21,46 +22,152 @@ type HomeServices struct{}
 // Search
 // ---------------------------------------------------------------------------
 
-// CustomerSearch runs a keyword search across active agents and packages, plus top explore
-// packages, returning the shape the mobile home search expects.
+// CustomerSearch runs a keyword search across active agents, plus top explore
+// packages and similar destinations from the same country, returning the shape the mobile home search expects.
 func (s *HomeServices) CustomerSearch(req bxapiReq.CustomerSearchReq) (*response.CustomerSearchResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
 	kw := "%" + req.Keyword + "%"
 
-	// agents: active agents whose company/responsible name OR country matches
+	// ── 1. Resolve keyword → city (preferred) then country (fallback) ─────
+	var (
+		cityID    uint
+		cityName  string
+		countryID uint
+		foundCity bool
+	)
+
+	// Try city first so "Dubai" hits the Dubai city row, not the AE country row.
+	if id, _ := s.findCityByKeyword(req.Keyword); id > 0 {
+		var c base.City
+		if err := global.GVA_DB.Select("id", "name", "country_id").
+			First(&c, id).Error; err == nil {
+			cityID = c.ID
+			cityName = c.Name
+			countryID = c.CountryID
+			foundCity = true
+		}
+	}
+
+	// Fallback: city by name (in case keyword JSONMap didn't match).
+	if !foundCity {
+		var c base.City
+		if err := global.GVA_DB.Where("name LIKE ? AND is_active = ?", kw, true).
+			Select("id", "name", "country_id").Limit(1).First(&c).Error; err == nil {
+			cityID = c.ID
+			cityName = c.Name
+			countryID = c.CountryID
+			foundCity = true
+		}
+	}
+
+	// If no city, try country.
+	if countryID == 0 {
+		countryID = s.findCountryByKeyword(req.Keyword)
+	}
+	if countryID == 0 {
+		var c base.Country
+		if err := global.GVA_DB.Where("name_en LIKE ? OR name_ar LIKE ? OR code LIKE ?", kw, kw, kw).
+			Select("id").Limit(1).First(&c).Error; err == nil {
+			countryID = c.ID
+		}
+	}
+
+	// ── 2. Agents: text-only matching (agent table has no city/country FK) ─
+	agentQ := global.GVA_DB.Where("status = ?", constants.AgentStatusActive)
+	if foundCity {
+		agentQ = agentQ.Where(
+			"company_name LIKE ? OR responsible_name LIKE ? OR country LIKE ? OR city LIKE ?",
+			kw, kw, kw, "%"+cityName+"%",
+		)
+	} else {
+		agentQ = agentQ.Where(
+			"company_name LIKE ? OR responsible_name LIKE ? OR country LIKE ?",
+			kw, kw, kw,
+		)
+	}
 	var agents []dxapi.DxAgentProfile
-	if err := global.GVA_DB.Where(
-		"status = ? AND (company_name LIKE ? OR responsible_name LIKE ? OR country LIKE ?)",
-		constants.AgentStatusActive, kw, kw, kw,
-	).Order("created_at desc").Limit(10).Find(&agents).Error; err != nil {
+	if err := agentQ.Order("created_at desc").Limit(10).Find(&agents).Error; err != nil {
 		return nil, err
 	}
 
-	// packages: active packages whose name, category, location OR destination country name matches
-	var packages []catalog.Package
-	if err := global.GVA_DB.Where(
-		"status = ? AND (name LIKE ? OR category LIKE ? OR location LIKE ? OR destination_country_id IN "+
-			"(SELECT id FROM base_country WHERE name_en LIKE ? OR name_ar LIKE ?))",
-		constants.PackageStatusActive, kw, kw, kw, kw, kw,
-	).Order("updated_at desc").Limit(20).Find(&packages).Error; err != nil {
-		return nil, err
-	}
-
-	// top explore: most-recently approved active packages (up to 6)
+	// ── 3. topExplore: packages strictly for the searched city ────────────
 	var topExplore []catalog.Package
-	if err := global.GVA_DB.Where("status = ?", constants.PackageStatusActive).
-		Order("approved_at desc").Limit(6).Find(&topExplore).Error; err != nil {
+	topQ := global.GVA_DB.Where("status = ?", constants.PackageStatusActive)
+	if foundCity {
+		topQ = topQ.Where(
+			"city_id = ? OR location LIKE ? OR name LIKE ?",
+			cityID, "%"+cityName+"%", "%"+cityName+"%",
+		)
+	} else if countryID > 0 {
+		topQ = topQ.Where("destination_country_id = ?", countryID)
+	}
+	if err := topQ.Order("approved_at desc").Limit(6).Find(&topExplore).Error; err != nil {
 		return nil, err
+	}
+
+	// ── 4. similarDestinations: same country EXCLUDING the searched city ──
+	var similarDestinations []catalog.Package
+	if countryID > 0 {
+		simQ := global.GVA_DB.Where(
+			"status = ? AND destination_country_id = ?",
+			constants.PackageStatusActive, countryID,
+		)
+		if foundCity {
+			simQ = simQ.Where(
+				"(city_id IS NULL OR city_id <> ?) AND NOT (location LIKE ? OR name LIKE ?)",
+				cityID, "%"+cityName+"%", "%"+cityName+"%",
+			)
+		}
+		if err := simQ.Order("approved_at desc").Limit(10).Find(&similarDestinations).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	return &response.CustomerSearchResult{
-		Keyword:    req.Keyword,
-		Agents:     s.buildAgentHits(agents),
-		Packages:   s.buildPackageHits(packages),
-		TopExplore: s.buildExploreHits(topExplore),
+		Keyword:             req.Keyword,
+		Agents:              s.buildAgentHits(agents),
+		TopExplore:          s.buildExploreHits(topExplore),
+		SimilarDestinations: s.buildExploreHits(similarDestinations),
 	}, nil
+}
+
+// findCountryByKeyword searches for a country by keyword in the Keywords JSONMap field
+// Returns country ID if found, 0 otherwise
+func (s *HomeServices) findCountryByKeyword(keyword string) uint {
+	var countryID uint
+	// keywords structure: {"keywords": ["UAE", "United Arab Emirates", "Emirates", "AE"]}
+	kw := "\"" + keyword + "\""
+	err := global.GVA_DB.Model(&base.Country{}).
+		Where("JSON_CONTAINS(keywords, ?, '$.keywords')", kw).
+		Select("id").
+		Limit(1).
+		Scan(&countryID).Error
+	if err != nil {
+		return 0
+	}
+	return countryID
+}
+
+// findCityByKeyword searches for a city by keyword in the Keywords JSONMap field
+// Returns city ID and city name if found, 0 and "" otherwise
+func (s *HomeServices) findCityByKeyword(keyword string) (uint, string) {
+	type cityResult struct {
+		ID   uint
+		Name string
+	}
+	var result cityResult
+	kw := "\"" + keyword + "\""
+	err := global.GVA_DB.Model(&base.City{}).
+		Where("JSON_CONTAINS(keywords, ?, '$.keywords') AND is_active = ?", kw, true).
+		Select("id", "name").
+		Limit(1).
+		Scan(&result).Error
+	if err != nil {
+		return 0, ""
+	}
+	return result.ID, result.Name
 }
 
 // ---------------------------------------------------------------------------
@@ -99,12 +206,11 @@ func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResu
 		return nil, errors.New("db not init")
 	}
 	type destRow struct {
-		CountryID       uint  `gorm:"column:country_id"`
+		CountryID       uint   `gorm:"column:country_id"`
 		CountryName     string `gorm:"column:country_name"`
 		CountryCode     string `gorm:"column:country_code"`
-		FlagURL         string `gorm:"column:flag_url"`
-		PackageCount    int   `gorm:"column:package_count"`
-		MinDisplayPrice int64 `gorm:"column:min_display_price"`
+		PackageCount    int    `gorm:"column:package_count"`
+		MinDisplayPrice int64  `gorm:"column:min_display_price"`
 	}
 	var rows []destRow
 
@@ -112,10 +218,10 @@ func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResu
 	countSQL := `
 		SELECT COUNT(*)
 		FROM (
-			SELECT c.id, c.name_en, c.code, c.flag_url, COUNT(p.id) AS package_count, MIN(p.display_price) AS min_display_price
+			SELECT c.id, c.name_en, c.code,  COUNT(p.id) AS package_count, MIN(p.display_price) AS min_display_price
 			FROM base_country c
 			INNER JOIN catalog_package p ON p.destination_country_id = c.id AND p.status = 'active'
-			GROUP BY c.id, c.name_en, c.code, c.flag_url
+			GROUP BY c.id, c.name_en, c.code
 		) as sub
 	`
 	offset := (page - 1) * pageSize
@@ -124,12 +230,11 @@ func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResu
 			c.id AS country_id,
 			c.name_en AS country_name,
 			c.code AS country_code,
-			c.flag_url AS flag_url,
 			COUNT(p.id) AS package_count,
 			MIN(p.display_price) AS min_display_price
 		FROM base_country c
 		INNER JOIN catalog_package p ON p.destination_country_id = c.id AND p.status = 'active'
-		GROUP BY c.id, c.name_en, c.code, c.flag_url
+		GROUP BY c.id, c.name_en, c.code
 		ORDER BY package_count DESC, min_display_price ASC
 		LIMIT %d OFFSET %d
 	`, pageSize, offset)
@@ -150,7 +255,6 @@ func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResu
 			CountryID:       r.CountryID,
 			CountryName:     r.CountryName,
 			CountryCode:     r.CountryCode,
-			FlagURL:         r.FlagURL,
 			PackageCount:    r.PackageCount,
 			MinDisplayPrice: r.MinDisplayPrice,
 		})
@@ -526,42 +630,6 @@ func (s *HomeServices) buildAgentHits(agents []dxapi.DxAgentProfile) []response.
 	return out
 }
 
-func (s *HomeServices) buildPackageHits(packages []catalog.Package) []response.CustomerPackageResult {
-	var agentIDs []uint
-	var pkgIDs []uint
-	agentSet := make(map[uint]bool)
-	for _, p := range packages {
-		pkgIDs = append(pkgIDs, p.ID)
-		if !agentSet[p.AgentID] {
-			agentSet[p.AgentID] = true
-			agentIDs = append(agentIDs, p.AgentID)
-		}
-	}
-	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
-	pkgRatings, pkgCounts := s.batchPackageRatings(pkgIDs)
-
-	out := make([]response.CustomerPackageResult, 0, len(packages))
-	for _, p := range packages {
-		info, _ := agentInfo[p.AgentID]
-		out = append(out, response.CustomerPackageResult{
-			ID:              p.ID,
-			PackageCode:     p.PackageCode,
-			AgentID:         p.AgentID,
-			CompanyName:     info.name,
-			Name:            p.Name,
-			CoverImageURL:   p.CoverImageURL,
-			Category:        p.Category,
-			DaysDuration:    p.DaysDuration,
-			DisplayPrice:    p.DisplayPrice,
-			DiscountPercent: p.DiscountPercent,
-			Rating:          pkgRatings[p.ID],
-			ReviewCount:     pkgCounts[p.ID],
-			Status:          p.Status,
-		})
-	}
-	return out
-}
-
 func (s *HomeServices) buildExploreHits(packages []catalog.Package) []response.CustomerExploreResult {
 	var agentIDs []uint
 	var pkgIDs []uint
@@ -650,11 +718,11 @@ func (s *HomeServices) buildDealResults(packages []catalog.Package) []response.C
 	for _, p := range packages {
 		info, _ := agentInfo[p.AgentID]
 		out = append(out, response.CustomerDealResult{
-			Package:           p,
-			AgentName:         info.name,
-			AgentLogo:         info.logo,
-			DiscountPercent:   p.DiscountPercent,
-			ViewCount:         0, // view count not tracked yet; field reserved
+			Package:         p,
+			AgentName:       info.name,
+			AgentLogo:       info.logo,
+			DiscountPercent: p.DiscountPercent,
+			ViewCount:       0, // view count not tracked yet; field reserved
 		})
 	}
 	return out

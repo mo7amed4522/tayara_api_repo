@@ -23,10 +23,13 @@ type DxAgentProfile struct {
 	HeaderImg         string     `json:"headerImg" gorm:"default:https://raw.githubusercontent.com/mo7amed4522/new_app/refs/heads/master/logo.png"` // HeaderImg
 	PhoneCountryCode  string     `json:"phoneCountryCode" gorm:"comment:User phone number country code"`                                            // User phone number country code
 	Phone             string     `json:"phone"  gorm:"comment:Phone"`                                                                               // Phone
-	BusinessEmail     string     `json:"businessEmail" form:"businessEmail" gorm:"size:191;uniqueIndex;comment:Business email"`
-	Country           string     `json:"country" form:"country" gorm:"size:128;index;comment:Country"`
-	CompanyAddress    string     `json:"companyAddress" form:"companyAddress" gorm:"size:500;comment:Company address"`
-	LicenseNumber     string     `json:"licenseNumber" form:"licenseNumber" gorm:"size:128;index;comment:License number"`
+	BusinessEmail  string  `json:"businessEmail" form:"businessEmail" gorm:"size:191;uniqueIndex;comment:Business email"`
+	CountryID      *uint   `json:"countryId" form:"countryId" gorm:"index;comment:Country ID"`
+	CityID         *uint   `json:"cityId" form:"cityId" gorm:"index;comment:City ID"`
+	Country        string  `json:"country" form:"country" gorm:"size:128;index;comment:Country (legacy, for backward compatibility)"`
+	City           string  `json:"city" form:"city" gorm:"size:128;comment:City (legacy, for backward compatibility)"`
+	CompanyAddress string  `json:"companyAddress" form:"companyAddress" gorm:"size:500;comment:Company address"`
+	LicenseNumber  string  `json:"licenseNumber" form:"licenseNumber" gorm:"size:128;index;comment:License number"`
 	Status            string     `json:"status" form:"status" gorm:"size:32;index;default:pending;comment:Agent status"`
 	PlanID            *uint      `json:"planId" form:"planId" gorm:"index;comment:Commission plan ID"`
 	ShortDescription  *string    `json:"shortDescription" form:"shortDescription" gorm:"size:200;comment:Company address"`

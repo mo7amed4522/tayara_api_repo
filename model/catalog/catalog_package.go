@@ -19,6 +19,7 @@ type Package struct {
 	Description          string         `json:"description" form:"description" gorm:"size:1000;comment:Description"`
 	GalleryImages        common.JSONMap `json:"galleryImages" form:"galleryImages" gorm:"comment:Image gallery"`
 	DestinationCountryID uint           `json:"destinationCountryId" form:"destinationCountryId" gorm:"index;comment:Destination country ID"`
+	CityID               *uint          `json:"cityId" form:"cityId" gorm:"index;comment:Destination city ID"`
 	Location             string         `json:"location" form:"location" gorm:"size:128;comment:Location (UAE for inbound)"`
 	Category             string         `json:"category" form:"category" gorm:"size:64;index;comment:Category code (honeymoon, adventure, ...)"`
 	DaysDuration         int            `json:"daysDuration" form:"daysDuration" gorm:"comment:Days duration"`
