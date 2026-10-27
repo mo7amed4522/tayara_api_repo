@@ -113,9 +113,11 @@ func (ExploreApi) GetExploreTopicPackages(c *gin.Context) {
 // AgentGetMyTopics
 //
 //	@Tags		Agent
-//	@Summary	Agent's topics with their package counts
+//	@Summary	Agent's topics with their package counts (paginated)
 //	@Produce	application/json
 //	@Security	BearerAuth
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"		default(20)
 //	@Success	200			{object}	response.Response
 //	@Router		/api/v1/agent/explore/topics [get]
 func (ExploreApi) AgentGetMyTopics(c *gin.Context) {
@@ -125,12 +127,26 @@ func (ExploreApi) AgentGetMyTopics(c *gin.Context) {
 		return
 	}
 
-	topics, err := bxapiSvc.ExploreServices.AgentGetMyTopics(agentID)
+	// Parse pagination parameters
+	page := 1
+	pageSize := 20
+	if p := c.Query("page"); p != "" {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+	if ps := c.Query("pageSize"); ps != "" {
+		if parsed, err := strconv.Atoi(ps); err == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+
+	result, err := bxapiSvc.ExploreServices.AgentGetMyTopics(agentID, page, pageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(topics, c)
+	response.OkWithData(result, c)
 }
 
 // AgentAddPackageToTopics

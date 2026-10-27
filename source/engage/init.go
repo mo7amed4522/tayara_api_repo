@@ -31,7 +31,8 @@ func (e *engageInit) DataInserted(ctx context.Context) bool {
 		return false
 	}
 	var n int64
-	return db.Model(&engmodel.AdCreative{}).Count(&n).Error == nil && n > 0
+	return db.Model(&engmodel.AdCreative{}).Count(&n).Error == nil && n > 0 &&
+		db.Model(&engmodel.ExploreTopic{}).Count(&n).Error == nil && n > 0
 }
 
 func (e *engageInit) InitializeData(ctx context.Context) (context.Context, error) {
@@ -44,6 +45,8 @@ func (e *engageInit) InitializeData(ctx context.Context) (context.Context, error
 	uOmar := userID(db, "omar.h")
 	pIstanbul := packageID(db, "PK-1001")
 	pDubai := packageID(db, "PK-1002")
+	pBali := packageID(db, "PK-1003")
+	pMaldives := packageID(db, "PK-1004")
 	bk1 := bookingID(db, "BK-2001")
 
 	if err := db.Create(seedNotificationTemplates()).Error; err != nil {
@@ -56,6 +59,9 @@ func (e *engageInit) InitializeData(ctx context.Context) (context.Context, error
 		return ctx, err
 	}
 	if err := db.Create(seedAds(db, now)).Error; err != nil {
+		return ctx, err
+	}
+	if err := db.Create(seedExploreTopics(db, now)).Error; err != nil {
 		return ctx, err
 	}
 	adID := adByCode(db, "AD-5001")
@@ -86,6 +92,10 @@ func (e *engageInit) InitializeData(ctx context.Context) (context.Context, error
 		{UserID: uAhmed, Token: "fcm-token-ahmed-0002", Platform: "android", IsActive: true},
 		{UserID: uOmar, Token: "fcm-token-omar-0001", Platform: "android", IsActive: true},
 	}).Error; err != nil {
+		return ctx, err
+	}
+	// Seed package-topic associations
+	if err := db.Create(seedPackageTopics(pIstanbul, pDubai, pBali, pMaldives)).Error; err != nil {
 		return ctx, err
 	}
 	return ctx, nil
@@ -229,4 +239,113 @@ func uintPtr(v uint) *uint { return &v }
 func tAdd(t time.Time, d time.Duration) *time.Time {
 	n := t.Add(d)
 	return &n
+}
+
+// seedExploreTopics creates the 6 default explore topics
+func seedExploreTopics(_ *gorm.DB, now time.Time) []engmodel.ExploreTopic {
+	now = now.Add(-30 * 24 * time.Hour) // Created 30 days ago
+	return []engmodel.ExploreTopic{
+		{
+			Code:        "adventure",
+			Name:        "Adventure Trips",
+			NameAr:      "رحلات مغامرة",
+			Description: "Thrilling experiences for adrenaline seekers - hiking, diving, safari and more",
+			ImageURL:    "https://img.magnific.com/free-psd/travel-tourism-instagram-post-social-media-post-template_106176-2392.jpg",
+			IconURL:     "https://img.magnific.com/free-psd/hiking-adventure-icon-template_47987-12345.jpg",
+			SortOrder:   1,
+			IsActive:    true,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+		{
+			Code:        "luxury",
+			Name:        "Luxury Escapes",
+			NameAr:      "هروب فاخر",
+			Description: "Premium getaways with 5-star amenities, private villas, and exclusive experiences",
+			ImageURL:    "https://d1csarkz8obe9u.cloudfront.net/posterpreviews/travel-agency-ad-design-template-b7db8661374e0eb66fad2ff933f59835_screen.jpg?ts=1653886566",
+			IconURL:     "https://img.magnific.com/free-psd/luxury-travel-icon-template_47987-67890.jpg",
+			SortOrder:   2,
+			IsActive:    true,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+		{
+			Code:        "cultural",
+			Name:        "Cultural Journeys",
+			NameAr:      "رحلات ثقافية",
+			Description: "Immersive heritage and culture tours - UNESCO sites, local traditions, history",
+			ImageURL:    "https://img.magnific.com/free-psd/tour-travel-agency-instagram-post-social-media-post-web-banner-template-design_84443-25291.jpg?semt=ais_hybrid&w=740&q=80",
+			IconURL:     "https://img.magnific.com/free-psd/cultural-travel-icon-template_47987-11111.jpg",
+			SortOrder:   3,
+			IsActive:    true,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+		{
+			Code:        "honeymoon",
+			Name:        "Honeymoon Deals",
+			NameAr:      "عروض شهر العسل",
+			Description: "Romantic packages for newlyweds - private dinners, couples spa, sunset cruises",
+			ImageURL:    "https://img.magnific.com/free-psd/travel-tourism-social-media-post-template_47987-29099.jpg?semt=ais_hybrid&w=740&q=80",
+			IconURL:     "https://img.magnific.com/free-psd/honeymoon-icon-template_47987-22222.jpg",
+			SortOrder:   4,
+			IsActive:    true,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+		{
+			Code:        "family",
+			Name:        "Family Holidays",
+			NameAr:      "عطلات عائلية",
+			Description: "Kid-friendly vacations for all ages - resorts with kids clubs, family activities",
+			ImageURL:    "https://www.shutterstock.com/image-vector/travel-promo-vector-design-tour-260nw-2172252889.jpg",
+			IconURL:     "https://img.magnific.com/free-psd/family-travel-icon-template_47987-33333.jpg",
+			SortOrder:   5,
+			IsActive:    true,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+		{
+			Code:        "friends",
+			Name:        "Friends Getaways",
+			NameAr:      "رحلات الأصدقاء",
+			Description: "Group trips perfect for friends - adventure, nightlife, shared experiences",
+			ImageURL:    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXRrGOt_cVkV4rlhQMvNUSNXTXDUZq0m1PWPuaeOa3rIyR-ub7nHtZZ4E&s=10",
+			IconURL:     "https://img.magnific.com/free-psd/friends-travel-icon-template_47987-44444.jpg",
+			SortOrder:   6,
+			IsActive:    true,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+	}
+}
+
+// seedPackageTopics associates packages with explore topics
+func seedPackageTopics(pIstanbul, pDubai, pBali, pMaldives uint) []engmodel.PackageTopic {
+	// We need topic IDs - we'll look them up by code
+	// For seeding, we'll use the known IDs (1-6 based on sort order)
+	// Istanbul (Turkey) -> Adventure, Cultural
+	// Dubai (UAE) -> Luxury, Friends
+	// Bali (Indonesia) -> Adventure, Cultural, Honeymoon
+	// Maldives -> Luxury, Honeymoon, Family
+	now := time.Now().Add(-24 * time.Hour)
+	return []engmodel.PackageTopic{
+		// Istanbul packages
+		{PackageID: pIstanbul, TopicID: 1, AddedBy: 1, AddedAt: now}, // Adventure
+		{PackageID: pIstanbul, TopicID: 3, AddedBy: 1, AddedAt: now}, // Cultural
+
+		// Dubai packages
+		{PackageID: pDubai, TopicID: 2, AddedBy: 1, AddedAt: now}, // Luxury
+		{PackageID: pDubai, TopicID: 6, AddedBy: 1, AddedAt: now}, // Friends
+
+		// Bali packages
+		{PackageID: pBali, TopicID: 1, AddedBy: 1, AddedAt: now}, // Adventure
+		{PackageID: pBali, TopicID: 3, AddedBy: 1, AddedAt: now}, // Cultural
+		{PackageID: pBali, TopicID: 4, AddedBy: 1, AddedAt: now}, // Honeymoon
+
+		// Maldives packages
+		{PackageID: pMaldives, TopicID: 2, AddedBy: 1, AddedAt: now}, // Luxury
+		{PackageID: pMaldives, TopicID: 4, AddedBy: 1, AddedAt: now}, // Honeymoon
+		{PackageID: pMaldives, TopicID: 5, AddedBy: 1, AddedAt: now}, // Family
+	}
 }

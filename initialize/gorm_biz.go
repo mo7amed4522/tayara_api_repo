@@ -69,6 +69,9 @@ func bizModel() error {
 		&engage.Share{},
 		&engage.Coupon{},
 		&engage.DeviceToken{},
+		&engage.PackageTopic{},
+		&engage.ExploreTopic{},
+
 		// payment
 		&paymentModel.PaymentTransaction{},
 		&paymentModel.Refund{},

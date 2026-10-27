@@ -26,3 +26,9 @@ type CustomerExploreTopicPackagesResult struct {
 	Page     int                              `json:"page"`
 	PageSize int                              `json:"pageSize"`
 }
+
+// AgentExploreTopicCard represents a topic card for agent dashboard (includes my package count)
+type AgentExploreTopicCard struct {
+	CustomerExploreTopicCard
+	MyPackageCount int `json:"myPackageCount"`
+}
