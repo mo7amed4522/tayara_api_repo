@@ -7,4 +7,5 @@ type ServiceGroup struct {
 	SystemConfigService
 	OperationRecordService
 	SysAdminProfileServices
+	ExploreTopicServices
 }

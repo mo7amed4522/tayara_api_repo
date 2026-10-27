@@ -8,6 +8,7 @@ type ApiGroup struct {
 	HomeApi
 	AgentDetailApi
 	PackageDetailApi
+	ExploreApi
 }
 
 // bxapiSvc reaches the bxapi services via the group var.
