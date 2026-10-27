@@ -49,6 +49,9 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// engage (reviews, ads, notifications, wishlist/shares/coupons, devices)
 	router.RouterGroupApp.Engage.InitEngageRouter(publicGroup, bxPrivate, systemPrivate)
 
+	// explore topics (public topics, agent package-topic mgmt, admin topic CRUD)
+	router.RouterGroupApp.BxApi.InitExploreRouter(publicGroup, bxPrivate, managePrivate)
+
 	// analytics (admin aggregate cards + agent dashboard card)
 	router.RouterGroupApp.Analytics.InitAnalyticsRouter(managePrivate, systemPrivate)
 
