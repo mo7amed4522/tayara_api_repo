@@ -16,13 +16,13 @@ type LogLayout struct {
 	Time      time.Time
 	Metadata  map[string]interface{} // Store custom original data
 	Path      string                 // Access path
-	Query     string                 //携带query
-	Body      string                 //携带body数据
-	IP        string                 // ip地址
-	UserAgent string                 //代理
-	Error     string                 //错误
-	Cost      time.Duration          //花费时间
-	Source    string                 //来源
+	Query     string                 //Include query
+	Body      string                 //Include body data
+	IP        string                 // IP address
+	UserAgent string                 //acting
+	Error     string                 //mistake
+	Cost      time.Duration          //Spend time
+	Source    string                 //source
 }
 
 type Logger struct {

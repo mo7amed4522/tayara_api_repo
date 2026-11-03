@@ -21,7 +21,7 @@ func LoadTls() gin.HandlerFunc {
 			fmt.Println(err)
 			return
 		}
-		// Continue往下处理
+		// Continue with the subsequent processing.
 		c.Next()
 	}
 }

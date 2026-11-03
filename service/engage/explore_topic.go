@@ -2,6 +2,7 @@ package engage
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	engageResp "github.com/mo7amed4522/tayara_api/model/engage/response"
 	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
 	"github.com/mo7amed4522/tayara_api/utils"
+	"github.com/mo7amed4522/tayara_api/utils/cache"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -33,6 +35,36 @@ func (s *ExploreTopicServices) ListTopics() ([]engageResp.ExploreTopicCard, erro
 		return nil, errors.New("db not init")
 	}
 
+	// Try to get cached active topics
+	cacheKey := "engage:explore:topics:active"
+	if val, found, _ := cache.Get(cacheKey); found {
+		if topics, ok := val.([]engage.ExploreTopic); ok {
+			// Get package counts for each topic
+			topicIDs := make([]uint, len(topics))
+			for i, t := range topics {
+				topicIDs[i] = t.ID
+			}
+
+			counts := s.GetPackageCountsByTopic(topicIDs)
+
+			// Build response cards
+			cards := make([]engageResp.ExploreTopicCard, len(topics))
+			for i, t := range topics {
+				cards[i] = engageResp.ExploreTopicCard{
+					ID:           t.ID,
+					Code:         t.Code,
+					Name:         t.Name,
+					NameAr:       t.NameAr,
+					Description:  t.Description,
+					ImageURL:     t.ImageURL,
+					IconURL:      t.IconURL,
+					PackageCount: counts[t.ID],
+				}
+			}
+			return cards, nil
+		}
+	}
+
 	var topics []engage.ExploreTopic
 	err := global.GVA_DB.Where("is_active = ? AND deleted_at IS NULL", true).
 		Order("sort_order asc, id asc").
@@ -40,6 +72,9 @@ func (s *ExploreTopicServices) ListTopics() ([]engageResp.ExploreTopicCard, erro
 	if err != nil {
 		return nil, err
 	}
+
+	// Cache the topics list
+	cache.Set(cacheKey, topics, int64(len(topics)*128), 10*time.Minute)
 
 	// Get package counts for each topic
 	topicIDs := make([]uint, len(topics))
@@ -73,6 +108,39 @@ func (s *ExploreTopicServices) GetTopicDetail(topicCode string) (*engageResp.Exp
 		return nil, errors.New("db not init")
 	}
 
+	// Try to get cached topic by code
+	cacheKey := "engage:explore:topic:code:" + topicCode
+	if val, found, _ := cache.Get(cacheKey); found {
+		if topic, ok := val.(*engage.ExploreTopic); ok {
+			if !topic.IsActive {
+				return nil, errors.New("topic not available")
+			}
+
+			// Get featured packages (first 6 active packages in this topic)
+			featuredPackages, err := s.getTopicPackages(topic.ID, 1, 6, true)
+			if err != nil {
+				return nil, err
+			}
+
+			// Get package count
+			counts := s.GetPackageCountsByTopic([]uint{topic.ID})
+
+			return &engageResp.ExploreTopicDetail{
+				ExploreTopicCard: engageResp.ExploreTopicCard{
+					ID:           topic.ID,
+					Code:         topic.Code,
+					Name:         topic.Name,
+					NameAr:       topic.NameAr,
+					Description:  topic.Description,
+					ImageURL:     topic.ImageURL,
+					IconURL:      topic.IconURL,
+					PackageCount: counts[topic.ID],
+				},
+				FeaturedPackages: featuredPackages,
+			}, nil
+		}
+	}
+
 	topic, err := engage.GetTopicByCode(topicCode)
 	if err != nil {
 		return nil, errors.New("topic not found")
@@ -80,6 +148,9 @@ func (s *ExploreTopicServices) GetTopicDetail(topicCode string) (*engageResp.Exp
 	if !topic.IsActive {
 		return nil, errors.New("topic not available")
 	}
+
+	// Cache the topic
+	cache.Set(cacheKey, topic, 128, 10*time.Minute)
 
 	// Get featured packages (first 6 active packages in this topic)
 	featuredPackages, err := s.getTopicPackages(topic.ID, 1, 6, true)
@@ -547,22 +618,42 @@ func (s *ExploreTopicServices) GetPackageCountsByTopic(topicIDs []uint) map[uint
 		return counts
 	}
 
-	type countRow struct {
-		TopicID uint `gorm:"column:topic_id"`
-		Count   int  `gorm:"column:cnt"`
+	// Check cache for each topic
+	var missingIDs []uint
+	for _, topicID := range topicIDs {
+		cacheKey := fmt.Sprintf("engage:explore:topic:%d:pkgcount", topicID)
+		if val, found, _ := cache.Get(cacheKey); found {
+			if count, ok := val.(int); ok {
+				counts[topicID] = count
+				continue
+			}
+		}
+		missingIDs = append(missingIDs, topicID)
 	}
-	var rows []countRow
-	global.GVA_DB.Model(&engage.PackageTopic{}).
-		Select("topic_id, COUNT(*) as cnt").
-		Where("topic_id IN ?", topicIDs).
-		Joins("INNER JOIN catalog_package ON catalog_package.id = engage_package_topic.package_id").
-		Where("catalog_package.status = ?", constants.PackageStatusActive).
-		Group("topic_id").
-		Scan(&rows)
 
-	for _, r := range rows {
-		counts[r.TopicID] = r.Count
+	// Query DB only for missing IDs
+	if len(missingIDs) > 0 {
+		type countRow struct {
+			TopicID uint `gorm:"column:topic_id"`
+			Count   int  `gorm:"column:cnt"`
+		}
+		var rows []countRow
+		global.GVA_DB.Model(&engage.PackageTopic{}).
+			Select("topic_id, COUNT(*) as cnt").
+			Where("topic_id IN ?", missingIDs).
+			Joins("INNER JOIN catalog_package ON catalog_package.id = engage_package_topic.package_id").
+			Where("catalog_package.status = ?", constants.PackageStatusActive).
+			Group("topic_id").
+			Scan(&rows)
+
+		for _, r := range rows {
+			counts[r.TopicID] = r.Count
+			// Cache the result
+			cacheKey := fmt.Sprintf("engage:explore:topic:%d:pkgcount", r.TopicID)
+			cache.Set(cacheKey, r.Count, 8, 10*time.Minute)
+		}
 	}
+
 	return counts
 }
 

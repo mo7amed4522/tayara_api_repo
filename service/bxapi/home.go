@@ -3,6 +3,7 @@ package bxapi
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
@@ -13,6 +14,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
 	"github.com/mo7amed4522/tayara_api/model/engage"
 	"github.com/mo7amed4522/tayara_api/utils"
+	"github.com/mo7amed4522/tayara_api/utils/cache"
 )
 
 // HomeServices owns the public/buyer-facing home-screen data aggregations.
@@ -136,6 +138,13 @@ func (s *HomeServices) CustomerSearch(req bxapiReq.CustomerSearchReq) (*response
 // findCountryByKeyword searches for a country by keyword in the Keywords JSONMap field
 // Returns country ID if found, 0 otherwise
 func (s *HomeServices) findCountryByKeyword(keyword string) uint {
+	cacheKey := "bxapi:country:keyword:" + keyword
+	if val, found, _ := cache.Get(cacheKey); found {
+		if id, ok := val.(uint); ok {
+			return id
+		}
+	}
+
 	var countryID uint
 	// keywords structure: {"keywords": ["UAE", "United Arab Emirates", "Emirates", "AE"]}
 	kw := "\"" + keyword + "\""
@@ -147,12 +156,21 @@ func (s *HomeServices) findCountryByKeyword(keyword string) uint {
 	if err != nil {
 		return 0
 	}
+
+	cache.Set(cacheKey, countryID, 8, cache.AddJitter(5*time.Minute))
 	return countryID
 }
 
 // findCityByKeyword searches for a city by keyword in the Keywords JSONMap field
 // Returns city ID and city name if found, 0 and "" otherwise
 func (s *HomeServices) findCityByKeyword(keyword string) (uint, string) {
+	cacheKey := "bxapi:city:keyword:" + keyword
+	if val, found, _ := cache.Get(cacheKey); found {
+		if result, ok := val.(struct{ ID uint; Name string }); ok {
+			return result.ID, result.Name
+		}
+	}
+
 	type cityResult struct {
 		ID   uint
 		Name string
@@ -167,6 +185,8 @@ func (s *HomeServices) findCityByKeyword(keyword string) (uint, string) {
 	if err != nil {
 		return 0, ""
 	}
+
+	cache.Set(cacheKey, result, 64, cache.AddJitter(5*time.Minute))
 	return result.ID, result.Name
 }
 
@@ -554,54 +574,98 @@ func (s *HomeServices) batchAgentRatings(agentIDs []uint) (ratings map[uint]floa
 }
 
 // batchPackageRatings loads avg rating and review count for multiple packages in one query.
+// Uses cache for individual package ratings, only queries DB for missing entries.
 func (s *HomeServices) batchPackageRatings(pkgIDs []uint) (ratings map[uint]float64, counts map[uint]int) {
 	ratings = make(map[uint]float64)
 	counts = make(map[uint]int)
 	if len(pkgIDs) == 0 {
 		return
 	}
-	type row struct {
-		PackageID uint    `gorm:"column:package_id"`
-		Avg       float64 `gorm:"column:avg"`
-		Cnt       int64   `gorm:"column:cnt"`
+
+	// Check cache for each package
+	var missingIDs []uint
+	for _, pkgID := range pkgIDs {
+		cacheKey := fmt.Sprintf("bxapi:pkg:rating:%d", pkgID)
+		if val, found, _ := cache.Get(cacheKey); found {
+			if cached, ok := val.(struct{ Avg float64; Cnt int }); ok {
+				ratings[pkgID] = cached.Avg
+				counts[pkgID] = cached.Cnt
+				continue
+			}
+		}
+		missingIDs = append(missingIDs, pkgID)
 	}
-	var rows []row
-	if err := global.GVA_DB.Model(&engage.Review{}).
-		Where("package_id IN ?", pkgIDs).
-		Where("review_status = ?", constants.ReviewStatusActive).
-		Select("package_id, ROUND(AVG(rating), 2) AS avg, COUNT(*) AS cnt").
-		Group("package_id").
-		Scan(&rows).Error; err != nil {
-		return
+
+	// Query DB only for missing IDs
+	if len(missingIDs) > 0 {
+		type row struct {
+			PackageID uint    `gorm:"column:package_id"`
+			Avg       float64 `gorm:"column:avg"`
+			Cnt       int64   `gorm:"column:cnt"`
+		}
+		var rows []row
+		if err := global.GVA_DB.Model(&engage.Review{}).
+			Where("package_id IN ?", missingIDs).
+			Where("review_status = ?", constants.ReviewStatusActive).
+			Select("package_id, ROUND(AVG(rating), 2) AS avg, COUNT(*) AS cnt").
+			Group("package_id").
+			Scan(&rows).Error; err == nil {
+			for _, r := range rows {
+				ratings[r.PackageID] = r.Avg
+				counts[r.PackageID] = int(r.Cnt)
+				// Cache the result
+				cacheKey := fmt.Sprintf("bxapi:pkg:rating:%d", r.PackageID)
+				cache.Set(cacheKey, struct{ Avg float64; Cnt int }{Avg: r.Avg, Cnt: int(r.Cnt)}, 24, cache.AddJitter(10*time.Minute))
+			}
+		}
 	}
-	for _, r := range rows {
-		ratings[r.PackageID] = r.Avg
-		counts[r.PackageID] = int(r.Cnt)
-	}
+
 	return
 }
 
 // batchAgentNamesAndLogos loads company name and header image for multiple agents in one query.
+// Uses cache for individual agent info, only queries DB for missing entries.
 func (s *HomeServices) batchAgentNamesAndLogos(agentIDs []uint) map[uint]agentInfo {
 	out := make(map[uint]agentInfo, len(agentIDs))
 	if len(agentIDs) == 0 {
 		return out
 	}
-	type row struct {
-		ID          uint   `gorm:"column:id"`
-		CompanyName string `gorm:"column:company_name"`
-		HeaderImg   string `gorm:"column:header_img"`
+
+	// Check cache for each agent
+	var missingIDs []uint
+	for _, agentID := range agentIDs {
+		cacheKey := fmt.Sprintf("bxapi:agent:info:%d", agentID)
+		if val, found, _ := cache.Get(cacheKey); found {
+			if info, ok := val.(agentInfo); ok {
+				out[agentID] = info
+				continue
+			}
+		}
+		missingIDs = append(missingIDs, agentID)
 	}
-	var rows []row
-	if err := global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
-		Where("id IN ?", agentIDs).
-		Select("id, company_name, header_img").
-		Scan(&rows).Error; err != nil {
-		return out
+
+	// Query DB only for missing IDs
+	if len(missingIDs) > 0 {
+		type row struct {
+			ID          uint   `gorm:"column:id"`
+			CompanyName string `gorm:"column:company_name"`
+			HeaderImg   string `gorm:"column:header_img"`
+		}
+		var rows []row
+		if err := global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
+			Where("id IN ?", missingIDs).
+			Select("id, company_name, header_img").
+			Scan(&rows).Error; err == nil {
+			for _, r := range rows {
+				info := agentInfo{name: r.CompanyName, logo: r.HeaderImg}
+				out[r.ID] = info
+				// Cache the result
+				cacheKey := fmt.Sprintf("bxapi:agent:info:%d", r.ID)
+				cache.Set(cacheKey, info, 64, cache.AddJitter(10*time.Minute))
+			}
+		}
 	}
-	for _, r := range rows {
-		out[r.ID] = agentInfo{name: r.CompanyName, logo: r.HeaderImg}
-	}
+
 	return out
 }
 
