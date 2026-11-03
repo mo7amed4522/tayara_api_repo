@@ -3,7 +3,7 @@ module github.com/mo7amed4522/tayara_api
 go 1.26.0
 
 require (
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/go-playground/validator/v10 v10.30.1
