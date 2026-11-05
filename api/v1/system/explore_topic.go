@@ -4,26 +4,23 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mo7amed4522/tayara_api/model/engage/request"
 	commonResp "github.com/mo7amed4522/tayara_api/model/common/response"
+	"github.com/mo7amed4522/tayara_api/model/engage/request"
 )
 
 // ExploreTopicApi handles admin endpoints for explore topics
 type ExploreTopicApi struct{}
 
-var exploreTopicApi = ExploreTopicApi{}
-
-// AdminListTopics
-//	@Tags		System
-//	@Summary	Admin list explore topics
-//	@Produce	application/json
-//	@Security	BearerAuth
-//	@Param		page		query		int		false	"page number"	default(1)
-//	@Param		pageSize	query		int		false	"page size"		default(20)
-//	@Param		isActive	query		bool	false	"filter by active status"
-//	@Param		keyword		query		string	false	"search keyword"
-//	@Success	200			{object}	commonResp.Response
-//	@Router		/api/v1/admin/explore/topics [get]
+// @Tags		System
+// @Summary	Admin list explore topics
+// @Produce	application/json
+// @Security	BearerAuth
+// @Param		page		query		int		false	"page number"	default(1)
+// @Param		pageSize	query		int		false	"page size"		default(20)
+// @Param		isActive	query		bool	false	"filter by active status"
+// @Param		keyword		query		string	false	"search keyword"
+// @Success	200			{object}	commonResp.Response
+// @Router		/api/v1/admin/explore/topics [get]
 func (ExploreTopicApi) AdminListTopics(c *gin.Context) {
 	var req request.AdminExploreTopicPageReq
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -46,6 +43,7 @@ func (ExploreTopicApi) AdminListTopics(c *gin.Context) {
 }
 
 // AdminGetTopic
+//
 //	@Tags		System
 //	@Summary	Admin get explore topic by ID
 //	@Produce	application/json
@@ -70,6 +68,7 @@ func (ExploreTopicApi) AdminGetTopic(c *gin.Context) {
 }
 
 // AdminCreateTopic
+//
 //	@Tags		System
 //	@Summary	Admin create explore topic
 //	@Produce	application/json
@@ -93,6 +92,7 @@ func (ExploreTopicApi) AdminCreateTopic(c *gin.Context) {
 }
 
 // AdminUpdateTopic
+//
 //	@Tags		System
 //	@Summary	Admin update explore topic
 //	@Produce	application/json
@@ -124,6 +124,7 @@ func (ExploreTopicApi) AdminUpdateTopic(c *gin.Context) {
 }
 
 // AdminDeleteTopic
+//
 //	@Tags		System
 //	@Summary	Admin delete explore topic
 //	@Produce	application/json
@@ -148,6 +149,7 @@ func (ExploreTopicApi) AdminDeleteTopic(c *gin.Context) {
 }
 
 // AdminReorderTopics
+//
 //	@Tags		System
 //	@Summary	Admin reorder explore topics
 //	@Produce	application/json
@@ -171,6 +173,7 @@ func (ExploreTopicApi) AdminReorderTopics(c *gin.Context) {
 }
 
 // AdminManageTopicPackages
+//
 //	@Tags		System
 //	@Summary	Admin manage packages in explore topic
 //	@Produce	application/json
@@ -202,6 +205,7 @@ func (ExploreTopicApi) AdminManageTopicPackages(c *gin.Context) {
 }
 
 // AdminGetTopicPackages
+//
 //	@Tags		System
 //	@Summary	Admin get packages in explore topic
 //	@Produce	application/json
