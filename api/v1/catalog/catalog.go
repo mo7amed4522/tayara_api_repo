@@ -11,6 +11,7 @@ import (
 type CatalogApi struct{}
 
 // CreatePackage
+//
 //	@Tags		Catalog
 //	@Summary	Agent creates a package (draft)
 //	@Produce	application/json
@@ -37,6 +38,7 @@ func (CatalogApi) CreatePackage(c *gin.Context) {
 }
 
 // UpdatePackage
+//
 //	@Tags		Catalog
 //	@Summary	Agent updates one of their own packages
 //	@Produce	application/json
@@ -63,6 +65,7 @@ func (CatalogApi) UpdatePackage(c *gin.Context) {
 }
 
 // SubmitForApproval
+//
 //	@Tags		Catalog
 //	@Summary	Agent submits a draft package for approval
 //	@Produce	application/json
@@ -84,6 +87,7 @@ func (CatalogApi) SubmitForApproval(c *gin.Context) {
 }
 
 // DeletePackage
+//
 //	@Tags		Catalog
 //	@Summary	Agent deletes one of their own packages
 //	@Produce	application/json
@@ -105,6 +109,7 @@ func (CatalogApi) DeletePackage(c *gin.Context) {
 }
 
 // GetOwnPackage
+//
 //	@Tags		Catalog
 //	@Summary	Agent gets one of their own packages (with children)
 //	@Produce	application/json
@@ -127,6 +132,7 @@ func (CatalogApi) GetOwnPackage(c *gin.Context) {
 }
 
 // ListOwnPackages
+//
 //	@Tags		Catalog
 //	@Summary	Agent lists their own packages (paginated)
 //	@Produce	application/json
@@ -146,6 +152,7 @@ func (CatalogApi) ListOwnPackages(c *gin.Context) {
 }
 
 // ListPublicPackages
+//
 //	@Tags		Catalog
 //	@Summary	Public list of active packages
 //	@Produce	application/json
@@ -153,17 +160,19 @@ func (CatalogApi) ListOwnPackages(c *gin.Context) {
 //	@Success	200		{object}	response.Response
 //	@Router		/api/v1/catalog/public/packages [get]
 func (CatalogApi) ListPublicPackages(c *gin.Context) {
-	var req catalogReq.PackagePageReq
-	_ = c.ShouldBindQuery(&req)
-	list, total, totalPage, err := catalogService.PackageServices.ListPublicPackages(req)
-	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+	agentID := utils.GetAgentID(c)
+	if agentID == 0 {
+		response.FailWithMessage("unauthorized agent", c)
 		return
 	}
+	var req catalogReq.PackagePageReq
+	_ = c.ShouldBindQuery(&req)
+	list, total, totalPage, _ := catalogService.PackageServices.ListOwnPackages(agentID, req)
 	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // GetPublicPackage
+//
 //	@Tags		Catalog
 //	@Summary	Public detail of an active package
 //	@Produce	application/json
@@ -171,12 +180,17 @@ func (CatalogApi) ListPublicPackages(c *gin.Context) {
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/catalog/public/packages/detail [get]
 func (CatalogApi) GetPublicPackage(c *gin.Context) {
-	var idReq commonReq.GetById
-	if err := c.ShouldBindQuery(&idReq); err != nil {
-		response.FailWithMessage(err.Error(), c)
+	agentID := utils.GetAgentID(c)
+	if agentID == 0 {
+		response.FailWithMessage("unauthorized agent", c)
 		return
 	}
-	detail, err := catalogService.PackageServices.GetPublicPackage(uint(idReq.ID))
+	var idReq commonReq.GetById
+	if err := c.ShouldBindQuery(&idReq); err != nil {
+		response.FailWithMessage("key required", c)
+		return
+	}
+	detail, err := catalogService.PackageServices.GetOwnPackage(agentID, uint(idReq.ID))
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -185,6 +199,7 @@ func (CatalogApi) GetPublicPackage(c *gin.Context) {
 }
 
 // ListPublicPackageReviews
+//
 //	@Tags		Catalog
 //	@Summary	Public paginated reviews for an active package
 //	@Produce	application/json
@@ -216,6 +231,7 @@ func (CatalogApi) ListPublicPackageReviews(c *gin.Context) {
 }
 
 // AdminListPackages
+//
 //	@Tags		Catalog
 //	@Summary	Admin lists all packages (moderation)
 //	@Produce	application/json
@@ -234,6 +250,7 @@ func (CatalogApi) AdminListPackages(c *gin.Context) {
 }
 
 // AdminGetPackageDetail
+//
 //	@Tags		Catalog
 //	@Summary	Admin gets full package detail (with children) for moderation review
 //	@Produce	application/json
@@ -255,6 +272,7 @@ func (CatalogApi) AdminGetPackageDetail(c *gin.Context) {
 }
 
 // AdminSetStatus
+//
 //	@Tags		Catalog
 //	@Summary	Admin moderates a package (approve/hide/flag/disable)
 //	@Produce	application/json

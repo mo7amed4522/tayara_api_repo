@@ -19,7 +19,6 @@ var (
 	homeApi          = api.ApiGroupApp.BxApiGroup.HomeApi
 	agentDetailApi   = api.ApiGroupApp.BxApiGroup.AgentDetailApi
 	packageDetailApi = api.ApiGroupApp.BxApiGroup.PackageDetailApi
-	exploreApi       = api.ApiGroupApp.BxApiGroup.ExploreApi
 )
 
 // InitExploreRouter registers explore topic routes
