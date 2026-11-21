@@ -2,6 +2,7 @@ package bxapi
 
 import (
 	"errors"
+	"mime/multipart"
 	"time"
 
 	"github.com/mo7amed4522/tayara_api/constants"
@@ -12,6 +13,7 @@ import (
 	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
 	"github.com/mo7amed4522/tayara_api/model/engage"
 	"github.com/mo7amed4522/tayara_api/utils"
+	"github.com/mo7amed4522/tayara_api/utils/upload"
 )
 
 type UserServices struct{}
@@ -106,7 +108,7 @@ func (s *UserServices) GetProfile(userID uint) (*bxapiResp.BxGetUserProfileData,
 }
 
 // UpdateProfile updates a user's own profile fields (partial update).
-func (s *UserServices) UpdateProfile(userID uint, req bxapiReq.UserUpdateProfileReq) (*bxapi.BxsUserProfile, error) {
+func (s *UserServices) UpdateProfile(userID uint, req bxapiReq.UserUpdateProfileReq, file *multipart.FileHeader) (*bxapi.BxsUserProfile, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
@@ -141,7 +143,22 @@ func (s *UserServices) UpdateProfile(userID uint, req bxapiReq.UserUpdateProfile
 	if req.DateOfBirth != nil {
 		updates["date_of_birth"] = req.DateOfBirth
 	}
-	if req.HeaderImg != "" {
+
+	// Handle profile image upload
+	if file != nil {
+		oss := upload.NewOss()
+		uploadPath, _, err := oss.UploadFileWithPath(file, "system/profile-images")
+		if err != nil {
+			return nil, errors.New("failed to upload profile image: " + err.Error())
+		}
+		updates["header_img"] = uploadPath
+
+		// Delete old image if exists
+		if user.HeaderImg != "" {
+			_ = oss.DeleteFile(user.HeaderImg)
+		}
+	} else if req.HeaderImg != "" {
+		// Allow setting header image via URL (backwards compatibility)
 		updates["header_img"] = req.HeaderImg
 	}
 

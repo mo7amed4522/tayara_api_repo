@@ -56,8 +56,8 @@ func (LookupApi) UpsertCategory(c *gin.Context) {
 //	@Summary	Public list of active package categories
 //	@Produce	application/json
 //	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200	{object}	response.Response
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/base/categories [get]
 func (LookupApi) ListCategories(c *gin.Context) {
 	var pageInfo commonReq.PageInfo
@@ -147,8 +147,8 @@ func (LookupApi) SettingHistory(c *gin.Context) {
 //	@Summary	Super-admin views all system settings grouped by section
 //	@Produce	application/json
 //	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200	{object}	response.Response
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/base/settings [get]
 func (LookupApi) Settings(c *gin.Context) {
 	if !requireSuperAdmin(c) {
@@ -260,8 +260,8 @@ func (LookupApi) DeleteSetting(c *gin.Context) {
 //	@Summary	Super-admin lists every config.yaml key that can be edited at runtime
 //	@Produce	application/json
 //	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200	{object}	response.Response
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/base/settings/keys [get]
 func (LookupApi) ConfigKeys(c *gin.Context) {
 	if !requireSuperAdmin(c) {

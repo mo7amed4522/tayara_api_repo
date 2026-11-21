@@ -37,10 +37,10 @@ func (RequirementApi) SetProfiles(c *gin.Context) {
 //	@Tags		Catalog
 //	@Summary	Agent gets custom-trip requirement profiles for a template+country
 //	@Produce	application/json
-//	@Param		data	query		catReq.SetRequirementProfilesReq	true	"template + country"
-//	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200		{object}	response.Response
+//	@Param		data		query		catReq.SetRequirementProfilesReq	true	"template + country"
+//	@Param		page		query		int									false	"page number"	default(1)
+//	@Param		pageSize	query		int									false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/catalog/templates/requirements [get]
 func (RequirementApi) GetProfiles(c *gin.Context) {
 	agentID := utils.GetAgentID(c)

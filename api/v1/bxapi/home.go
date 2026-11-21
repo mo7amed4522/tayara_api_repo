@@ -146,10 +146,10 @@ func (HomeApi) ListDeals(c *gin.Context) {
 //	@Tags		Customer
 //	@Summary	Public top rated agencies
 //	@Produce	application/json
-//	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
+//	@Param		page		query		int	false	"page number"					default(1)
+//	@Param		pageSize	query		int	false	"page size"						default(10)
 //	@Param		limit		query		int	false	"deprecated page-size alias"	default(10)
-//	@Success	200		{object}	response.Response
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/customer/home/agents [get]
 func (HomeApi) ListTopRatedAgents(c *gin.Context) {
 	page := utils.StringToInt(c.Query("page"))
@@ -209,8 +209,8 @@ func (HomeApi) RecommendedForYou(c *gin.Context) {
 //	@Tags		Customer
 //	@Summary	Public home top-banner ads
 //	@Produce	application/json
-//	@Param		page		query		int		false	"page number"	default(1)
-//	@Param		pageSize	query		int		false	"page size"	default(10)
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"		default(10)
 //	@Success	200			{object}	response.Response
 //	@Router		/api/v1/customer/home/ads [get]
 func (HomeApi) ActiveHomeAds(c *gin.Context) {

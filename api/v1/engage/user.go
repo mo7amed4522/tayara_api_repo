@@ -39,8 +39,8 @@ func (UserEngageApi) ToggleWishlist(c *gin.Context) {
 //	@Summary	User lists their saved packages
 //	@Produce	application/json
 //	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200	{object}	response.Response
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/engage/wishlist [get]
 func (UserEngageApi) ListWishlist(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
@@ -199,8 +199,8 @@ func (UserEngageApi) RegisterDeviceToken(c *gin.Context) {
 //	@Summary	User lists their registered push devices
 //	@Produce	application/json
 //	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200	{object}	response.Response
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/engage/devices [get]
 func (UserEngageApi) ListDeviceTokens(c *gin.Context) {
 	userID := utils.GetBxUserID(c)

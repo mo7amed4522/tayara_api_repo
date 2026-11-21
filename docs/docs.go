@@ -5143,6 +5143,9 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -5152,13 +5155,52 @@ const docTemplate = `{
                 "summary": "User updates their own profile",
                 "parameters": [
                     {
-                        "description": "profile payload",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.UserUpdateProfileReq"
-                        }
+                        "type": "string",
+                        "description": "Full name",
+                        "name": "fullName",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nickname",
+                        "name": "nickName",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email",
+                        "name": "email",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Phone country code",
+                        "name": "phoneCountryCode",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Phone number",
+                        "name": "phone",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nationality",
+                        "name": "nationality",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date of birth (RFC3339)",
+                        "name": "dateOfBirth",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Profile image",
+                        "name": "headerImg",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -5217,7 +5259,7 @@ const docTemplate = `{
                 "summary": "Send test email",
                 "responses": {
                     "200": {
-                        "description": "{\"success\":true,\"data\":{},\"msg\":\"Send success\"}",
+                        "description": "{\"success\":true,\"data\":{},\"msg\":\"Send\tsuccess\"}",
                         "schema": {
                             "type": "string"
                         }
@@ -5252,7 +5294,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "{\"success\":true,\"data\":{},\"msg\":\"Send success\"}",
+                        "description": "{\"success\":true,\"data\":{},\"msg\":\"Send\tsuccess\"}",
                         "schema": {
                             "type": "string"
                         }
@@ -7237,35 +7279,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.UserUpdateProfileReq": {
-            "type": "object",
-            "properties": {
-                "dateOfBirth": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "fullName": {
-                    "type": "string"
-                },
-                "headerImg": {
-                    "type": "string"
-                },
-                "nationality": {
-                    "type": "string"
-                },
-                "nickName": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "phoneCountryCode": {
                     "type": "string"
                 }
             }
