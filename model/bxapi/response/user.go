@@ -8,3 +8,16 @@ type UserLoginResponse struct {
 	Token     string               `json:"token"`
 	ExpiresAt int64                `json:"expiresAt"`
 }
+
+// GetProfileData return on success user profile with favoiute , past and upcoming trip
+type BxGetUserProfileData struct {
+	User      bxapi.BxsUserProfile `json:"user"`
+	PastTrips int32                `json:"pastTrips"`
+	Upcoming  int32                `json:"upcoming"`
+	Favorites int32                `json:"favorites"`
+}
+
+// UpdateProfileData return user data
+type BxUpdateUserProfileData struct {
+	User bxapi.BxsUserProfile `json:"user"`
+}
