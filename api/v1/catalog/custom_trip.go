@@ -11,6 +11,7 @@ import (
 type CustomTripApi struct{}
 
 // CreateTemplate
+//
 //	@Tags		Catalog
 //	@Summary	Agent creates a custom-trip builder template
 //	@Produce	application/json
@@ -37,6 +38,7 @@ func (CustomTripApi) CreateTemplate(c *gin.Context) {
 }
 
 // UpdateTemplate
+//
 //	@Tags		Catalog
 //	@Summary	Agent updates one of their own templates
 //	@Produce	application/json
@@ -59,22 +61,34 @@ func (CustomTripApi) UpdateTemplate(c *gin.Context) {
 }
 
 // ListOwnTemplates
+//
 //	@Tags		Catalog
 //	@Summary	Agent lists their own custom-trip templates
 //	@Produce	application/json
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/catalog/templates [get]
 func (CustomTripApi) ListOwnTemplates(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
-	list, err := catalogService.CustomTripServices.ListOwnTemplates(agentID)
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	result, err := catalogService.CustomTripServices.ListOwnTemplates(agentID, pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	response.OkWithDetailed(response.PageResult{
+		List: result.Data, Total: result.Total, TotalPage: result.TotalPage,
+		Page: result.Page, PageSize: result.PageSize,
+	}, "ok", c)
 }
 
 // GetOwnTemplate
+//
 //	@Tags		Catalog
 //	@Summary	Agent gets one of their own templates
 //	@Produce	application/json
@@ -97,6 +111,7 @@ func (CustomTripApi) GetOwnTemplate(c *gin.Context) {
 }
 
 // DeleteTemplate
+//
 //	@Tags		Catalog
 //	@Summary	Agent deletes one of their own templates
 //	@Produce	application/json

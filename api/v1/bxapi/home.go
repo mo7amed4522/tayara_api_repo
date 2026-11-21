@@ -13,6 +13,7 @@ import (
 type HomeApi struct{}
 
 // CustomerSearch
+//
 //	@Tags		Customer
 //	@Summary	Public search across agents and packages
 //	@Produce	application/json
@@ -42,6 +43,7 @@ func (HomeApi) CustomerSearch(c *gin.Context) {
 }
 
 // ListExploreTrips
+//
 //	@Tags		Customer
 //	@Summary	Public explore trips listing
 //	@Produce	application/json
@@ -52,22 +54,26 @@ func (HomeApi) CustomerSearch(c *gin.Context) {
 //	@Router		/api/v1/customer/explore/trips [get]
 func (HomeApi) ListExploreTrips(c *gin.Context) {
 	var req bxapiReq.CustomerHomeExploreReq
-	_ = c.ShouldBindQuery(&req)
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
 	if req.Page <= 0 {
 		req.Page = 1
 	}
 	if req.PageSize <= 0 {
 		req.PageSize = 12
 	}
-	list, total, err := bxapiSvc.HomeServices.ListExploreTrips(req)
+	list, total, totalPage, err := bxapiSvc.HomeServices.ListExploreTrips(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // ListDestinations
+//
 //	@Tags		Customer
 //	@Summary	Public discover destinations
 //	@Produce	application/json
@@ -92,19 +98,21 @@ func (HomeApi) ListDestinations(c *gin.Context) {
 	// Extract list from paginateResult.Data
 	list, ok := paginateResult.Data.([]bxapiResp.CustomerDestinationCard)
 	if !ok {
-		list = []bxapiResp.CustomerDestinationCard{}
+		response.FailWithMessage("unexpected destination pagination result", c)
+		return
 	}
 	// Build page result with calculated total pages
 	response.OkWithDetailed(response.PageResult{
-		List:       list,
-		Total:      paginateResult.Total,
-		TotalPage:  paginateResult.TotalPage,
-		Page:       paginateResult.Page,
-		PageSize:   paginateResult.PageSize,
+		List:      list,
+		Total:     paginateResult.Total,
+		TotalPage: paginateResult.TotalPage,
+		Page:      paginateResult.Page,
+		PageSize:  paginateResult.PageSize,
 	}, "ok", c)
 }
 
 // ListDeals
+//
 //	@Tags		Customer
 //	@Summary	Public deals listing (discounted packages)
 //	@Produce	application/json
@@ -115,45 +123,64 @@ func (HomeApi) ListDestinations(c *gin.Context) {
 //	@Router		/api/v1/customer/home/deals [get]
 func (HomeApi) ListDeals(c *gin.Context) {
 	var req bxapiReq.CustomerHomeDealsReq
-	_ = c.ShouldBindQuery(&req)
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
 	if req.Page <= 0 {
 		req.Page = 1
 	}
 	if req.PageSize <= 0 {
 		req.PageSize = 12
 	}
-	list, total, err := bxapiSvc.HomeServices.ListDeals(req)
+	list, total, totalPage, err := bxapiSvc.HomeServices.ListDeals(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // ListTopRatedAgents
+//
 //	@Tags		Customer
 //	@Summary	Public top rated agencies
 //	@Produce	application/json
-//	@Param		limit	query		int	false	"max results"	default(10)
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
+//	@Param		limit		query		int	false	"deprecated page-size alias"	default(10)
 //	@Success	200		{object}	response.Response
 //	@Router		/api/v1/customer/home/agents [get]
 func (HomeApi) ListTopRatedAgents(c *gin.Context) {
-	limit := 10
-	if l := c.Query("limit"); l != "" {
-		var n int
-		if _, err := fmt.Sscanf(l, "%d", &n); err == nil && n > 0 && n <= 50 {
-			limit = n
-		}
+	page := utils.StringToInt(c.Query("page"))
+	pageSize := utils.StringToInt(c.Query("pageSize"))
+	if page <= 0 {
+		page = 1
 	}
-	list, err := bxapiSvc.HomeServices.ListTopRatedAgents(limit)
+	if pageSize <= 0 {
+		pageSize = utils.StringToInt(c.Query("limit"))
+	}
+	if pageSize <= 0 || pageSize > 50 {
+		pageSize = 10
+	}
+	result, err := bxapiSvc.HomeServices.ListTopRatedAgents(page, pageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	list, ok := result.Data.([]bxapiResp.CustomerAgentCard)
+	if !ok {
+		response.FailWithMessage("unexpected agent pagination result", c)
+		return
+	}
+	response.OkWithDetailed(response.PageResult{
+		List: list, Total: result.Total, TotalPage: result.TotalPage,
+		Page: result.Page, PageSize: result.PageSize,
+	}, "ok", c)
 }
 
 // RecommendedForYou
+//
 //	@Tags		Customer
 //	@Summary	Recommended packages for the authenticated user (wishlist + top picks)
 //	@Produce	application/json
@@ -178,6 +205,7 @@ func (HomeApi) RecommendedForYou(c *gin.Context) {
 }
 
 // ActiveHomeAds
+//
 //	@Tags		Customer
 //	@Summary	Public home top-banner ads
 //	@Produce	application/json

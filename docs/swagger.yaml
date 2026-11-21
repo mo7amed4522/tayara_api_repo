@@ -1746,6 +1746,17 @@ paths:
       tags:
       - Base
     get:
+      parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
@@ -1776,6 +1787,17 @@ paths:
       - Base
   /api/v1/base/settings:
     get:
+      parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
@@ -1886,6 +1908,17 @@ paths:
       - Base
   /api/v1/base/settings/keys:
     get:
+      parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
@@ -2144,6 +2177,16 @@ paths:
         in: query
         name: id
         required: true
+        type: integer
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -2735,6 +2778,17 @@ paths:
       tags:
       - Catalog
     get:
+      parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
@@ -2809,6 +2863,16 @@ paths:
       - in: query
         name: templateId
         required: true
+        type: integer
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -2996,8 +3060,18 @@ paths:
   /api/v1/customer/home/agents:
     get:
       parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
       - default: 10
-        description: max results
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      - default: 10
+        description: deprecated page-size alias
         in: query
         name: limit
         type: integer
@@ -3264,6 +3338,17 @@ paths:
       tags:
       - Engage
     get:
+      parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
@@ -3507,6 +3592,17 @@ paths:
       - Engage
   /api/v1/engage/devices:
     get:
+      parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
@@ -3586,6 +3682,16 @@ paths:
         name: placement
         required: true
         type: string
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:
@@ -3704,6 +3810,17 @@ paths:
       - Engage
   /api/v1/engage/wishlist:
     get:
+      parameters:
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
       produces:
       - application/json
       responses:

@@ -13,6 +13,7 @@ import (
 type AdApi struct{}
 
 // CreateAd
+//
 //	@Tags		Engage
 //	@Summary	Admin creates an ad creative (draft)
 //	@Produce	application/json
@@ -35,6 +36,7 @@ func (AdApi) CreateAd(c *gin.Context) {
 }
 
 // UpdateAd
+//
 //	@Tags		Engage
 //	@Summary	Admin updates an ad creative
 //	@Produce	application/json
@@ -57,6 +59,7 @@ func (AdApi) UpdateAd(c *gin.Context) {
 }
 
 // SetStatus
+//
 //	@Tags		Engage
 //	@Summary	Admin activates/disables an ad
 //	@Produce	application/json
@@ -77,6 +80,7 @@ func (AdApi) SetStatus(c *gin.Context) {
 }
 
 // DeleteAd
+//
 //	@Tags		Engage
 //	@Summary	Admin deletes an ad (draft/disabled only)
 //	@Produce	application/json
@@ -97,6 +101,7 @@ func (AdApi) DeleteAd(c *gin.Context) {
 }
 
 // ListAds
+//
 //	@Tags		Engage
 //	@Summary	Admin lists ads with CTR (filterable by placement/status)
 //	@Produce	application/json
@@ -115,10 +120,13 @@ func (AdApi) ListAds(c *gin.Context) {
 }
 
 // ActiveAds
+//
 //	@Tags		Engage
 //	@Summary	Public list of currently-active ads for a placement
 //	@Produce	application/json
 //	@Param		placement	query		string	true	"placement"
+//	@Param		page		query		int		false	"page number"	default(1)
+//	@Param		pageSize	query		int		false	"page size"		default(10)
 //	@Success	200			{object}	response.Response
 //	@Router		/api/v1/engage/public/ads [get]
 func (AdApi) ActiveAds(c *gin.Context) {
@@ -127,15 +135,30 @@ func (AdApi) ActiveAds(c *gin.Context) {
 		response.FailWithMessage("placement required", c)
 		return
 	}
-	list, err := engageService.AdServices.ActiveAds(placement)
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, totalPage, err := engageService.AdServices.ActiveAds(placement, pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	if pageInfo.Page <= 0 {
+		pageInfo.Page = 1
+	}
+	if pageInfo.PageSize <= 0 {
+		pageInfo.PageSize = 10
+	}
+	response.OkWithDetailed(response.PageResult{
+		List: list, Total: total, TotalPage: totalPage,
+		Page: pageInfo.Page, PageSize: pageInfo.PageSize,
+	}, "ok", c)
 }
 
 // RecordImpression
+//
 //	@Tags		Engage
 //	@Summary	Public records an ad impression
 //	@Produce	application/json
@@ -156,6 +179,7 @@ func (AdApi) RecordImpression(c *gin.Context) {
 }
 
 // GroupedAnalytics
+//
 //	@Tags		Engage
 //	@Summary	Admin ad impression/CTR analytics grouped by placement
 //	@Produce	application/json
@@ -182,6 +206,7 @@ func (AdApi) GroupedAnalytics(c *gin.Context) {
 }
 
 // RecordClick
+//
 //	@Tags		Engage
 //	@Summary	Admin clicks an ad
 //	@Produce	application/json

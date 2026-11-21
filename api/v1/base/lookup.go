@@ -6,11 +6,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mo7amed4522/tayara_api/constants"
-	"gorm.io/gorm"
 	baseReq "github.com/mo7amed4522/tayara_api/model/base/request"
 	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
 	"github.com/mo7amed4522/tayara_api/model/common/response"
 	"github.com/mo7amed4522/tayara_api/utils"
+	"gorm.io/gorm"
 )
 
 type LookupApi struct{}
@@ -29,6 +29,7 @@ func requireSuperAdmin(c *gin.Context) bool {
 }
 
 // UpsertCategory
+//
 //	@Tags		Base
 //	@Summary	Admin creates/updates a package category
 //	@Produce	application/json
@@ -50,21 +51,36 @@ func (LookupApi) UpsertCategory(c *gin.Context) {
 }
 
 // ListCategories
+//
 //	@Tags		Base
 //	@Summary	Public list of active package categories
 //	@Produce	application/json
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/base/categories [get]
 func (LookupApi) ListCategories(c *gin.Context) {
-	list, err := baseServiceApp.LookupServices.ListCategories()
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, totalPage, err := baseServiceApp.LookupServices.ListCategories(pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	if pageInfo.Page <= 0 {
+		pageInfo.Page = 1
+	}
+	if pageInfo.PageSize <= 0 {
+		pageInfo.PageSize = 10
+	}
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: pageInfo.Page, PageSize: pageInfo.PageSize}, "ok", c)
 }
 
 // DeleteCategory
+//
 //	@Tags		Base
 //	@Summary	Admin deletes a package category
 //	@Produce	application/json
@@ -85,6 +101,7 @@ func (LookupApi) DeleteCategory(c *gin.Context) {
 }
 
 // RecordSettingChange
+//
 //	@Tags		Base
 //	@Summary	Admin records a system-settings edit (audit trail)
 //	@Produce	application/json
@@ -106,6 +123,7 @@ func (LookupApi) RecordSettingChange(c *gin.Context) {
 }
 
 // SettingHistory
+//
 //	@Tags		Base
 //	@Summary	Admin views the system-settings change history
 //	@Produce	application/json
@@ -124,24 +142,36 @@ func (LookupApi) SettingHistory(c *gin.Context) {
 }
 
 // Settings
+//
 //	@Tags		Base
 //	@Summary	Super-admin views all system settings grouped by section
 //	@Produce	application/json
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/base/settings [get]
 func (LookupApi) Settings(c *gin.Context) {
 	if !requireSuperAdmin(c) {
 		return
 	}
-	sections, err := baseServiceApp.LookupServices.SettingsBySection()
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	result, err := baseServiceApp.LookupServices.SettingsBySection(pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(sections, c)
+	response.OkWithDetailed(response.PageResult{
+		List: result.Data, Total: result.Total, TotalPage: result.TotalPage,
+		Page: result.Page, PageSize: result.PageSize,
+	}, "ok", c)
 }
 
 // GetSetting
+//
 //	@Tags		Base
 //	@Summary	Super-admin retrieves a single system setting by key
 //	@Produce	application/json
@@ -170,6 +200,7 @@ func (LookupApi) GetSetting(c *gin.Context) {
 }
 
 // UpdateSetting
+//
 //	@Tags		Base
 //	@Summary	Super-admin updates or creates a system setting (audited)
 //	@Produce	application/json
@@ -196,6 +227,7 @@ func (LookupApi) UpdateSetting(c *gin.Context) {
 }
 
 // DeleteSetting
+//
 //	@Tags		Base
 //	@Summary	Super-admin deletes a system setting override (reverts to config default)
 //	@Produce	application/json
@@ -223,24 +255,36 @@ func (LookupApi) DeleteSetting(c *gin.Context) {
 }
 
 // ConfigKeys
+//
 //	@Tags		Base
 //	@Summary	Super-admin lists every config.yaml key that can be edited at runtime
 //	@Produce	application/json
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/base/settings/keys [get]
 func (LookupApi) ConfigKeys(c *gin.Context) {
 	if !requireSuperAdmin(c) {
 		return
 	}
-	keys, err := baseServiceApp.LookupServices.ListAllConfigKeys()
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	result, err := baseServiceApp.LookupServices.ListAllConfigKeys(pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(keys, c)
+	response.OkWithDetailed(response.PageResult{
+		List: result.Data, Total: result.Total, TotalPage: result.TotalPage,
+		Page: result.Page, PageSize: result.PageSize,
+	}, "ok", c)
 }
 
 // ResetSection
+//
 //	@Tags		Base
 //	@Summary	Super-admin resets a settings section to its seeded defaults
 //	@Produce	application/json

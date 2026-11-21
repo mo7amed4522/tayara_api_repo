@@ -11,6 +11,7 @@ import (
 type DisputeApi struct{}
 
 // Create
+//
 //	@Tags		Booking
 //	@Summary	User or agent opens a dispute on a booking
 //	@Produce	application/json
@@ -44,6 +45,7 @@ func (DisputeApi) Create(c *gin.Context) {
 }
 
 // List
+//
 //	@Tags		Booking
 //	@Summary	Admin lists disputes (filterable by booking/status)
 //	@Produce	application/json
@@ -62,6 +64,7 @@ func (DisputeApi) List(c *gin.Context) {
 }
 
 // Resolve
+//
 //	@Tags		Booking
 //	@Summary	Admin resolves/closes a dispute
 //	@Produce	application/json
@@ -84,10 +87,13 @@ func (DisputeApi) Resolve(c *gin.Context) {
 }
 
 // ListForBooking
+//
 //	@Tags		Booking
 //	@Summary	User/agent lists disputes for their own booking
 //	@Produce	application/json
 //	@Param		id	query		int	true	"booking id"
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/booking/disputes [get]
 func (DisputeApi) ListForBooking(c *gin.Context) {
@@ -96,10 +102,21 @@ func (DisputeApi) ListForBooking(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	list, err := bookingService.DisputeServices.ListForBooking(idReq.Uint())
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, totalPage, err := bookingService.DisputeServices.ListForBooking(idReq.Uint(), pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	if pageInfo.Page <= 0 {
+		pageInfo.Page = 1
+	}
+	if pageInfo.PageSize <= 0 {
+		pageInfo.PageSize = 10
+	}
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: pageInfo.Page, PageSize: pageInfo.PageSize}, "ok", c)
 }

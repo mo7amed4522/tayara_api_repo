@@ -41,16 +41,21 @@ func (s LookupServices) UpsertCategory(req baseReq.PackageCategoryReq) (*base.Pa
 	return &cat, nil
 }
 
-// ListCategories returns active package categories ordered by sort.
-func (s LookupServices) ListCategories() ([]base.PackageCategory, error) {
+// ListCategories returns a paginated list of active package categories.
+func (s LookupServices) ListCategories(page, pageSize int) ([]base.PackageCategory, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	var list []base.PackageCategory
-	if err := global.GVA_DB.Where("is_active = ?", true).Order("sort_order asc").Find(&list).Error; err != nil {
-		return nil, err
+	countDB := global.GVA_DB.Model(&base.PackageCategory{}).Where("is_active = ?", true)
+	queryDB := global.GVA_DB.Model(&base.PackageCategory{}).
+		Where("is_active = ?", true).
+		Order("sort_order asc")
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // DeleteCategory soft-deletes a category (admin).
@@ -96,20 +101,26 @@ func (s LookupServices) SettingHistory(req baseReq.SettingHistoryPageReq) ([]bas
 
 // --- system settings management (PRD §6.10 System Settings page) ---
 
-// SettingsBySection returns all settings, grouped by section (the System Settings page contract).
-func (s LookupServices) SettingsBySection() (map[string][]base.SystemSetting, error) {
+// SettingsBySection returns a paginated settings list grouped by section.
+func (s LookupServices) SettingsBySection(page, pageSize int) (*utils.PaginateResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
 	var rows []base.SystemSetting
-	if err := global.GVA_DB.Where("is_active = ?", true).Order("id asc").Find(&rows).Error; err != nil {
+	countDB := global.GVA_DB.Model(&base.SystemSetting{}).Where("is_active = ?", true)
+	queryDB := global.GVA_DB.Model(&base.SystemSetting{}).
+		Where("is_active = ?", true).
+		Order("id asc")
+	result, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &rows)
+	if err != nil {
 		return nil, err
 	}
 	out := make(map[string][]base.SystemSetting)
 	for _, r := range rows {
 		out[r.Section] = append(out[r.Section], r)
 	}
-	return out, nil
+	result.Data = out
+	return result, nil
 }
 
 // GetSetting returns a single setting by key (used by business logic to read typed values).
@@ -257,7 +268,10 @@ type ConfigKeyValue struct {
 // ListAllConfigKeys enumerates every leaf key in config.yaml and returns them with their current
 // values (DB overrides take precedence over the YAML default). The returned list is sorted by
 // section then key for stable frontend rendering.
-func (s LookupServices) ListAllConfigKeys() ([]ConfigKeyValue, error) {
+func (s LookupServices) ListAllConfigKeys(page, pageSize int) (*utils.PaginateResult, error) {
+	if global.GVA_DB == nil {
+		return nil, errors.New("db not init")
+	}
 	// Build a quick lookup of DB overrides keyed by "section.key".
 	dbOverrides := make(map[string]string)
 	var rows []base.SystemSetting
@@ -284,7 +298,29 @@ func (s LookupServices) ListAllConfigKeys() ([]ConfigKeyValue, error) {
 	}
 	// Stable sort by section then key.
 	sortConfigKeys(out)
-	return out, nil
+
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	} else if pageSize > 100 {
+		pageSize = 100
+	}
+	total := int64(len(out))
+	totalPage := (total + int64(pageSize) - 1) / int64(pageSize)
+	start := len(out)
+	if totalPage > 0 && int64(page) <= totalPage {
+		start = (page - 1) * pageSize
+	}
+	end := start + pageSize
+	if end > len(out) {
+		end = len(out)
+	}
+	return &utils.PaginateResult{
+		Total: total, Page: page, PageSize: pageSize, TotalPage: totalPage,
+		Data: out[start:end],
+	}, nil
 }
 
 type leaf struct {

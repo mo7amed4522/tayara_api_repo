@@ -6,6 +6,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/model/catalog"
 	"github.com/mo7amed4522/tayara_api/model/catalog/request"
+	"github.com/mo7amed4522/tayara_api/utils"
 	"gorm.io/gorm"
 )
 
@@ -65,16 +66,17 @@ func (c *CustomTripServices) UpdateTemplate(agentID uint, req request.CustomTrip
 	return c.GetOwnTemplate(agentID, req.ID)
 }
 
-// ListOwnTemplates returns the agent's templates (agent scoping enforced).
-func (c *CustomTripServices) ListOwnTemplates(agentID uint) ([]catalog.CustomTripTemplate, error) {
+// ListOwnTemplates returns a paginated list of the agent's templates.
+func (c *CustomTripServices) ListOwnTemplates(agentID uint, page, pageSize int) (*utils.PaginateResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
 	var list []catalog.CustomTripTemplate
-	if err := global.GVA_DB.Where("agent_id = ?", agentID).Order("updated_at desc").Find(&list).Error; err != nil {
-		return nil, err
-	}
-	return list, nil
+	countDB := global.GVA_DB.Model(&catalog.CustomTripTemplate{}).Where("agent_id = ?", agentID)
+	queryDB := global.GVA_DB.Model(&catalog.CustomTripTemplate{}).
+		Where("agent_id = ?", agentID).
+		Order("updated_at desc")
+	return utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &list)
 }
 
 // GetOwnTemplate returns one of the agent's own templates.

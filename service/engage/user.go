@@ -38,16 +38,21 @@ func (u UserEngageServices) ToggleWishlist(userID uint, req engageReq.WishlistTo
 	return true, nil
 }
 
-// ListWishlist returns the user's saved packages (ids).
-func (u UserEngageServices) ListWishlist(userID uint) ([]engage.Wishlist, error) {
+// ListWishlist returns a paginated list of the user's saved packages.
+func (u UserEngageServices) ListWishlist(userID uint, page, pageSize int) ([]engage.Wishlist, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	var list []engage.Wishlist
-	if err := global.GVA_DB.Where("user_id = ?", userID).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, err
+	countDB := global.GVA_DB.Model(&engage.Wishlist{}).Where("user_id = ?", userID)
+	queryDB := global.GVA_DB.Model(&engage.Wishlist{}).
+		Where("user_id = ?", userID).
+		Order("created_at desc")
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // --- shares ---
@@ -185,16 +190,21 @@ func (u UserEngageServices) RegisterDeviceToken(userID uint, req engageReq.Devic
 	return token, nil
 }
 
-// ListDeviceTokens returns a user's registered push tokens (admin can view an end-user's devices).
-func (u UserEngageServices) ListDeviceTokens(userID uint) ([]engage.DeviceToken, error) {
+// ListDeviceTokens returns a paginated list of a user's registered push tokens.
+func (u UserEngageServices) ListDeviceTokens(userID uint, page, pageSize int) ([]engage.DeviceToken, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	var list []engage.DeviceToken
-	if err := global.GVA_DB.Where("user_id = ?", userID).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, err
+	countDB := global.GVA_DB.Model(&engage.DeviceToken{}).Where("user_id = ?", userID)
+	queryDB := global.GVA_DB.Model(&engage.DeviceToken{}).
+		Where("user_id = ?", userID).
+		Order("created_at desc")
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // RemoveDeviceToken deactivates a user's device token (e.g. on logout).

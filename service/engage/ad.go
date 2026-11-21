@@ -168,17 +168,22 @@ func (a AdServices) ListAds(req engageReq.AdCreativePageReq) ([]engageResp.AdDet
 	return out, pr.Total, pr.TotalPage, nil
 }
 
-// ActiveAds returns only currently-active creatives for a placement (buyer-facing).
-func (a AdServices) ActiveAds(placement string) ([]engage.AdCreative, error) {
+// ActiveAds returns a paginated list of currently-active creatives for a placement.
+func (a AdServices) ActiveAds(placement string, page, pageSize int) ([]engage.AdCreative, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	var list []engage.AdCreative
-	if err := global.GVA_DB.Where("placement = ? AND status = ?", placement, constants.AdStatusActive).
-		Order("display_order asc").Find(&list).Error; err != nil {
-		return nil, err
+	countDB := global.GVA_DB.Model(&engage.AdCreative{}).
+		Where("placement = ? AND status = ?", placement, constants.AdStatusActive)
+	queryDB := global.GVA_DB.Model(&engage.AdCreative{}).
+		Where("placement = ? AND status = ?", placement, constants.AdStatusActive).
+		Order("display_order asc")
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, nil
+	return list, pr.Total, pr.TotalPage, nil
 }
 
 // GetAd returns a single ad by id.
