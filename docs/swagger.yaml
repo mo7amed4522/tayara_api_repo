@@ -1039,6 +1039,25 @@ definitions:
     - password
     - username
     type: object
+  request.UserUpdateProfileReq:
+    properties:
+      dateOfBirth:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      headerImg:
+        type: string
+      nationality:
+        type: string
+      nickName:
+        type: string
+      phone:
+        type: string
+      phoneCountryCode:
+        type: string
+    type: object
   request.WishlistToggleReq:
     properties:
       packageId:
@@ -4122,6 +4141,18 @@ paths:
       summary: Reset an admin password using a one-time emailed token
       tags:
       - SystemAuth
+  /api/v1/user/account:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User deletes their own account
+      tags:
+      - User
   /api/v1/user/admin:
     get:
       parameters:
@@ -4231,7 +4262,25 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
-      summary: User gets their own profile
+      summary: User gets their own profile with trip/favorite counts
+      tags:
+      - User
+    put:
+      parameters:
+      - description: profile payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserUpdateProfileReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User updates their own profile
       tags:
       - User
   /api/v1/user/register:
