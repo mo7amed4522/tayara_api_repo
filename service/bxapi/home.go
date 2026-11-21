@@ -166,7 +166,10 @@ func (s *HomeServices) findCountryByKeyword(keyword string) uint {
 func (s *HomeServices) findCityByKeyword(keyword string) (uint, string) {
 	cacheKey := "bxapi:city:keyword:" + keyword
 	if val, found, _ := cache.Get(cacheKey); found {
-		if result, ok := val.(struct{ ID uint; Name string }); ok {
+		if result, ok := val.(struct {
+			ID   uint
+			Name string
+		}); ok {
 			return result.ID, result.Name
 		}
 	}
@@ -194,25 +197,27 @@ func (s *HomeServices) findCityByKeyword(keyword string) (uint, string) {
 // Explore trips (cards)
 // ---------------------------------------------------------------------------
 
-// ListExploreTrips returns trending active packages (with agent info + aggregated rating).
-func (s *HomeServices) ListExploreTrips(req bxapiReq.CustomerHomeExploreReq) ([]response.CustomerExploreTripCard, int64, error) {
+// ListExploreTrips returns a paginated list of trending active packages.
+func (s *HomeServices) ListExploreTrips(req bxapiReq.CustomerHomeExploreReq) ([]response.CustomerExploreTripCard, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
-	db := global.GVA_DB.Model(&catalog.Package{}).
+	countDB := global.GVA_DB.Model(&catalog.Package{}).
 		Where("status = ?", constants.PackageStatusActive)
 	if req.Category != "" {
-		db = db.Where("category = ?", req.Category)
+		countDB = countDB.Where("category = ?", req.Category)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
+	queryDB := global.GVA_DB.Model(&catalog.Package{}).
+		Where("status = ?", constants.PackageStatusActive)
+	if req.Category != "" {
+		queryDB = queryDB.Where("category = ?", req.Category)
 	}
 	var packages []catalog.Package
-	if err := db.Scopes(req.Paginate()).Order("approved_at desc").Find(&packages).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB.Order("approved_at desc"), req.Page, req.PageSize, &packages)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return s.buildExploreTripCards(packages), total, nil
+	return s.buildExploreTripCards(packages), pr.Total, pr.TotalPage, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -234,36 +239,17 @@ func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResu
 	}
 	var rows []destRow
 
-	// Count query (subquery)
-	countSQL := `
-		SELECT COUNT(*)
-		FROM (
-			SELECT c.id, c.name_en, c.code,  COUNT(p.id) AS package_count, MIN(p.display_price) AS min_display_price
-			FROM base_country c
-			INNER JOIN catalog_package p ON p.destination_country_id = c.id AND p.status = 'active'
-			GROUP BY c.id, c.name_en, c.code
-		) as sub
-	`
-	offset := (page - 1) * pageSize
-	dataSQL := fmt.Sprintf(`
-		SELECT
-			c.id AS country_id,
-			c.name_en AS country_name,
-			c.code AS country_code,
-			COUNT(p.id) AS package_count,
-			MIN(p.display_price) AS min_display_price
-		FROM base_country c
-		INNER JOIN catalog_package p ON p.destination_country_id = c.id AND p.status = 'active'
-		GROUP BY c.id, c.name_en, c.code
-		ORDER BY package_count DESC, min_display_price ASC
-		LIMIT %d OFFSET %d
-	`, pageSize, offset)
-
-	countDB := global.GVA_DB.Raw(countSQL)
-	dataDB := global.GVA_DB.Raw(dataSQL)
-
-	// Paginate
-	paginateResult, err := utils.PaginateWithCustomQuery(countDB, dataDB, page, pageSize, &rows)
+	countDB := global.GVA_DB.Model(&base.Country{}).
+		Joins("JOIN catalog_package ON catalog_package.destination_country_id = base_country.id").
+		Where("catalog_package.status = ?", constants.PackageStatusActive).
+		Distinct("base_country.id")
+	queryDB := global.GVA_DB.Model(&base.Country{}).
+		Joins("JOIN catalog_package ON catalog_package.destination_country_id = base_country.id").
+		Where("catalog_package.status = ?", constants.PackageStatusActive).
+		Select("base_country.id AS country_id, base_country.name_en AS country_name, base_country.code AS country_code, COUNT(catalog_package.id) AS package_count, MIN(catalog_package.display_price) AS min_display_price").
+		Group("base_country.id, base_country.name_en, base_country.code").
+		Order("package_count desc, min_display_price asc")
+	paginateResult, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &rows)
 	if err != nil {
 		return nil, err
 	}
@@ -288,25 +274,27 @@ func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResu
 // Deals
 // ---------------------------------------------------------------------------
 
-// ListDeals returns active packages that have a discount applied, ordered by discount desc.
-func (s *HomeServices) ListDeals(req bxapiReq.CustomerHomeDealsReq) ([]response.CustomerDealResult, int64, error) {
+// ListDeals returns a paginated list of discounted active packages.
+func (s *HomeServices) ListDeals(req bxapiReq.CustomerHomeDealsReq) ([]response.CustomerDealResult, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
-	db := global.GVA_DB.Model(&catalog.Package{}).
+	countDB := global.GVA_DB.Model(&catalog.Package{}).
 		Where("status = ? AND discount_percent > ?", constants.PackageStatusActive, 0)
 	if req.Category != "" {
-		db = db.Where("category = ?", req.Category)
+		countDB = countDB.Where("category = ?", req.Category)
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
+	queryDB := global.GVA_DB.Model(&catalog.Package{}).
+		Where("status = ? AND discount_percent > ?", constants.PackageStatusActive, 0)
+	if req.Category != "" {
+		queryDB = queryDB.Where("category = ?", req.Category)
 	}
 	var packages []catalog.Package
-	if err := db.Scopes(req.Paginate()).Order("discount_percent desc, updated_at desc").Find(&packages).Error; err != nil {
-		return nil, 0, err
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB.Order("discount_percent desc, updated_at desc"), req.Page, req.PageSize, &packages)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return s.buildDealResults(packages), total, nil
+	return s.buildDealResults(packages), pr.Total, pr.TotalPage, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -314,7 +302,7 @@ func (s *HomeServices) ListDeals(req bxapiReq.CustomerHomeDealsReq) ([]response.
 // ---------------------------------------------------------------------------
 
 // ListTopRatedAgents returns active agents ranked by average review rating.
-func (s *HomeServices) ListTopRatedAgents(limit int) ([]response.CustomerAgentCard, error) {
+func (s *HomeServices) ListTopRatedAgents(page, pageSize int) (*utils.PaginateResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
@@ -332,30 +320,19 @@ func (s *HomeServices) ListTopRatedAgents(limit int) ([]response.CustomerAgentCa
 		AvgRating        float64 `gorm:"column:avg_rating"`
 		ReviewCount      int     `gorm:"column:review_count"`
 	}
-	query := `
-		SELECT
-			a.id AS agent_id,
-			a.company_name,
-			a.header_img,
-			a.phone,
-			a.phone_country_code,
-			a.business_email,
-			a.country,
-			a.company_address,
-			a.license_number,
-			a.status,
-			ROUND(AVG(r.rating), 2) AS avg_rating,
-			COUNT(r.id) AS review_count
-		FROM dx_agent_profile a
-		INNER JOIN engage_review r ON r.agent_id = a.id AND r.review_status = 'active'
-		WHERE a.status = 'active'
-		GROUP BY a.id, a.company_name, a.header_img, a.phone, a.phone_country_code,
-		         a.business_email, a.country, a.company_address, a.license_number, a.status
-		ORDER BY avg_rating DESC, review_count DESC
-		LIMIT ?
-	`
+	countDB := global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
+		Joins("JOIN engage_review ON engage_review.agent_id = dx_agent_profile.id").
+		Where("dx_agent_profile.status = ? AND engage_review.review_status = ?", constants.AgentStatusActive, constants.ReviewStatusActive).
+		Distinct("dx_agent_profile.id")
+	queryDB := global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
+		Joins("JOIN engage_review ON engage_review.agent_id = dx_agent_profile.id").
+		Where("dx_agent_profile.status = ? AND engage_review.review_status = ?", constants.AgentStatusActive, constants.ReviewStatusActive).
+		Select("dx_agent_profile.id AS agent_id, dx_agent_profile.company_name, dx_agent_profile.header_img, dx_agent_profile.phone, dx_agent_profile.phone_country_code, dx_agent_profile.business_email, dx_agent_profile.country, dx_agent_profile.company_address, dx_agent_profile.license_number, dx_agent_profile.status, ROUND(AVG(engage_review.rating), 2) AS avg_rating, COUNT(engage_review.id) AS review_count").
+		Group("dx_agent_profile.id, dx_agent_profile.company_name, dx_agent_profile.header_img, dx_agent_profile.phone, dx_agent_profile.phone_country_code, dx_agent_profile.business_email, dx_agent_profile.country, dx_agent_profile.company_address, dx_agent_profile.license_number, dx_agent_profile.status").
+		Order("avg_rating desc, review_count desc")
 	var rows []agentRatingRow
-	if err := global.GVA_DB.Raw(query, limit).Scan(&rows).Error; err != nil {
+	paginateResult, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &rows)
+	if err != nil {
 		return nil, err
 	}
 	out := make([]response.CustomerAgentCard, 0, len(rows))
@@ -372,7 +349,8 @@ func (s *HomeServices) ListTopRatedAgents(limit int) ([]response.CustomerAgentCa
 			ReviewCount:    r.ReviewCount,
 		})
 	}
-	return out, nil
+	paginateResult.Data = out
+	return paginateResult, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -587,7 +565,10 @@ func (s *HomeServices) batchPackageRatings(pkgIDs []uint) (ratings map[uint]floa
 	for _, pkgID := range pkgIDs {
 		cacheKey := fmt.Sprintf("bxapi:pkg:rating:%d", pkgID)
 		if val, found, _ := cache.Get(cacheKey); found {
-			if cached, ok := val.(struct{ Avg float64; Cnt int }); ok {
+			if cached, ok := val.(struct {
+				Avg float64
+				Cnt int
+			}); ok {
 				ratings[pkgID] = cached.Avg
 				counts[pkgID] = cached.Cnt
 				continue
@@ -615,7 +596,10 @@ func (s *HomeServices) batchPackageRatings(pkgIDs []uint) (ratings map[uint]floa
 				counts[r.PackageID] = int(r.Cnt)
 				// Cache the result
 				cacheKey := fmt.Sprintf("bxapi:pkg:rating:%d", r.PackageID)
-				cache.Set(cacheKey, struct{ Avg float64; Cnt int }{Avg: r.Avg, Cnt: int(r.Cnt)}, 24, cache.AddJitter(10*time.Minute))
+				cache.Set(cacheKey, struct {
+					Avg float64
+					Cnt int
+				}{Avg: r.Avg, Cnt: int(r.Cnt)}, 24, cache.AddJitter(10*time.Minute))
 			}
 		}
 	}

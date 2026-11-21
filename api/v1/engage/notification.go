@@ -11,6 +11,7 @@ import (
 type NotificationApi struct{}
 
 // ListNotifications
+//
 //	@Tags		Engage
 //	@Summary	Admin lists notification log (all recipients, filterable)
 //	@Produce	application/json
@@ -29,6 +30,7 @@ func (NotificationApi) ListNotifications(c *gin.Context) {
 }
 
 // ListMyNotifications
+//
 //	@Tags		Engage
 //	@Summary	User lists their own notifications
 //	@Produce	application/json
@@ -48,6 +50,7 @@ func (NotificationApi) ListMyNotifications(c *gin.Context) {
 }
 
 // Resend
+//
 //	@Tags		Engage
 //	@Summary	Admin resends a notification
 //	@Produce	application/json
@@ -69,6 +72,7 @@ func (NotificationApi) Resend(c *gin.Context) {
 }
 
 // UpsertTemplate
+//
 //	@Tags		Engage
 //	@Summary	Admin creates/updates a notification template
 //	@Produce	application/json
@@ -90,21 +94,36 @@ func (NotificationApi) UpsertTemplate(c *gin.Context) {
 }
 
 // ListTemplates
+//
 //	@Tags		Engage
 //	@Summary	Admin lists all notification templates (design/moderate)
 //	@Produce	application/json
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/engage/admin/notification-templates [get]
 func (NotificationApi) ListTemplates(c *gin.Context) {
-	list, err := engageService.NotificationServices.ListTemplates()
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, totalPage, err := engageService.NotificationServices.ListTemplates(pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	if pageInfo.Page <= 0 {
+		pageInfo.Page = 1
+	}
+	if pageInfo.PageSize <= 0 {
+		pageInfo.PageSize = 10
+	}
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: pageInfo.Page, PageSize: pageInfo.PageSize}, "ok", c)
 }
 
 // DeleteTemplate
+//
 //	@Tags		Engage
 //	@Summary	Admin deletes a notification template
 //	@Produce	application/json

@@ -2,6 +2,7 @@ package engage
 
 import (
 	"github.com/gin-gonic/gin"
+	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
 	"github.com/mo7amed4522/tayara_api/model/common/response"
 	engageReq "github.com/mo7amed4522/tayara_api/model/engage/request"
 	"github.com/mo7amed4522/tayara_api/utils"
@@ -10,6 +11,7 @@ import (
 type UserEngageApi struct{}
 
 // ToggleWishlist
+//
 //	@Tags		Engage
 //	@Summary	User adds/removes a package from their wishlist
 //	@Produce	application/json
@@ -32,22 +34,37 @@ func (UserEngageApi) ToggleWishlist(c *gin.Context) {
 }
 
 // ListWishlist
+//
 //	@Tags		Engage
 //	@Summary	User lists their saved packages
 //	@Produce	application/json
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/engage/wishlist [get]
 func (UserEngageApi) ListWishlist(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
-	list, err := engageService.UserEngageServices.ListWishlist(userID)
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, totalPage, err := engageService.UserEngageServices.ListWishlist(userID, pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	if pageInfo.Page <= 0 {
+		pageInfo.Page = 1
+	}
+	if pageInfo.PageSize <= 0 {
+		pageInfo.PageSize = 10
+	}
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: pageInfo.Page, PageSize: pageInfo.PageSize}, "ok", c)
 }
 
 // RecordShare
+//
 //	@Tags		Engage
 //	@Summary	User records a share of a package
 //	@Produce	application/json
@@ -70,6 +87,7 @@ func (UserEngageApi) RecordShare(c *gin.Context) {
 }
 
 // CreateCoupon
+//
 //	@Tags		Engage
 //	@Summary	Admin creates a coupon
 //	@Produce	application/json
@@ -91,6 +109,7 @@ func (UserEngageApi) CreateCoupon(c *gin.Context) {
 }
 
 // ListCoupons
+//
 //	@Tags		Engage
 //	@Summary	User lists their coupons
 //	@Produce	application/json
@@ -110,6 +129,7 @@ func (UserEngageApi) ListCoupons(c *gin.Context) {
 }
 
 // AdminListCoupons
+//
 //	@Tags		Engage
 //	@Summary	Admin lists all coupons
 //	@Produce	application/json
@@ -128,6 +148,7 @@ func (UserEngageApi) AdminListCoupons(c *gin.Context) {
 }
 
 // ApplyCoupon
+//
 //	@Tags		Engage
 //	@Summary	User applies a coupon to a booking (discount + marks used)
 //	@Produce	application/json
@@ -150,6 +171,7 @@ func (UserEngageApi) ApplyCoupon(c *gin.Context) {
 }
 
 // RegisterDeviceToken
+//
 //	@Tags		Engage
 //	@Summary	User registers a push device token (FCM)
 //	@Produce	application/json
@@ -172,22 +194,37 @@ func (UserEngageApi) RegisterDeviceToken(c *gin.Context) {
 }
 
 // ListDeviceTokens
+//
 //	@Tags		Engage
 //	@Summary	User lists their registered push devices
 //	@Produce	application/json
+//	@Param		page		query		int	false	"page number"	default(1)
+//	@Param		pageSize	query		int	false	"page size"	default(10)
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/engage/devices [get]
 func (UserEngageApi) ListDeviceTokens(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
-	list, err := engageService.UserEngageServices.ListDeviceTokens(userID)
+	var pageInfo commonReq.PageInfo
+	if err := c.ShouldBindQuery(&pageInfo); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, totalPage, err := engageService.UserEngageServices.ListDeviceTokens(userID, pageInfo.Page, pageInfo.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(list, c)
+	if pageInfo.Page <= 0 {
+		pageInfo.Page = 1
+	}
+	if pageInfo.PageSize <= 0 {
+		pageInfo.PageSize = 10
+	}
+	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: pageInfo.Page, PageSize: pageInfo.PageSize}, "ok", c)
 }
 
 // RemoveDeviceToken
+//
 //	@Tags		Engage
 //	@Summary	User deactivates a push device token
 //	@Produce	application/json

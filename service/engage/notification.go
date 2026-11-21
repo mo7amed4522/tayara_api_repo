@@ -189,14 +189,18 @@ func (n NotificationServices) DeleteTemplate(id uint) error {
 	return global.GVA_DB.Delete(&engage.NotificationTemplate{}, id).Error
 }
 
-// ListTemplates returns all notification templates (admin designs/moderates content + triggers).
-func (n NotificationServices) ListTemplates() ([]engage.NotificationTemplate, error) {
+// ListTemplates returns a paginated list of notification templates.
+func (n NotificationServices) ListTemplates(page, pageSize int) ([]engage.NotificationTemplate, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	var list []engage.NotificationTemplate
-	if err := global.GVA_DB.Order("event_type asc, channel asc").Find(&list).Error; err != nil {
-		return nil, err
+	countDB := global.GVA_DB.Model(&engage.NotificationTemplate{})
+	queryDB := global.GVA_DB.Model(&engage.NotificationTemplate{}).
+		Order("event_type asc, channel asc")
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, nil
+	return list, pr.Total, pr.TotalPage, nil
 }

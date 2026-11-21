@@ -95,14 +95,19 @@ func (s DisputeServices) List(req bkReq.DisputePageReq) ([]bookingModel.Dispute,
 	return list, pr.Total, pr.TotalPage, nil
 }
 
-// ListForBooking returns disputes for a specific booking (user/agent scoped).
-func (s DisputeServices) ListForBooking(bookingID uint) ([]bookingModel.Dispute, error) {
+// ListForBooking returns a paginated list of disputes for a specific booking.
+func (s DisputeServices) ListForBooking(bookingID uint, page, pageSize int) ([]bookingModel.Dispute, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	var list []bookingModel.Dispute
-	if err := global.GVA_DB.Where("booking_id = ?", bookingID).Order("created_at desc").Find(&list).Error; err != nil {
-		return nil, err
+	countDB := global.GVA_DB.Model(&bookingModel.Dispute{}).Where("booking_id = ?", bookingID)
+	queryDB := global.GVA_DB.Model(&bookingModel.Dispute{}).
+		Where("booking_id = ?", bookingID).
+		Order("created_at desc")
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, nil
+	return list, pr.Total, pr.TotalPage, nil
 }

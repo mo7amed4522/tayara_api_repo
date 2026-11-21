@@ -7,11 +7,13 @@ import (
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
+	bxapiModel "github.com/mo7amed4522/tayara_api/model/bxapi"
 	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
 	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
 	"github.com/mo7amed4522/tayara_api/model/catalog"
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
 	"github.com/mo7amed4522/tayara_api/model/engage"
+	"github.com/mo7amed4522/tayara_api/utils"
 )
 
 // AgentDetailServices owns the customer-facing agent detail aggregations.
@@ -46,19 +48,26 @@ func (s *AgentDetailServices) CustomerAgentDetail(req bxapiReq.CustomerAgentDeta
 	topDest := s.topDestinationForAgent(agentID)
 
 	// 4) Paginated active packages, optionally filtered by destination.
+	pkgCountDB := global.GVA_DB.Model(&catalog.Package{}).
+		Where("agent_id = ? AND status = ?", agentID, constants.PackageStatusActive)
 	pkgQuery := global.GVA_DB.Model(&catalog.Package{}).
 		Where("agent_id = ? AND status = ?", agentID, constants.PackageStatusActive)
 	if req.DestinationCountryID != nil && *req.DestinationCountryID > 0 {
+		pkgCountDB = pkgCountDB.Where("destination_country_id = ?", *req.DestinationCountryID)
 		pkgQuery = pkgQuery.Where("destination_country_id = ?", *req.DestinationCountryID)
 	}
-	var pkgTotal int64
-	if err := pkgQuery.Count(&pkgTotal).Error; err != nil {
-		return nil, err
-	}
 	var packages []catalog.Package
-	if err := pkgQuery.Scopes(req.Paginate()).Order("approved_at desc").Find(&packages).Error; err != nil {
+	paginateResult, err := utils.PaginateWithCustomQuery(
+		pkgCountDB,
+		pkgQuery.Order("approved_at desc"),
+		req.Page,
+		req.PageSize,
+		&packages,
+	)
+	if err != nil {
 		return nil, err
 	}
+	pkgTotal := paginateResult.Total
 
 	// 5) Agent reviews (reviews where agent_id matches; not package-specific).
 	var reviews []engage.Review
@@ -123,11 +132,11 @@ func (s *AgentDetailServices) buildAgentReviews(reviews []engage.Review) []bxapi
 	out := make([]bxapiResp.CustomerAgentReviewItem, 0, len(reviews))
 	for _, r := range reviews {
 		out = append(out, bxapiResp.CustomerAgentReviewItem{
-			ID:        r.ID,
-			UserName:  s.userName(r.UserID),
-			Rating:    r.Rating,
+			ID:         r.ID,
+			UserName:   s.userName(r.UserID),
+			Rating:     r.Rating,
 			ReviewText: r.ReviewText,
-			CreatedAt: r.CreatedAt,
+			CreatedAt:  r.CreatedAt,
 		})
 	}
 	return out
@@ -181,17 +190,15 @@ func (s *AgentDetailServices) topDestinationForAgent(agentID uint) string {
 		CountryName string `gorm:"column:country_name"`
 		Cnt         int    `gorm:"column:cnt"`
 	}
-	query := `
-		SELECT c.name_en AS country_name, COUNT(p.id) AS cnt
-		FROM catalog_package p
-		INNER JOIN base_country c ON c.id = p.destination_country_id
-		WHERE p.agent_id = ? AND p.status = ?
-		GROUP BY c.id, c.name_en
-		ORDER BY cnt DESC
-		LIMIT 1
-	`
 	var row destRow
-	if err := global.GVA_DB.Raw(query, agentID, constants.PackageStatusActive).Scan(&row).Error; err != nil {
+	if err := global.GVA_DB.Model(&catalog.Package{}).
+		Joins("JOIN base_country ON base_country.id = catalog_package.destination_country_id").
+		Where("catalog_package.agent_id = ? AND catalog_package.status = ?", agentID, constants.PackageStatusActive).
+		Select("base_country.name_en AS country_name").
+		Group("base_country.id, base_country.name_en").
+		Order("COUNT(catalog_package.id) desc").
+		Limit(1).
+		Scan(&row).Error; err != nil {
 		return ""
 	}
 	return row.CountryName
@@ -199,7 +206,10 @@ func (s *AgentDetailServices) topDestinationForAgent(agentID uint) string {
 
 func (s *AgentDetailServices) userName(userID uint) string {
 	var name string
-	if err := global.GVA_DB.Raw("SELECT full_name FROM bx_user_profile WHERE id = ?", userID).Scan(&name).Error; err != nil {
+	if err := global.GVA_DB.Model(&bxapiModel.BxsUserProfile{}).
+		Select("full_name").
+		Where("id = ?", userID).
+		Scan(&name).Error; err != nil {
 		return ""
 	}
 	return strings.TrimSpace(name)

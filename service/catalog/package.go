@@ -233,16 +233,16 @@ func (p *PackageServices) buildDetail(scoped *gorm.DB, id uint) (*response.Packa
 		return nil, errors.New("package not found")
 	}
 	var (
-		hotels       []catalog.PackageHotel
-		activities   []catalog.PackageActivity
-		addons       []catalog.PackageAddon
-		avail        []catalog.PackageAvailability
-		reqFields    []catalog.PackageRequiredField
-		docReqs      []catalog.PackageDocumentRequirement
-		itinDays     []catalog.ItineraryDay
-		includes     []catalog.PackageInclusion
-		excludes     []catalog.PackageExclusion
-		highlights   []catalog.PackageHighlight
+		hotels     []catalog.PackageHotel
+		activities []catalog.PackageActivity
+		addons     []catalog.PackageAddon
+		avail      []catalog.PackageAvailability
+		reqFields  []catalog.PackageRequiredField
+		docReqs    []catalog.PackageDocumentRequirement
+		itinDays   []catalog.ItineraryDay
+		includes   []catalog.PackageInclusion
+		excludes   []catalog.PackageExclusion
+		highlights []catalog.PackageHighlight
 	)
 	pid := pkg.ID
 	if err := global.GVA_DB.Where("package_id = ?", pid).Find(&hotels).Error; err != nil {
@@ -303,18 +303,15 @@ func (p *PackageServices) ListPackageReviews(packageID uint, page, pageSize int)
 		return nil, 0, 0, errors.New("db not init")
 	}
 	var rows []engage.Review
-	var total int64
-	if err := global.GVA_DB.Model(&engage.Review{}).Where("package_id = ?", packageID).Count(&total).Error; err != nil {
+	countDB := global.GVA_DB.Model(&engage.Review{}).Where("package_id = ?", packageID)
+	queryDB := global.GVA_DB.Model(&engage.Review{}).
+		Where("package_id = ?", packageID).
+		Order("created_at desc")
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &rows)
+	if err != nil {
 		return nil, 0, 0, err
 	}
-	db := global.GVA_DB.Where("package_id = ?", packageID).
-		Order("created_at desc").
-		Offset((page - 1) * pageSize).
-		Limit(pageSize)
-	if err := db.Find(&rows).Error; err != nil {
-		return nil, 0, 0, err
-	}
-	return rows, total, int64((int(total)+pageSize-1)/pageSize), nil
+	return rows, pr.Total, pr.TotalPage, nil
 }
 
 // page runs a paginated count+find on the given model scope.

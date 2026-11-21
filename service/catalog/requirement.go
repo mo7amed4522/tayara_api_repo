@@ -6,6 +6,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/model/catalog"
 	catReq "github.com/mo7amed4522/tayara_api/model/catalog/request"
+	"github.com/mo7amed4522/tayara_api/utils"
 	"gorm.io/gorm"
 )
 
@@ -46,18 +47,23 @@ func (s RequirementServices) SetProfiles(agentID uint, req catReq.SetRequirement
 }
 
 // GetProfiles returns the requirement profiles for a template+country (agent-owned).
-func (s RequirementServices) GetProfiles(agentID, templateID, countryID uint) ([]catalog.CustomTripRequirementProfile, error) {
+func (s RequirementServices) GetProfiles(agentID, templateID, countryID uint, page, pageSize int) ([]catalog.CustomTripRequirementProfile, int64, int64, error) {
 	if global.GVA_DB == nil {
-		return nil, errors.New("db not init")
+		return nil, 0, 0, errors.New("db not init")
 	}
 	var tpl catalog.CustomTripTemplate
 	if err := global.GVA_DB.Where("id = ? AND agent_id = ?", templateID, agentID).First(&tpl).Error; err != nil {
-		return nil, errors.New("template not found")
+		return nil, 0, 0, errors.New("template not found")
 	}
 	var list []catalog.CustomTripRequirementProfile
-	if err := global.GVA_DB.Where("template_id = ? AND country_id = ?", templateID, countryID).
-		Order("id asc").Find(&list).Error; err != nil {
-		return nil, err
+	countDB := global.GVA_DB.Model(&catalog.CustomTripRequirementProfile{}).
+		Where("template_id = ? AND country_id = ?", templateID, countryID)
+	queryDB := global.GVA_DB.Model(&catalog.CustomTripRequirementProfile{}).
+		Where("template_id = ? AND country_id = ?", templateID, countryID).
+		Order("id asc")
+	pr, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &list)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return list, nil
+	return list, pr.Total, pr.TotalPage, nil
 }

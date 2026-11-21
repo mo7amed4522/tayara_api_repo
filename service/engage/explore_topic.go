@@ -8,14 +8,14 @@ import (
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
+	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
+	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
 	"github.com/mo7amed4522/tayara_api/model/catalog"
 	"github.com/mo7amed4522/tayara_api/model/common/request"
-	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
 	"github.com/mo7amed4522/tayara_api/model/engage"
 	engageReq "github.com/mo7amed4522/tayara_api/model/engage/request"
 	engageResp "github.com/mo7amed4522/tayara_api/model/engage/response"
-	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
 	"github.com/mo7amed4522/tayara_api/utils"
 	"github.com/mo7amed4522/tayara_api/utils/cache"
 	"gorm.io/gorm"
@@ -29,52 +29,22 @@ type ExploreTopicServices struct{}
 // Public (User-facing) Methods
 // ============================================================================
 
-// ListTopics returns all active explore topics with package counts
-func (s *ExploreTopicServices) ListTopics() ([]engageResp.ExploreTopicCard, error) {
+// ListTopics returns a paginated list of active explore topics with package counts.
+func (s *ExploreTopicServices) ListTopics(page, pageSize int) (*utils.PaginateResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
 
-	// Try to get cached active topics
-	cacheKey := "engage:explore:topics:active"
-	if val, found, _ := cache.Get(cacheKey); found {
-		if topics, ok := val.([]engage.ExploreTopic); ok {
-			// Get package counts for each topic
-			topicIDs := make([]uint, len(topics))
-			for i, t := range topics {
-				topicIDs[i] = t.ID
-			}
-
-			counts := s.GetPackageCountsByTopic(topicIDs)
-
-			// Build response cards
-			cards := make([]engageResp.ExploreTopicCard, len(topics))
-			for i, t := range topics {
-				cards[i] = engageResp.ExploreTopicCard{
-					ID:           t.ID,
-					Code:         t.Code,
-					Name:         t.Name,
-					NameAr:       t.NameAr,
-					Description:  t.Description,
-					ImageURL:     t.ImageURL,
-					IconURL:      t.IconURL,
-					PackageCount: counts[t.ID],
-				}
-			}
-			return cards, nil
-		}
-	}
-
 	var topics []engage.ExploreTopic
-	err := global.GVA_DB.Where("is_active = ? AND deleted_at IS NULL", true).
-		Order("sort_order asc, id asc").
-		Find(&topics).Error
+	countDB := global.GVA_DB.Model(&engage.ExploreTopic{}).
+		Where("is_active = ? AND deleted_at IS NULL", true)
+	queryDB := global.GVA_DB.Model(&engage.ExploreTopic{}).
+		Where("is_active = ? AND deleted_at IS NULL", true).
+		Order("sort_order asc, id asc")
+	paginateResult, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &topics)
 	if err != nil {
 		return nil, err
 	}
-
-	// Cache the topics list
-	cache.Set(cacheKey, topics, int64(len(topics)*128), 10*time.Minute)
 
 	// Get package counts for each topic
 	topicIDs := make([]uint, len(topics))
@@ -99,7 +69,8 @@ func (s *ExploreTopicServices) ListTopics() ([]engageResp.ExploreTopicCard, erro
 		}
 	}
 
-	return cards, nil
+	paginateResult.Data = cards
+	return paginateResult, nil
 }
 
 // GetTopicDetail returns topic metadata with featured packages
@@ -208,10 +179,10 @@ func (s *ExploreTopicServices) GetTopicPackages(topicCode string, req bxapiReq.C
 			IconURL:      topic.IconURL,
 			PackageCount: counts[topic.ID],
 		},
-		Packages:  packages,
-		Total:     total,
-		Page:      req.Page,
-		PageSize:  req.PageSize,
+		Packages: packages,
+		Total:    total,
+		Page:     req.Page,
+		PageSize: req.PageSize,
 	}, nil
 }
 
@@ -219,14 +190,19 @@ func (s *ExploreTopicServices) GetTopicPackages(topicCode string, req bxapiReq.C
 // Agent-facing Methods
 // ============================================================================
 
-// AgentGetMyTopics returns topics with the agent's package counts
-func (s *ExploreTopicServices) AgentGetMyTopics(agentID uint) ([]engageResp.AgentTopicCard, error) {
+// AgentGetMyTopics returns a paginated list of topics with the agent's package counts.
+func (s *ExploreTopicServices) AgentGetMyTopics(agentID uint, page, pageSize int) (*utils.PaginateResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
 
-	// Get all active topics
-	topics, err := engage.GetActiveTopics()
+	var topics []engage.ExploreTopic
+	countDB := global.GVA_DB.Model(&engage.ExploreTopic{}).
+		Where("is_active = ? AND deleted_at IS NULL", true)
+	queryDB := global.GVA_DB.Model(&engage.ExploreTopic{}).
+		Where("is_active = ? AND deleted_at IS NULL", true).
+		Order("sort_order asc, id asc")
+	paginateResult, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &topics)
 	if err != nil {
 		return nil, err
 	}
@@ -240,32 +216,13 @@ func (s *ExploreTopicServices) AgentGetMyTopics(agentID uint) ([]engageResp.Agen
 		return nil, err
 	}
 
-	if len(agentPackageIDs) == 0 {
-		// Return topics with zero counts
-		cards := make([]engageResp.AgentTopicCard, len(topics))
-		for i, t := range topics {
-			cards[i] = engageResp.AgentTopicCard{
-				ExploreTopicCard: engageResp.ExploreTopicCard{
-					ID:           t.ID,
-					Code:         t.Code,
-					Name:         t.Name,
-					NameAr:       t.NameAr,
-					Description:  t.Description,
-					ImageURL:     t.ImageURL,
-					IconURL:      t.IconURL,
-					PackageCount: 0,
-				},
-				MyPackageCount: 0,
-			}
-		}
-		return cards, nil
-	}
-
 	// Get topic associations for agent's packages
 	var packageTopics []engage.PackageTopic
-	err = global.GVA_DB.Where("package_id IN ?", agentPackageIDs).Find(&packageTopics).Error
-	if err != nil {
-		return nil, err
+	if len(agentPackageIDs) > 0 {
+		err = global.GVA_DB.Where("package_id IN ?", agentPackageIDs).Find(&packageTopics).Error
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Count packages per topic for this agent
@@ -299,7 +256,8 @@ func (s *ExploreTopicServices) AgentGetMyTopics(agentID uint) ([]engageResp.Agen
 		}
 	}
 
-	return cards, nil
+	paginateResult.Data = cards
+	return paginateResult, nil
 }
 
 // AgentAddPackageToTopic associates a package with one or more topics
@@ -463,15 +421,15 @@ func (s *ExploreTopicServices) AdminUpdateTopic(id uint, req engageReq.ExploreTo
 	}
 
 	updates := map[string]interface{}{
-		"code":         req.Code,
-		"name":         req.Name,
-		"name_ar":      req.NameAr,
-		"description":  req.Description,
-		"image_url":    req.ImageURL,
-		"icon_url":     req.IconURL,
-		"sort_order":   req.SortOrder,
-		"is_active":    req.IsActive,
-		"updated_at":   global.GVA_DB.NowFunc(),
+		"code":        req.Code,
+		"name":        req.Name,
+		"name_ar":     req.NameAr,
+		"description": req.Description,
+		"image_url":   req.ImageURL,
+		"icon_url":    req.IconURL,
+		"sort_order":  req.SortOrder,
+		"is_active":   req.IsActive,
+		"updated_at":  global.GVA_DB.NowFunc(),
 	}
 
 	err := global.GVA_DB.Model(&topic).Updates(updates).Error
