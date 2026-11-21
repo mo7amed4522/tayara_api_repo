@@ -1,6 +1,8 @@
 package request
 
 import (
+	"time"
+
 	commonReq "github.com/mo7amed4522/tayara_api/model/common/request"
 )
 
@@ -45,4 +47,16 @@ type UserPageReq struct {
 type ChangeUserPasswordReq struct {
 	OldPassword string `json:"oldPassword" binding:"required"`
 	NewPassword string `json:"newPassword" binding:"required,min=6"`
+}
+
+// UserUpdateProfileReq user updates their own profile (all fields optional).
+type UserUpdateProfileReq struct {
+	FullName         string     `json:"fullName"`
+	NickName         string     `json:"nickName"`
+	Email            string     `json:"email" binding:"omitempty,email"`
+	PhoneCountryCode string     `json:"phoneCountryCode"`
+	Phone            string     `json:"phone"`
+	Nationality      string     `json:"nationality"`
+	DateOfBirth      *time.Time `json:"dateOfBirth"`
+	HeaderImg        string     `json:"headerImg"`
 }

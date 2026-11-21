@@ -6,9 +6,11 @@ import (
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
+	"github.com/mo7amed4522/tayara_api/model/booking"
 	"github.com/mo7amed4522/tayara_api/model/bxapi"
 	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
 	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
+	"github.com/mo7amed4522/tayara_api/model/engage"
 	"github.com/mo7amed4522/tayara_api/utils"
 )
 
@@ -76,8 +78,8 @@ func (s *UserServices) Login(req bxapiReq.UserLoginReq) (*bxapiResp.UserLoginRes
 	}, nil
 }
 
-// GetProfile returns a user's own profile by id.
-func (s *UserServices) GetProfile(userID uint) (*bxapi.BxsUserProfile, error) {
+// GetProfile returns a user's own profile with trip/favorite counters.
+func (s *UserServices) GetProfile(userID uint) (*bxapiResp.BxGetUserProfileData, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
@@ -85,7 +87,85 @@ func (s *UserServices) GetProfile(userID uint) (*bxapi.BxsUserProfile, error) {
 	if err := global.GVA_DB.First(&user, userID).Error; err != nil {
 		return nil, errors.New("user not found")
 	}
+
+	now := time.Now()
+	var pastTrips, upcoming, favorites int64
+	_ = global.GVA_DB.Model(&booking.Booking{}).
+		Where("user_id = ? AND end_date < ?", userID, now).Count(&pastTrips).Error
+	_ = global.GVA_DB.Model(&booking.Booking{}).
+		Where("user_id = ? AND start_date > ?", userID, now).Count(&upcoming).Error
+	_ = global.GVA_DB.Model(&engage.Wishlist{}).
+		Where("user_id = ?", userID).Count(&favorites).Error
+
+	return &bxapiResp.BxGetUserProfileData{
+		User:      user,
+		PastTrips: int32(pastTrips),
+		Upcoming:  int32(upcoming),
+		Favorites: int32(favorites),
+	}, nil
+}
+
+// UpdateProfile updates a user's own profile fields (partial update).
+func (s *UserServices) UpdateProfile(userID uint, req bxapiReq.UserUpdateProfileReq) (*bxapi.BxsUserProfile, error) {
+	if global.GVA_DB == nil {
+		return nil, errors.New("db not init")
+	}
+	var user bxapi.BxsUserProfile
+	if err := global.GVA_DB.First(&user, userID).Error; err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	updates := map[string]interface{}{}
+	if req.FullName != "" {
+		updates["full_name"] = req.FullName
+	}
+	if req.NickName != "" {
+		updates["nick_name"] = req.NickName
+	}
+	if req.Email != "" && req.Email != user.Email {
+		var exists bxapi.BxsUserProfile
+		if err := global.GVA_DB.Where("email = ? AND id <> ?", req.Email, userID).First(&exists).Error; err == nil {
+			return nil, errors.New("email already registered")
+		}
+		updates["email"] = req.Email
+	}
+	if req.PhoneCountryCode != "" {
+		updates["phone_country_code"] = req.PhoneCountryCode
+	}
+	if req.Phone != "" {
+		updates["phone"] = req.Phone
+	}
+	if req.Nationality != "" {
+		updates["nationality"] = req.Nationality
+	}
+	if req.DateOfBirth != nil {
+		updates["date_of_birth"] = req.DateOfBirth
+	}
+	if req.HeaderImg != "" {
+		updates["header_img"] = req.HeaderImg
+	}
+
+	if len(updates) > 0 {
+		if err := global.GVA_DB.Model(&user).Updates(updates).Error; err != nil {
+			return nil, err
+		}
+	}
+	if err := global.GVA_DB.First(&user, userID).Error; err != nil {
+		return nil, errors.New("user not found")
+	}
 	return &user, nil
+}
+
+// DeleteAccount soft-deletes the user's own account.
+func (s *UserServices) DeleteAccount(userID uint) error {
+	if global.GVA_DB == nil {
+		return errors.New("db not init")
+	}
+	var user bxapi.BxsUserProfile
+	if err := global.GVA_DB.First(&user, userID).Error; err != nil {
+		return errors.New("user not found")
+	}
+	return global.GVA_DB.Delete(&user).Error
 }
 
 // ChangePassword updates the user's own password after verifying the old one.

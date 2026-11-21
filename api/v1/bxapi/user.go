@@ -3,6 +3,7 @@ package bxapi
 import (
 	"github.com/gin-gonic/gin"
 	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
+	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
 	"github.com/mo7amed4522/tayara_api/model/common/response"
 	"github.com/mo7amed4522/tayara_api/utils"
 )
@@ -10,6 +11,7 @@ import (
 type UserApi struct{}
 
 // Register
+//
 //	@Tags		User
 //	@Summary	Public end-user registration
 //	@Produce	application/json
@@ -31,6 +33,7 @@ func (UserApi) Register(c *gin.Context) {
 }
 
 // Login
+//
 //	@Tags		User
 //	@Summary	User login (returns X-token)
 //	@Produce	application/json
@@ -52,6 +55,7 @@ func (UserApi) Login(c *gin.Context) {
 }
 
 // FirebaseLogin
+//
 //	@Tags		User
 //	@Summary	User login/register via Firebase (Google / Apple / Phone)
 //	@Produce	application/json
@@ -73,22 +77,63 @@ func (UserApi) FirebaseLogin(c *gin.Context) {
 }
 
 // GetProfile
+//
 //	@Tags		User
-//	@Summary	User gets their own profile
+//	@Summary	User gets their own profile with trip/favorite counts
 //	@Produce	application/json
 //	@Success	200	{object}	response.Response
 //	@Router		/api/v1/user/profile [get]
 func (UserApi) GetProfile(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
-	user, err := bxapiSvc.UserServices.GetProfile(userID)
+	data, err := bxapiSvc.UserServices.GetProfile(userID)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithData(user, c)
+	response.OkWithData(data, c)
+}
+
+// UpdateProfile
+//
+//	@Tags		User
+//	@Summary	User updates their own profile
+//	@Produce	application/json
+//	@Param		data	body		bxapiReq.UserUpdateProfileReq	true	"profile payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/user/profile [put]
+func (UserApi) UpdateProfile(c *gin.Context) {
+	userID := utils.GetBxUserID(c)
+	var req bxapiReq.UserUpdateProfileReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	user, err := bxapiSvc.UserServices.UpdateProfile(userID, req)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(bxapiResp.BxUpdateUserProfileData{User: *user}, c)
+}
+
+// DeleteAccount
+//
+//	@Tags		User
+//	@Summary	User deletes their own account
+//	@Produce	application/json
+//	@Success	200	{object}	response.Response
+//	@Router		/api/v1/user/account [delete]
+func (UserApi) DeleteAccount(c *gin.Context) {
+	userID := utils.GetBxUserID(c)
+	if err := bxapiSvc.UserServices.DeleteAccount(userID); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("account deleted", c)
 }
 
 // ChangePassword
+//
 //	@Tags		User
 //	@Summary	User changes their own password
 //	@Produce	application/json
@@ -110,6 +155,7 @@ func (UserApi) ChangePassword(c *gin.Context) {
 }
 
 // ListUsers
+//
 //	@Tags		User
 //	@Summary	Admin lists users (paginated, filterable by status)
 //	@Produce	application/json
@@ -128,6 +174,7 @@ func (UserApi) ListUsers(c *gin.Context) {
 }
 
 // Block
+//
 //	@Tags		User
 //	@Summary	Admin blocks/unblocks a user
 //	@Produce	application/json

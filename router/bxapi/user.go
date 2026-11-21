@@ -20,7 +20,9 @@ func (r UserRouter) InitUserRouter(publicGroup, bxGroup, systemGroup *gin.Router
 	}
 	{
 		bx.GET("profile", userApi.GetProfile)
+		bx.PUT("profile", userApi.UpdateProfile)
 		bx.POST("change-password", userApi.ChangePassword)
+		bx.DELETE("account", userApi.DeleteAccount)
 	}
 	{
 		system.GET("admin", userApi.ListUsers)

@@ -3,6 +3,7 @@ module github.com/mo7amed4522/tayara_api
 go 1.26.0
 
 require (
+	github.com/dgraph-io/ristretto v0.2.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-pdf/fpdf v0.9.0
@@ -55,7 +56,6 @@ require (
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/dgraph-io/ristretto v0.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
