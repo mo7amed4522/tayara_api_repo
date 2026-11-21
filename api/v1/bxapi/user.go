@@ -97,18 +97,31 @@ func (UserApi) GetProfile(c *gin.Context) {
 //
 //	@Tags		User
 //	@Summary	User updates their own profile
+//	@Accept		multipart/form-data
 //	@Produce	application/json
-//	@Param		data	body		bxapiReq.UserUpdateProfileReq	true	"profile payload"
-//	@Success	200		{object}	response.Response
+//	@Param		fullName			formData	string	false	"Full name"
+//	@Param		nickName			formData	string	false	"Nickname"
+//	@Param		email				formData	string	false	"Email"
+//	@Param		phoneCountryCode	formData	string	false	"Phone country code"
+//	@Param		phone				formData	string	false	"Phone number"
+//	@Param		nationality			formData	string	false	"Nationality"
+//	@Param		dateOfBirth			formData	string	false	"Date of birth (RFC3339)"
+//	@Param		headerImg			formData	file	false	"Profile image"
+//	@Success	200					{object}	response.Response
 //	@Router		/api/v1/user/profile [put]
 func (UserApi) UpdateProfile(c *gin.Context) {
 	userID := utils.GetBxUserID(c)
+
+	// Get optional file upload
+	file, _ := c.FormFile("headerImg")
+
 	var req bxapiReq.UserUpdateProfileReq
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	user, err := bxapiSvc.UserServices.UpdateProfile(userID, req)
+
+	user, err := bxapiSvc.UserServices.UpdateProfile(userID, req, file)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return

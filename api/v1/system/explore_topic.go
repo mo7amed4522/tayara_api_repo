@@ -11,16 +11,16 @@ import (
 // ExploreTopicApi handles admin endpoints for explore topics
 type ExploreTopicApi struct{}
 
-// @Tags		System
-// @Summary	Admin list explore topics
-// @Produce	application/json
-// @Security	BearerAuth
-// @Param		page		query		int		false	"page number"	default(1)
-// @Param		pageSize	query		int		false	"page size"		default(20)
-// @Param		isActive	query		bool	false	"filter by active status"
-// @Param		keyword		query		string	false	"search keyword"
-// @Success	200			{object}	commonResp.Response
-// @Router		/api/v1/admin/explore/topics [get]
+//	@Tags		System
+//	@Summary	Admin list explore topics
+//	@Produce	application/json
+//	@Security	BearerAuth
+//	@Param		page		query		int		false	"page number"	default(1)
+//	@Param		pageSize	query		int		false	"page size"		default(20)
+//	@Param		isActive	query		bool	false	"filter by active status"
+//	@Param		keyword		query		string	false	"search keyword"
+//	@Success	200			{object}	commonResp.Response
+//	@Router		/api/v1/admin/explore/topics [get]
 func (ExploreTopicApi) AdminListTopics(c *gin.Context) {
 	var req request.AdminExploreTopicPageReq
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -49,7 +49,7 @@ func (ExploreTopicApi) AdminListTopics(c *gin.Context) {
 //	@Produce	application/json
 //	@Security	BearerAuth
 //	@Param		id	path		int	true	"topic ID"
-//	@Success	200		{object}	commonResp.Response
+//	@Success	200	{object}	commonResp.Response
 //	@Router		/api/v1/admin/explore/topics/:id [get]
 func (ExploreTopicApi) AdminGetTopic(c *gin.Context) {
 	idStr := c.Param("id")
@@ -97,7 +97,7 @@ func (ExploreTopicApi) AdminCreateTopic(c *gin.Context) {
 //	@Summary	Admin update explore topic
 //	@Produce	application/json
 //	@Security	BearerAuth
-//	@Param		id	path		int	true	"topic ID"
+//	@Param		id		path		int						true	"topic ID"
 //	@Param		body	body		request.ExploreTopicReq	true	"topic data"
 //	@Success	200		{object}	commonResp.Response
 //	@Router		/api/v1/admin/explore/topics/:id [put]
@@ -130,7 +130,7 @@ func (ExploreTopicApi) AdminUpdateTopic(c *gin.Context) {
 //	@Produce	application/json
 //	@Security	BearerAuth
 //	@Param		id	path		int	true	"topic ID"
-//	@Success	200		{object}	commonResp.Response
+//	@Success	200	{object}	commonResp.Response
 //	@Router		/api/v1/admin/explore/topics/:id [delete]
 func (ExploreTopicApi) AdminDeleteTopic(c *gin.Context) {
 	idStr := c.Param("id")
@@ -178,7 +178,7 @@ func (ExploreTopicApi) AdminReorderTopics(c *gin.Context) {
 //	@Summary	Admin manage packages in explore topic
 //	@Produce	application/json
 //	@Security	BearerAuth
-//	@Param		id		path		int	true	"topic ID"
+//	@Param		id		path		int									true	"topic ID"
 //	@Param		body	body		request.AdminManageTopicPackagesReq	true	"package IDs and replace flag"
 //	@Success	200		{object}	commonResp.Response
 //	@Router		/api/v1/admin/explore/topics/:id/packages [post]
@@ -210,10 +210,10 @@ func (ExploreTopicApi) AdminManageTopicPackages(c *gin.Context) {
 //	@Summary	Admin get packages in explore topic
 //	@Produce	application/json
 //	@Security	BearerAuth
-//	@Param		id		path		int	true	"topic ID"
-//	@Param		page	query		int	false	"page number"	default(1)
+//	@Param		id			path		int	true	"topic ID"
+//	@Param		page		query		int	false	"page number"	default(1)
 //	@Param		pageSize	query		int	false	"page size"		default(20)
-//	@Success	200		{object}	commonResp.Response
+//	@Success	200			{object}	commonResp.Response
 //	@Router		/api/v1/admin/explore/topics/:id/packages [get]
 func (ExploreTopicApi) AdminGetTopicPackages(c *gin.Context) {
 	idStr := c.Param("id")

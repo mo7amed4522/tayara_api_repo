@@ -91,10 +91,10 @@ func (DisputeApi) Resolve(c *gin.Context) {
 //	@Tags		Booking
 //	@Summary	User/agent lists disputes for their own booking
 //	@Produce	application/json
-//	@Param		id	query		int	true	"booking id"
+//	@Param		id			query		int	true	"booking id"
 //	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200	{object}	response.Response
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/booking/disputes [get]
 func (DisputeApi) ListForBooking(c *gin.Context) {
 	var idReq commonReq.GetById

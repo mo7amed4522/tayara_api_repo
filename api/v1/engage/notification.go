@@ -99,8 +99,8 @@ func (NotificationApi) UpsertTemplate(c *gin.Context) {
 //	@Summary	Admin lists all notification templates (design/moderate)
 //	@Produce	application/json
 //	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200	{object}	response.Response
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/engage/admin/notification-templates [get]
 func (NotificationApi) ListTemplates(c *gin.Context) {
 	var pageInfo commonReq.PageInfo

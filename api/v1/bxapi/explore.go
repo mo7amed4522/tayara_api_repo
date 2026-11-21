@@ -55,7 +55,7 @@ func (ExploreApi) ListExploreTopics(c *gin.Context) {
 //	@Summary	Public explore topic detail with featured packages
 //	@Produce	application/json
 //	@Param		code	path		string	true	"topic code"
-//	@Success	200			{object}	response.Response
+//	@Success	200		{object}	response.Response
 //	@Router		/api/v1/customer/explore/topics/:code [get]
 func (ExploreApi) GetExploreTopicDetail(c *gin.Context) {
 	code := c.Param("code")
@@ -155,7 +155,7 @@ func (ExploreApi) AgentGetMyTopics(c *gin.Context) {
 //	@Summary	Add package to explore topics
 //	@Produce	application/json
 //	@Security	BearerAuth
-//	@Param		id		path		int		true	"package ID"
+//	@Param		id		path		int								true	"package ID"
 //	@Param		body	body		engageReq.AgentPackageTopicsReq	true	"topic IDs"
 //	@Success	200		{object}	response.Response
 //	@Router		/api/v1/agent/explore/packages/:id/topics [post]
@@ -221,7 +221,7 @@ func (ExploreApi) AgentRemovePackageFromTopic(c *gin.Context) {
 //	@Produce	application/json
 //	@Security	BearerAuth
 //	@Param		id	path		int	true	"package ID"
-//	@Success	200		{object}	response.Response
+//	@Success	200	{object}	response.Response
 //	@Router		/api/v1/agent/explore/packages/:id/topics [get]
 func (ExploreApi) AgentGetPackageTopics(c *gin.Context) {
 	agentID := utils.GetAgentID(c)

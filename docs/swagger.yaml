@@ -1039,25 +1039,6 @@ definitions:
     - password
     - username
     type: object
-  request.UserUpdateProfileReq:
-    properties:
-      dateOfBirth:
-        type: string
-      email:
-        type: string
-      fullName:
-        type: string
-      headerImg:
-        type: string
-      nationality:
-        type: string
-      nickName:
-        type: string
-      phone:
-        type: string
-      phoneCountryCode:
-        type: string
-    type: object
   request.WishlistToggleReq:
     properties:
       packageId:
@@ -4383,13 +4364,41 @@ paths:
       tags:
       - User
     put:
+      consumes:
+      - multipart/form-data
       parameters:
-      - description: profile payload
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/request.UserUpdateProfileReq'
+      - description: Full name
+        in: formData
+        name: fullName
+        type: string
+      - description: Nickname
+        in: formData
+        name: nickName
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        type: string
+      - description: Phone country code
+        in: formData
+        name: phoneCountryCode
+        type: string
+      - description: Phone number
+        in: formData
+        name: phone
+        type: string
+      - description: Nationality
+        in: formData
+        name: nationality
+        type: string
+      - description: Date of birth (RFC3339)
+        in: formData
+        name: dateOfBirth
+        type: string
+      - description: Profile image
+        in: formData
+        name: headerImg
+        type: file
       produces:
       - application/json
       responses:
@@ -4425,7 +4434,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: '{"success":true,"data":{},"msg":"Send success"}'
+          description: "{\"success\":true,\"data\":{},\"msg\":\"Send\tsuccess\"}"
           schema:
             type: string
       security:
@@ -4446,7 +4455,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: '{"success":true,"data":{},"msg":"Send success"}'
+          description: "{\"success\":true,\"data\":{},\"msg\":\"Send\tsuccess\"}"
           schema:
             type: string
       security:

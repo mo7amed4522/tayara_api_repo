@@ -66,8 +66,8 @@ func (CustomTripApi) UpdateTemplate(c *gin.Context) {
 //	@Summary	Agent lists their own custom-trip templates
 //	@Produce	application/json
 //	@Param		page		query		int	false	"page number"	default(1)
-//	@Param		pageSize	query		int	false	"page size"	default(10)
-//	@Success	200	{object}	response.Response
+//	@Param		pageSize	query		int	false	"page size"		default(10)
+//	@Success	200			{object}	response.Response
 //	@Router		/api/v1/catalog/templates [get]
 func (CustomTripApi) ListOwnTemplates(c *gin.Context) {
 	agentID := utils.GetAgentID(c)
