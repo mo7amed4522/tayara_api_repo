@@ -1,0 +1,5 @@
+a6a8e64841c4fc4865a9cadec957d79dd0c9a0c6912d5ebc41a3e9c786c4ccb7  tayara-api-darwin-amd64
+bb143d7732181d413b3e786e1464bc284c063de4340a0f3a96091969d3d1d641  tayara-api-darwin-arm64
+fdb0b6223a37ddd7aec17eafedfe8e472424f3569ee5c6225c08e79e8eee4837  tayara-api-linux-amd64
+84f964c5af3448c560c598dbbf7c11f9cdedd226b846a98b4452d44cede37184  tayara-api-linux-arm64
+dbe17d456ad621afffe37a04771955338c95dd69952ffe8adec2e454bf336867  tayara-api-windows-amd64.exe
