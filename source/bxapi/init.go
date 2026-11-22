@@ -75,6 +75,23 @@ func (u *userInit) InitializeData(ctx context.Context) (context.Context, error) 
 			Nationality: "Filipino", KYCStatus: "approved", TotalSpend: 3200000, Status: "active",
 			LastLoginAt: &now, AuthProvider: "email",
 		},
+		{
+			FullName:         "Khaled Mohamed",
+			Username:         "mo7amed4522@gmail.com",
+			Password:         "", // Google users have no local password
+			NickName:         "Khaled",
+			HeaderImg:        "https://raw.githubusercontent.com/mo7amed4522/new_app/refs/heads/master/logo.png",
+			PhoneCountryCode: "+971",
+			Phone:            "0544523695",
+			Email:            "mo7amed4522@gmail.com",
+			Nationality:      "Egyptienne",    // pick one; was NULL
+			KYCStatus:        "not_submitted", // keep, or "pending" if you want KYC docs seeded
+			TotalSpend:       0,
+			Status:           "active",
+			AuthProvider:     "google",
+			FirebaseUID:      "gn3io6EgoDWz7Mi6vQ8F3WB1cmh2",
+			LastLoginAt:      &now, // user just logged in
+		},
 	}
 	if err := db.Create(&users).Error; err != nil {
 		return ctx, err
