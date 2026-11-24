@@ -64,12 +64,12 @@ func (HomeApi) ListExploreTrips(c *gin.Context) {
 	if req.PageSize <= 0 {
 		req.PageSize = 12
 	}
-	list, total, totalPage, err := bxapiSvc.HomeServices.ListExploreTrips(req)
+	result, err := bxapiSvc.HomeServices.ListExploreTrips(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: result.Items, Total: result.Total, TotalPage: result.TotalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // ListDestinations
@@ -133,12 +133,12 @@ func (HomeApi) ListDeals(c *gin.Context) {
 	if req.PageSize <= 0 {
 		req.PageSize = 12
 	}
-	list, total, totalPage, err := bxapiSvc.HomeServices.ListDeals(req)
+	result, err := bxapiSvc.HomeServices.ListDeals(req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, TotalPage: totalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: result.Items, Total: result.Total, TotalPage: result.TotalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }
 
 // ListTopRatedAgents
@@ -225,10 +225,10 @@ func (HomeApi) ActiveHomeAds(c *gin.Context) {
 	if req.PageSize <= 0 {
 		req.PageSize = 10
 	}
-	list, total, err := bxapiSvc.HomeServices.ActiveHomeAds(req.Page, req.PageSize)
+	result, err := bxapiSvc.HomeServices.ActiveHomeAds(req.Page, req.PageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: list, Total: total, Page: req.Page, PageSize: req.PageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: result.Items, Total: result.Total, TotalPage: result.TotalPage, Page: req.Page, PageSize: req.PageSize}, "ok", c)
 }

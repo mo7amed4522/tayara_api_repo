@@ -8,7 +8,10 @@ type EngageRouter struct{}
 func (r EngageRouter) InitEngageRouter(publicGroup, bxGroup, systemGroup *gin.RouterGroup) {
 	public := publicGroup.Group("api/v1/engage")
 	bx := bxGroup.Group("api/v1/engage")
+	push := bxGroup.Group("api/v1/push")
 	system := systemGroup.Group("api/v1/engage")
+
+	push.POST("token", userApi.UpsertPushToken)
 
 	// public (browse)
 	{

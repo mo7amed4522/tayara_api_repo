@@ -495,7 +495,13 @@ definitions:
     type: object
   request.FirebaseLoginReq:
     properties:
+      device_id:
+        type: string
       idToken:
+        type: string
+      platform:
+        type: string
+      push_token:
         type: string
     required:
     - idToken
@@ -745,6 +751,24 @@ definitions:
         type: string
     required:
     - bookingId
+    type: object
+  request.PushTokenReq:
+    properties:
+      app_version:
+        type: string
+      device_id:
+        type: string
+      platform:
+        enum:
+        - ios
+        - android
+        type: string
+      token:
+        type: string
+    required:
+    - device_id
+    - platform
+    - token
     type: object
   request.RefundReq:
     properties:
@@ -4070,6 +4094,25 @@ paths:
       summary: Stripe webhook (payment authorization events)
       tags:
       - Payment
+  /api/v1/push/token:
+    post:
+      parameters:
+      - description: push token payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.PushTokenReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User registers or refreshes a push token for an app installation
+      tags:
+      - Engage
   /api/v1/system/casbin/policies:
     get:
       parameters:

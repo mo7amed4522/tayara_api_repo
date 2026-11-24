@@ -193,6 +193,33 @@ func (UserEngageApi) RegisterDeviceToken(c *gin.Context) {
 	response.OkWithData(token, c)
 }
 
+// UpsertPushToken
+//
+//	@Tags		Engage
+//	@Summary	User registers or refreshes a push token for an app installation
+//	@Produce	application/json
+//	@Param		data	body		engageReq.PushTokenReq	true	"push token payload"
+//	@Success	200		{object}	response.Response
+//	@Router		/api/v1/push/token [post]
+func (UserEngageApi) UpsertPushToken(c *gin.Context) {
+	userID := utils.GetBxUserID(c)
+	if userID == 0 {
+		response.FailWithMessage("authenticated user is required", c)
+		return
+	}
+
+	var req engageReq.PushTokenReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if err := engageService.UserEngageServices.UpsertPushToken(userID, req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("push token registered", c)
+}
+
 // ListDeviceTokens
 //
 //	@Tags		Engage

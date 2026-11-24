@@ -43,6 +43,10 @@ func Redis() {
 		fmt.Println(err.Error())
 	} else {
 		global.GVA_REDIS = redisClient
+		global.SetCacheRedisClient(redisClient)
+	}
+	if err := global.InitCache(100, true); err != nil {
+		fmt.Printf("cache initialization failed: %v\n", err)
 	}
 }
 

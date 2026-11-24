@@ -1,6 +1,7 @@
 package bxapi
 
 import (
+	"context"
 	"errors"
 
 	"github.com/mo7amed4522/tayara_api/constants"
@@ -11,6 +12,7 @@ import (
 	engageModel "github.com/mo7amed4522/tayara_api/model/engage"
 	engageSvc "github.com/mo7amed4522/tayara_api/service/engage"
 	"github.com/mo7amed4522/tayara_api/utils"
+	"github.com/mo7amed4522/tayara_api/utils/cache"
 )
 
 // ExploreServices provides explore topic operations for public/agent APIs
@@ -25,7 +27,6 @@ func (s *ExploreServices) ListExploreTopics(req request.CustomerExploreTopicsReq
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
-
 	// Set defaults for pagination
 	if req.Page <= 0 {
 		req.Page = 1
@@ -33,7 +34,27 @@ func (s *ExploreServices) ListExploreTopics(req request.CustomerExploreTopicsReq
 	if req.PageSize <= 0 {
 		req.PageSize = 20
 	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), ExploreTopicsKey(req.Page, req.PageSize), sharedResponseTTL, func() (cachedPage[bxapiResp.CustomerExploreTopicCard], error) {
+		paginateResult, err := s.listExploreTopicsUncached(req)
+		if err != nil {
+			return cachedPage[bxapiResp.CustomerExploreTopicCard]{}, err
+		}
+		items, ok := paginateResult.Data.([]bxapiResp.CustomerExploreTopicCard)
+		if !ok {
+			return cachedPage[bxapiResp.CustomerExploreTopicCard]{}, errors.New("unexpected explore topics result type")
+		}
+		return cachedPage[bxapiResp.CustomerExploreTopicCard]{
+			Items: items, Total: paginateResult.Total, Page: paginateResult.Page,
+			PageSize: paginateResult.PageSize, TotalPage: paginateResult.TotalPage,
+		}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.paginateResult(), nil
+}
 
+func (s *ExploreServices) listExploreTopicsUncached(req request.CustomerExploreTopicsReq) (*utils.PaginateResult, error) {
 	topicService := &engageSvc.ExploreTopicServices{}
 
 	// Build count query
@@ -56,7 +77,10 @@ func (s *ExploreServices) ListExploreTopics(req request.CustomerExploreTopicsReq
 	for i, t := range topics {
 		topicIDs[i] = t.ID
 	}
-	counts := topicService.GetPackageCountsByTopic(topicIDs)
+	counts, err := topicService.GetPackageCountsByTopicE(topicIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	// Convert to bxapi response format
 	cards := make([]bxapiResp.CustomerExploreTopicCard, len(topics))
@@ -82,7 +106,13 @@ func (s *ExploreServices) GetExploreTopicDetail(code string) (*bxapiResp.Custome
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
+	detail, _, err := cache.GetOrLoadJSON(context.Background(), ExploreTopicDetailKey(code), sharedResponseTTL, func() (*bxapiResp.CustomerExploreTopicDetail, error) {
+		return s.getExploreTopicDetailUncached(code)
+	})
+	return detail, err
+}
 
+func (s *ExploreServices) getExploreTopicDetailUncached(code string) (*bxapiResp.CustomerExploreTopicDetail, error) {
 	topicService := &engageSvc.ExploreTopicServices{}
 	detail, err := topicService.GetTopicDetail(code)
 	if err != nil {
@@ -113,7 +143,13 @@ func (s *ExploreServices) GetExploreTopicPackages(code string, req request.Custo
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), ExploreTopicPackagesKey(code, req), sharedResponseTTL, func() (*bxapiResp.CustomerExploreTopicPackagesResult, error) {
+		return s.getExploreTopicPackagesUncached(code, req)
+	})
+	return result, err
+}
 
+func (s *ExploreServices) getExploreTopicPackagesUncached(code string, req request.CustomerExploreTopicPackagesReq) (*bxapiResp.CustomerExploreTopicPackagesResult, error) {
 	topicService := &engageSvc.ExploreTopicServices{}
 	// Convert to internal request format
 	internalReq := request.CustomerHomeExploreReq{
@@ -164,7 +200,27 @@ func (s *ExploreServices) AgentGetMyTopics(agentID uint, page, pageSize int) (*u
 	if pageSize <= 0 {
 		pageSize = 20
 	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), AgentGetMyTopicsKey(agentID, page, pageSize), agentScopedTTL, func() (cachedPage[bxapiResp.AgentExploreTopicCard], error) {
+		paginateResult, err := s.agentGetMyTopicsUncached(agentID, page, pageSize)
+		if err != nil {
+			return cachedPage[bxapiResp.AgentExploreTopicCard]{}, err
+		}
+		items, ok := paginateResult.Data.([]bxapiResp.AgentExploreTopicCard)
+		if !ok {
+			return cachedPage[bxapiResp.AgentExploreTopicCard]{}, errors.New("unexpected agent topics result type")
+		}
+		return cachedPage[bxapiResp.AgentExploreTopicCard]{
+			Items: items, Total: paginateResult.Total, Page: paginateResult.Page,
+			PageSize: paginateResult.PageSize, TotalPage: paginateResult.TotalPage,
+		}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.paginateResult(), nil
+}
 
+func (s *ExploreServices) agentGetMyTopicsUncached(agentID uint, page, pageSize int) (*utils.PaginateResult, error) {
 	topicService := &engageSvc.ExploreTopicServices{}
 
 	// Get all active topics (we need to count them for pagination)
@@ -212,7 +268,10 @@ func (s *ExploreServices) AgentGetMyTopics(agentID uint, page, pageSize int) (*u
 	for i, t := range topics {
 		topicIDs[i] = t.ID
 	}
-	totalCounts := topicService.GetPackageCountsByTopic(topicIDs)
+	totalCounts, err := topicService.GetPackageCountsByTopicE(topicIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	// Build response cards with both total and agent-specific counts
 	cards := make([]bxapiResp.AgentExploreTopicCard, len(topics))
@@ -261,7 +320,9 @@ func (s *ExploreServices) AgentGetPackageTopics(agentID, packageID uint) ([]uint
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
-
-	topicService := &engageSvc.ExploreTopicServices{}
-	return topicService.AgentGetPackageTopics(agentID, packageID)
+	result, _, err := cache.GetOrLoadJSON(context.Background(), AgentGetPackageTopicsKey(agentID, packageID), agentScopedTTL, func() ([]uint, error) {
+		topicService := &engageSvc.ExploreTopicServices{}
+		return topicService.AgentGetPackageTopics(agentID, packageID)
+	})
+	return result, err
 }

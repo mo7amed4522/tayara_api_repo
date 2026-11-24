@@ -10,6 +10,8 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/bxapi"
 	bxapiReq "github.com/mo7amed4522/tayara_api/model/bxapi/request"
 	bxapiResp "github.com/mo7amed4522/tayara_api/model/bxapi/response"
+	engageReq "github.com/mo7amed4522/tayara_api/model/engage/request"
+	engageService "github.com/mo7amed4522/tayara_api/service/engage"
 	"github.com/mo7amed4522/tayara_api/utils"
 	fbutil "github.com/mo7amed4522/tayara_api/utils/firebase"
 	"go.uber.org/zap"
@@ -35,8 +37,12 @@ func (s *UserServices) FirebaseLogin(ctx context.Context, req bxapiReq.FirebaseL
 	if err := fbutil.ValidateProvider(token, provider); err != nil {
 		return nil, err
 	}
+	if err := validateFirebaseDevice(req); err != nil {
+		return nil, err
+	}
 	// phone sign-ins expose the verified number in token.PhoneNumber
 	var user bxapi.BxsUserProfile
+	created := false
 	err = global.GVA_DB.Where("firebase_uid = ?", token.UID).First(&user).Error
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -47,6 +53,7 @@ func (s *UserServices) FirebaseLogin(ctx context.Context, req bxapiReq.FirebaseL
 		if err := global.GVA_DB.Create(&user).Error; err != nil {
 			return nil, err
 		}
+		created = true
 	}
 	if user.Status != constants.UserStatusActive {
 		return nil, errors.New("account is blocked")
@@ -56,11 +63,45 @@ func (s *UserServices) FirebaseLogin(ctx context.Context, req bxapiReq.FirebaseL
 	if err != nil {
 		return nil, err
 	}
+	if created {
+		if req.PushToken != "" {
+			if err := (engageService.UserEngageServices{}).UpsertPushToken(user.ID, engageReq.PushTokenReq{
+				DeviceID: req.DeviceID,
+				Platform: req.Platform,
+				Token:    req.PushToken,
+			}); err != nil {
+				global.GVA_LOG.Error("failed to register device token during Firebase signup", zap.Error(err))
+			}
+		}
+		(engageService.NotificationServices{}).EmitWithImage(
+			constants.NotifEventWelcome,
+			constants.NotifRecipientUser,
+			user.ID,
+			constants.NotifChannelPush,
+			"Welcome at Taiyara Marketplace",
+			"We here to help you in any trip and booking you do as you wish",
+			"https://raw.githubusercontent.com/tayara_app/refs/heads/master/assets/images/app_logo.png",
+		)
+	}
 	return &bxapiResp.UserLoginResponse{
 		User:      user,
 		Token:     jwtToken,
 		ExpiresAt: claims.RegisteredClaims.ExpiresAt.Unix() * 1000,
 	}, nil
+}
+
+func validateFirebaseDevice(req bxapiReq.FirebaseLoginReq) error {
+	hasDeviceDetails := req.DeviceID != "" || req.Platform != "" || req.PushToken != ""
+	if !hasDeviceDetails {
+		return nil
+	}
+	if req.DeviceID == "" || req.Platform == "" || req.PushToken == "" {
+		return errors.New("device_id, platform, and push_token must be provided together")
+	}
+	if req.Platform != "ios" && req.Platform != "android" {
+		return errors.New("platform must be ios or android")
+	}
+	return nil
 }
 
 // buildUserFromFirebase maps a verified Firebase identity onto a local user profile. Email, name,

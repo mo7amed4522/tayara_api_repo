@@ -52,7 +52,10 @@ func (s *ExploreTopicServices) ListTopics(page, pageSize int) (*utils.PaginateRe
 		topicIDs[i] = t.ID
 	}
 
-	counts := s.GetPackageCountsByTopic(topicIDs)
+	counts, err := s.GetPackageCountsByTopicE(topicIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	// Build response cards
 	cards := make([]engageResp.ExploreTopicCard, len(topics))
@@ -79,49 +82,13 @@ func (s *ExploreTopicServices) GetTopicDetail(topicCode string) (*engageResp.Exp
 		return nil, errors.New("db not init")
 	}
 
-	// Try to get cached topic by code
-	cacheKey := "engage:explore:topic:code:" + topicCode
-	if val, found, _ := cache.Get(cacheKey); found {
-		if topic, ok := val.(*engage.ExploreTopic); ok {
-			if !topic.IsActive {
-				return nil, errors.New("topic not available")
-			}
-
-			// Get featured packages (first 6 active packages in this topic)
-			featuredPackages, err := s.getTopicPackages(topic.ID, 1, 6, true)
-			if err != nil {
-				return nil, err
-			}
-
-			// Get package count
-			counts := s.GetPackageCountsByTopic([]uint{topic.ID})
-
-			return &engageResp.ExploreTopicDetail{
-				ExploreTopicCard: engageResp.ExploreTopicCard{
-					ID:           topic.ID,
-					Code:         topic.Code,
-					Name:         topic.Name,
-					NameAr:       topic.NameAr,
-					Description:  topic.Description,
-					ImageURL:     topic.ImageURL,
-					IconURL:      topic.IconURL,
-					PackageCount: counts[topic.ID],
-				},
-				FeaturedPackages: featuredPackages,
-			}, nil
-		}
-	}
-
 	topic, err := engage.GetTopicByCode(topicCode)
 	if err != nil {
-		return nil, errors.New("topic not found")
+		return nil, err
 	}
 	if !topic.IsActive {
 		return nil, errors.New("topic not available")
 	}
-
-	// Cache the topic
-	cache.Set(cacheKey, topic, 128, 10*time.Minute)
 
 	// Get featured packages (first 6 active packages in this topic)
 	featuredPackages, err := s.getTopicPackages(topic.ID, 1, 6, true)
@@ -130,7 +97,10 @@ func (s *ExploreTopicServices) GetTopicDetail(topicCode string) (*engageResp.Exp
 	}
 
 	// Get package count
-	counts := s.GetPackageCountsByTopic([]uint{topic.ID})
+	counts, err := s.GetPackageCountsByTopicE([]uint{topic.ID})
+	if err != nil {
+		return nil, err
+	}
 
 	return &engageResp.ExploreTopicDetail{
 		ExploreTopicCard: engageResp.ExploreTopicCard{
@@ -155,7 +125,7 @@ func (s *ExploreTopicServices) GetTopicPackages(topicCode string, req bxapiReq.C
 
 	topic, err := engage.GetTopicByCode(topicCode)
 	if err != nil {
-		return nil, errors.New("topic not found")
+		return nil, err
 	}
 	if !topic.IsActive {
 		return nil, errors.New("topic not available")
@@ -166,7 +136,10 @@ func (s *ExploreTopicServices) GetTopicPackages(topicCode string, req bxapiReq.C
 		return nil, err
 	}
 
-	counts := s.GetPackageCountsByTopic([]uint{topic.ID})
+	counts, err := s.GetPackageCountsByTopicE([]uint{topic.ID})
+	if err != nil {
+		return nil, err
+	}
 
 	return &engageResp.ExploreTopicPackagesResult{
 		Topic: engageResp.ExploreTopicCard{
@@ -236,7 +209,10 @@ func (s *ExploreTopicServices) AgentGetMyTopics(agentID uint, page, pageSize int
 	for i, t := range topics {
 		topicIDs[i] = t.ID
 	}
-	totalCounts := s.GetPackageCountsByTopic(topicIDs)
+	totalCounts, err := s.GetPackageCountsByTopicE(topicIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	// Build response
 	cards := make([]engageResp.AgentTopicCard, len(topics))
@@ -571,19 +547,30 @@ func (s *ExploreTopicServices) AdminGetTopicPackages(topicID uint, page, pageSiz
 
 // GetPackageCountsByTopic returns package counts for multiple topics (public for admin use)
 func (s *ExploreTopicServices) GetPackageCountsByTopic(topicIDs []uint) map[uint]int {
+	counts, _ := s.getPackageCountsByTopic(topicIDs, true)
+	return counts
+}
+
+func (s *ExploreTopicServices) GetPackageCountsByTopicE(topicIDs []uint) (map[uint]int, error) {
+	return s.getPackageCountsByTopic(topicIDs, false)
+}
+
+func (s *ExploreTopicServices) getPackageCountsByTopic(topicIDs []uint, useCache bool) (map[uint]int, error) {
 	counts := make(map[uint]int)
 	if len(topicIDs) == 0 {
-		return counts
+		return counts, nil
 	}
 
 	// Check cache for each topic
 	var missingIDs []uint
 	for _, topicID := range topicIDs {
-		cacheKey := fmt.Sprintf("engage:explore:topic:%d:pkgcount", topicID)
-		if val, found, _ := cache.Get(cacheKey); found {
-			if count, ok := val.(int); ok {
-				counts[topicID] = count
-				continue
+		if useCache {
+			cacheKey := fmt.Sprintf("engage:explore:topic:%d:pkgcount", topicID)
+			if val, found, _ := cache.Get(cacheKey); found {
+				if count, ok := val.(int); ok {
+					counts[topicID] = count
+					continue
+				}
 			}
 		}
 		missingIDs = append(missingIDs, topicID)
@@ -596,23 +583,26 @@ func (s *ExploreTopicServices) GetPackageCountsByTopic(topicIDs []uint) map[uint
 			Count   int  `gorm:"column:cnt"`
 		}
 		var rows []countRow
-		global.GVA_DB.Model(&engage.PackageTopic{}).
+		if err := global.GVA_DB.Model(&engage.PackageTopic{}).
 			Select("topic_id, COUNT(*) as cnt").
 			Where("topic_id IN ?", missingIDs).
 			Joins("INNER JOIN catalog_package ON catalog_package.id = engage_package_topic.package_id").
 			Where("catalog_package.status = ?", constants.PackageStatusActive).
 			Group("topic_id").
-			Scan(&rows)
+			Scan(&rows).Error; err != nil {
+			return nil, err
+		}
 
 		for _, r := range rows {
 			counts[r.TopicID] = r.Count
-			// Cache the result
-			cacheKey := fmt.Sprintf("engage:explore:topic:%d:pkgcount", r.TopicID)
-			cache.Set(cacheKey, r.Count, 8, 10*time.Minute)
+			if useCache {
+				cacheKey := fmt.Sprintf("engage:explore:topic:%d:pkgcount", r.TopicID)
+				cache.Set(cacheKey, r.Count, 8, 10*time.Minute)
+			}
 		}
 	}
 
-	return counts
+	return counts, nil
 }
 
 // getTopicPackages returns packages for a topic (limited, for featured)
@@ -637,7 +627,7 @@ func (s *ExploreTopicServices) getTopicPackages(topicID uint, page, pageSize int
 	}
 
 	// Build response cards with agent info and ratings
-	return s.buildExploreTripCards(packages), nil
+	return s.buildExploreTripCards(packages)
 }
 
 // getTopicPackagesPaginated returns paginated packages for a topic
@@ -669,13 +659,17 @@ func (s *ExploreTopicServices) getTopicPackagesPaginated(topicID uint, page, pag
 		return nil, 0, err
 	}
 
-	return s.buildExploreTripCards(packages), paginateResult.Total, nil
+	cards, err := s.buildExploreTripCards(packages)
+	if err != nil {
+		return nil, 0, err
+	}
+	return cards, paginateResult.Total, nil
 }
 
 // buildExploreTripCards converts packages to explore trip cards with agent info and ratings
-func (s *ExploreTopicServices) buildExploreTripCards(packages []catalog.Package) []bxapiResp.CustomerExploreTripCard {
+func (s *ExploreTopicServices) buildExploreTripCards(packages []catalog.Package) ([]bxapiResp.CustomerExploreTripCard, error) {
 	if len(packages) == 0 {
-		return []bxapiResp.CustomerExploreTripCard{}
+		return []bxapiResp.CustomerExploreTripCard{}, nil
 	}
 
 	var agentIDs []uint
@@ -690,9 +684,15 @@ func (s *ExploreTopicServices) buildExploreTripCards(packages []catalog.Package)
 	}
 
 	// Batch load agent info
-	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
+	agentInfo, err := s.batchAgentNamesAndLogos(agentIDs)
+	if err != nil {
+		return nil, err
+	}
 	// Batch load package ratings
-	pkgRatings, pkgCounts := s.batchPackageRatings(pkgIDs)
+	pkgRatings, pkgCounts, err := s.batchPackageRatings(pkgIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	out := make([]bxapiResp.CustomerExploreTripCard, 0, len(packages))
 	for _, p := range packages {
@@ -713,14 +713,14 @@ func (s *ExploreTopicServices) buildExploreTripCards(packages []catalog.Package)
 			Status:          p.Status,
 		})
 	}
-	return out
+	return out, nil
 }
 
 // batchAgentNamesAndLogos loads company name and header image for multiple agents
-func (s *ExploreTopicServices) batchAgentNamesAndLogos(agentIDs []uint) map[uint]struct{ name, logo string } {
+func (s *ExploreTopicServices) batchAgentNamesAndLogos(agentIDs []uint) (map[uint]struct{ name, logo string }, error) {
 	out := make(map[uint]struct{ name, logo string }, len(agentIDs))
 	if len(agentIDs) == 0 {
-		return out
+		return out, nil
 	}
 	type row struct {
 		ID          uint   `gorm:"column:id"`
@@ -728,22 +728,24 @@ func (s *ExploreTopicServices) batchAgentNamesAndLogos(agentIDs []uint) map[uint
 		HeaderImg   string `gorm:"column:header_img"`
 	}
 	var rows []row
-	global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
+	if err := global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
 		Where("id IN ?", agentIDs).
 		Select("id, company_name, header_img").
-		Scan(&rows)
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
 	for _, r := range rows {
 		out[r.ID] = struct{ name, logo string }{name: r.CompanyName, logo: r.HeaderImg}
 	}
-	return out
+	return out, nil
 }
 
 // batchPackageRatings loads avg rating and review count for multiple packages
-func (s *ExploreTopicServices) batchPackageRatings(pkgIDs []uint) (map[uint]float64, map[uint]int) {
+func (s *ExploreTopicServices) batchPackageRatings(pkgIDs []uint) (map[uint]float64, map[uint]int, error) {
 	ratings := make(map[uint]float64)
 	counts := make(map[uint]int)
 	if len(pkgIDs) == 0 {
-		return ratings, counts
+		return ratings, counts, nil
 	}
 	type row struct {
 		PackageID uint    `gorm:"column:package_id"`
@@ -751,15 +753,17 @@ func (s *ExploreTopicServices) batchPackageRatings(pkgIDs []uint) (map[uint]floa
 		Cnt       int64   `gorm:"column:cnt"`
 	}
 	var rows []row
-	global.GVA_DB.Model(&engage.Review{}).
+	if err := global.GVA_DB.Model(&engage.Review{}).
 		Where("package_id IN ?", pkgIDs).
 		Where("review_status = ?", constants.ReviewStatusActive).
 		Select("package_id, ROUND(AVG(rating), 2) AS avg, COUNT(*) AS cnt").
 		Group("package_id").
-		Scan(&rows)
+		Scan(&rows).Error; err != nil {
+		return nil, nil, err
+	}
 	for _, r := range rows {
 		ratings[r.PackageID] = r.Avg
 		counts[r.PackageID] = int(r.Cnt)
 	}
-	return ratings, counts
+	return ratings, counts, nil
 }

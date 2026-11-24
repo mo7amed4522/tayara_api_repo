@@ -14,6 +14,7 @@ type Notification struct {
 	Status           string `json:"status" form:"status" gorm:"size:16;default:pending;comment:pending|sent|failed"`
 	Title            string `json:"title" form:"title" gorm:"size:191;comment:Title"`
 	Body             string `json:"body" form:"body" gorm:"size:500;comment:Body"`
+	ImageURL         string `json:"imageUrl" form:"imageUrl" gorm:"size:1024;comment:Notification image URL"`
 	global.GVA_MODEL
 }
 

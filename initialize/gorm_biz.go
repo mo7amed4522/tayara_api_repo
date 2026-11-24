@@ -69,6 +69,7 @@ func bizModel() error {
 		&engage.Share{},
 		&engage.Coupon{},
 		&engage.DeviceToken{},
+		&engage.PushToken{},
 		&engage.PackageTopic{},
 		&engage.ExploreTopic{},
 
