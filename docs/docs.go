@@ -4680,6 +4680,36 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/push/token": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Engage"
+                ],
+                "summary": "User registers or refreshes a push token for an app installation",
+                "parameters": [
+                    {
+                        "description": "push token payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.PushTokenReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/system/casbin/policies": {
             "get": {
                 "produces": [
@@ -6469,7 +6499,16 @@ const docTemplate = `{
                 "idToken"
             ],
             "properties": {
+                "device_id": {
+                    "type": "string"
+                },
                 "idToken": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "push_token": {
                     "type": "string"
                 }
             }
@@ -6840,6 +6879,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "referenceNumber": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.PushTokenReq": {
+            "type": "object",
+            "required": [
+                "device_id",
+                "platform",
+                "token"
+            ],
+            "properties": {
+                "app_version": {
+                    "type": "string"
+                },
+                "device_id": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string",
+                    "enum": [
+                        "ios",
+                        "android"
+                    ]
+                },
+                "token": {
                     "type": "string"
                 }
             }
