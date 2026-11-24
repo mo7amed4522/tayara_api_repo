@@ -24,7 +24,7 @@ func fcmEnabled() bool {
 }
 
 // Send pushes a message to the given device tokens.
-func (FcmSender) Send(ctx context.Context, tokens []string, title, body string) error {
+func (FcmSender) Send(ctx context.Context, tokens []string, title, body, imageURL string) error {
 	if len(tokens) == 0 || !fcmEnabled() {
 		return nil
 	}
@@ -36,8 +36,9 @@ func (FcmSender) Send(ctx context.Context, tokens []string, title, body string) 
 	_, err = client.SendEachForMulticast(ctx, &messaging.MulticastMessage{
 		Tokens: tokens,
 		Notification: &messaging.Notification{
-			Title: title,
-			Body:  body,
+			Title:    title,
+			Body:     body,
+			ImageURL: imageURL,
 		},
 	})
 	return err

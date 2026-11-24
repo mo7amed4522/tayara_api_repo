@@ -66,6 +66,7 @@ const (
 	NotifEventCancellation     = "cancellation"
 	NotifEventPayout           = "payout"
 	NotifEventRefund           = "refund"
+	NotifEventWelcome          = "welcome"
 )
 
 // Notification recipient type

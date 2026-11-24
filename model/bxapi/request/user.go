@@ -28,7 +28,10 @@ type UserLoginReq struct {
 // a Firebase ID token obtained after a successful provider sign-in; the server verifies it and
 // upserts the local user bound to the Firebase UID.
 type FirebaseLoginReq struct {
-	IDToken string `json:"idToken" binding:"required"`
+	IDToken   string `json:"idToken" binding:"required"`
+	DeviceID  string `json:"device_id"`
+	Platform  string `json:"platform"`
+	PushToken string `json:"push_token"`
 }
 
 // UserBlockReq admin blocks/unblocks a user.

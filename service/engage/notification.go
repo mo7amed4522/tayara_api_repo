@@ -17,23 +17,36 @@ import (
 // provider dispatchers (SMTP email / FCM push) do the actual delivery and mark sent/failed.
 type NotificationServices struct{}
 
+var errNotificationDeliveryDeferred = errors.New("notification delivery deferred")
+
 // Emit records a notification for a recipient, then attempts provider delivery. If a template
 // exists for (event_type, channel) it replaces the title/body. Delivery is best-effort: a send
 // failure marks the record failed but never fails the calling flow.
 func (n NotificationServices) Emit(eventType, recipientType string, recipientID uint, channel, title, body string) {
+	n.emit(eventType, recipientType, recipientID, channel, title, body, "", true)
+}
+
+// EmitWithImage persists the notification, including its image URL, before attempting delivery.
+func (n NotificationServices) EmitWithImage(eventType, recipientType string, recipientID uint, channel, title, body, imageURL string) {
+	n.emit(eventType, recipientType, recipientID, channel, title, body, imageURL, false)
+}
+
+func (n NotificationServices) emit(eventType, recipientType string, recipientID uint, channel, title, body, imageURL string, useTemplate bool) {
 	if global.GVA_DB == nil {
 		global.GVA_LOG.Info("notify (db not init)", zap.String("event", eventType))
 		return
 	}
 	// prefer the configured template
-	var tpl engage.NotificationTemplate
-	if err := global.GVA_DB.Where("event_type = ? AND channel = ? AND is_active = ?", eventType, channel, true).
-		First(&tpl).Error; err == nil {
-		if tpl.Subject != "" {
-			title = tpl.Subject
-		}
-		if tpl.Body != "" {
-			body = tpl.Body
+	if useTemplate {
+		var tpl engage.NotificationTemplate
+		if err := global.GVA_DB.Where("event_type = ? AND channel = ? AND is_active = ?", eventType, channel, true).
+			First(&tpl).Error; err == nil {
+			if tpl.Subject != "" {
+				title = tpl.Subject
+			}
+			if tpl.Body != "" {
+				body = tpl.Body
+			}
 		}
 	}
 	rec := &engage.Notification{
@@ -45,6 +58,7 @@ func (n NotificationServices) Emit(eventType, recipientType string, recipientID 
 		Status:           constants.NotificationStatusPending,
 		Title:            title,
 		Body:             body,
+		ImageURL:         imageURL,
 	}
 	if err := global.GVA_DB.Create(rec).Error; err != nil {
 		global.GVA_LOG.Error("failed to emit notification", zap.Error(err))
@@ -52,6 +66,9 @@ func (n NotificationServices) Emit(eventType, recipientType string, recipientID 
 	}
 	// deliver via the provider dispatcher
 	if err := n.deliver(rec); err != nil {
+		if errors.Is(err, errNotificationDeliveryDeferred) {
+			return
+		}
 		_ = global.GVA_DB.Model(&engage.Notification{}).Where("id = ?", rec.ID).
 			Update("status", constants.NotificationStatusFailed).Error
 		return
@@ -73,30 +90,50 @@ func (n NotificationServices) deliver(rec *engage.Notification) error {
 	case constants.NotifChannelPush:
 		var fcm dispatch.FcmSender
 		if !fcm.Enabled() {
-			return nil
+			return errNotificationDeliveryDeferred
 		}
-		tokens := n.deviceTokens(rec.RecipientID)
+		tokens, err := n.deviceTokens(rec.RecipientID)
+		if err != nil {
+			return err
+		}
 		if len(tokens) == 0 {
-			return nil
+			return errNotificationDeliveryDeferred
 		}
-		return fcm.Send(ctx, tokens, rec.Title, rec.Body)
+		return fcm.Send(ctx, tokens, rec.Title, rec.Body, rec.ImageURL)
 	default:
 		return nil
 	}
 }
 
 // deviceTokens returns the recipient's active FCM tokens (push delivery targets).
-func (n NotificationServices) deviceTokens(userID uint) []string {
+func (n NotificationServices) deviceTokens(userID uint) ([]string, error) {
 	var rows []engage.DeviceToken
-	_ = global.GVA_DB.Where("user_id = ? AND is_active = ?", userID, true).Find(&rows).Error
-	if len(rows) == 0 {
-		return nil
+	if err := global.GVA_DB.Where("user_id = ? AND is_active = ?", userID, true).Find(&rows).Error; err != nil {
+		return nil, err
 	}
-	out := make([]string, 0, len(rows))
+
+	var pushTokens []engage.PushToken
+	if err := global.GVA_DB.Where("user_id = ? AND is_active = ?", userID, true).Find(&pushTokens).Error; err != nil {
+		return nil, err
+	}
+
+	out := make([]string, 0, len(rows)+len(pushTokens))
+	seen := make(map[string]struct{}, len(rows)+len(pushTokens))
 	for _, r := range rows {
+		if _, exists := seen[r.Token]; exists {
+			continue
+		}
+		seen[r.Token] = struct{}{}
 		out = append(out, r.Token)
 	}
-	return out
+	for _, r := range pushTokens {
+		if _, exists := seen[r.Token]; exists {
+			continue
+		}
+		seen[r.Token] = struct{}{}
+		out = append(out, r.Token)
+	}
+	return out, nil
 }
 
 // recipientEmail resolves a recipient's email address. For email delivery the recipient id is a

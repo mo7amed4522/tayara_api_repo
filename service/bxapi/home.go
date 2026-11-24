@@ -1,9 +1,8 @@
 package bxapi
 
 import (
+	"context"
 	"errors"
-	"fmt"
-	"time"
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
@@ -15,10 +14,16 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/engage"
 	"github.com/mo7amed4522/tayara_api/utils"
 	"github.com/mo7amed4522/tayara_api/utils/cache"
+	"gorm.io/gorm"
 )
 
 // HomeServices owns the public/buyer-facing home-screen data aggregations.
 type HomeServices struct{}
+
+type cityKeywordResult struct {
+	ID   uint
+	Name string
+}
 
 // ---------------------------------------------------------------------------
 // Search
@@ -30,6 +35,13 @@ func (s *HomeServices) CustomerSearch(req bxapiReq.CustomerSearchReq) (*response
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), HomeSearchKey(req), sharedResponseTTL, func() (*response.CustomerSearchResult, error) {
+		return s.customerSearchUncached(req)
+	})
+	return result, err
+}
+
+func (s *HomeServices) customerSearchUncached(req bxapiReq.CustomerSearchReq) (*response.CustomerSearchResult, error) {
 	kw := "%" + req.Keyword + "%"
 
 	// ── 1. Resolve keyword → city (preferred) then country (fallback) ─────
@@ -41,14 +53,18 @@ func (s *HomeServices) CustomerSearch(req bxapiReq.CustomerSearchReq) (*response
 	)
 
 	// Try city first so "Dubai" hits the Dubai city row, not the AE country row.
-	if id, _ := s.findCityByKeyword(req.Keyword); id > 0 {
+	if id, name, err := s.findCityByKeyword(req.Keyword); err != nil {
+		return nil, err
+	} else if id > 0 {
 		var c base.City
 		if err := global.GVA_DB.Select("id", "name", "country_id").
 			First(&c, id).Error; err == nil {
 			cityID = c.ID
-			cityName = c.Name
+			cityName = name
 			countryID = c.CountryID
 			foundCity = true
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
 		}
 	}
 
@@ -61,18 +77,26 @@ func (s *HomeServices) CustomerSearch(req bxapiReq.CustomerSearchReq) (*response
 			cityName = c.Name
 			countryID = c.CountryID
 			foundCity = true
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
 		}
 	}
 
 	// If no city, try country.
 	if countryID == 0 {
-		countryID = s.findCountryByKeyword(req.Keyword)
+		var err error
+		countryID, err = s.findCountryByKeyword(req.Keyword)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if countryID == 0 {
 		var c base.Country
 		if err := global.GVA_DB.Where("name_en LIKE ? OR name_ar LIKE ? OR code LIKE ?", kw, kw, kw).
 			Select("id").Limit(1).First(&c).Error; err == nil {
 			countryID = c.ID
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
 		}
 	}
 
@@ -127,24 +151,29 @@ func (s *HomeServices) CustomerSearch(req bxapiReq.CustomerSearchReq) (*response
 		}
 	}
 
+	agentHits, err := s.buildAgentHits(agents)
+	if err != nil {
+		return nil, err
+	}
+	topHits, err := s.buildExploreHits(topExplore)
+	if err != nil {
+		return nil, err
+	}
+	similarHits, err := s.buildExploreHits(similarDestinations)
+	if err != nil {
+		return nil, err
+	}
 	return &response.CustomerSearchResult{
 		Keyword:             req.Keyword,
-		Agents:              s.buildAgentHits(agents),
-		TopExplore:          s.buildExploreHits(topExplore),
-		SimilarDestinations: s.buildExploreHits(similarDestinations),
+		Agents:              agentHits,
+		TopExplore:          topHits,
+		SimilarDestinations: similarHits,
 	}, nil
 }
 
 // findCountryByKeyword searches for a country by keyword in the Keywords JSONMap field
 // Returns country ID if found, 0 otherwise
-func (s *HomeServices) findCountryByKeyword(keyword string) uint {
-	cacheKey := "bxapi:country:keyword:" + keyword
-	if val, found, _ := cache.Get(cacheKey); found {
-		if id, ok := val.(uint); ok {
-			return id
-		}
-	}
-
+func (s *HomeServices) findCountryByKeyword(keyword string) (uint, error) {
 	var countryID uint
 	// keywords structure: {"keywords": ["UAE", "United Arab Emirates", "Emirates", "AE"]}
 	kw := "\"" + keyword + "\""
@@ -154,31 +183,16 @@ func (s *HomeServices) findCountryByKeyword(keyword string) uint {
 		Limit(1).
 		Scan(&countryID).Error
 	if err != nil {
-		return 0
+		return 0, err
 	}
 
-	cache.Set(cacheKey, countryID, 8, cache.AddJitter(5*time.Minute))
-	return countryID
+	return countryID, nil
 }
 
 // findCityByKeyword searches for a city by keyword in the Keywords JSONMap field
 // Returns city ID and city name if found, 0 and "" otherwise
-func (s *HomeServices) findCityByKeyword(keyword string) (uint, string) {
-	cacheKey := "bxapi:city:keyword:" + keyword
-	if val, found, _ := cache.Get(cacheKey); found {
-		if result, ok := val.(struct {
-			ID   uint
-			Name string
-		}); ok {
-			return result.ID, result.Name
-		}
-	}
-
-	type cityResult struct {
-		ID   uint
-		Name string
-	}
-	var result cityResult
+func (s *HomeServices) findCityByKeyword(keyword string) (uint, string, error) {
+	var result cityKeywordResult
 	kw := "\"" + keyword + "\""
 	err := global.GVA_DB.Model(&base.City{}).
 		Where("JSON_CONTAINS(keywords, ?, '$.keywords') AND is_active = ?", kw, true).
@@ -186,11 +200,10 @@ func (s *HomeServices) findCityByKeyword(keyword string) (uint, string) {
 		Limit(1).
 		Scan(&result).Error
 	if err != nil {
-		return 0, ""
+		return 0, "", err
 	}
 
-	cache.Set(cacheKey, result, 64, cache.AddJitter(5*time.Minute))
-	return result.ID, result.Name
+	return result.ID, result.Name, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -198,7 +211,21 @@ func (s *HomeServices) findCityByKeyword(keyword string) (uint, string) {
 // ---------------------------------------------------------------------------
 
 // ListExploreTrips returns a paginated list of trending active packages.
-func (s *HomeServices) ListExploreTrips(req bxapiReq.CustomerHomeExploreReq) ([]response.CustomerExploreTripCard, int64, int64, error) {
+func (s *HomeServices) ListExploreTrips(req bxapiReq.CustomerHomeExploreReq) (response.CustomerExploreTripsResult, error) {
+	if global.GVA_DB == nil {
+		return response.CustomerExploreTripsResult{}, errors.New("db not init")
+	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), ExploreTripsKey(req), sharedResponseTTL, func() (response.CustomerExploreTripsResult, error) {
+		items, total, totalPage, err := s.listExploreTripsUncached(req)
+		if err != nil {
+			return response.CustomerExploreTripsResult{}, err
+		}
+		return response.CustomerExploreTripsResult{Items: items, Total: total, TotalPage: totalPage}, nil
+	})
+	return result, err
+}
+
+func (s *HomeServices) listExploreTripsUncached(req bxapiReq.CustomerHomeExploreReq) ([]response.CustomerExploreTripCard, int64, int64, error) {
 	if global.GVA_DB == nil {
 		return nil, 0, 0, errors.New("db not init")
 	}
@@ -217,7 +244,11 @@ func (s *HomeServices) ListExploreTrips(req bxapiReq.CustomerHomeExploreReq) ([]
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	return s.buildExploreTripCards(packages), pr.Total, pr.TotalPage, nil
+	cards, err := s.buildExploreTripCards(packages)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return cards, pr.Total, pr.TotalPage, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -227,6 +258,30 @@ func (s *HomeServices) ListExploreTrips(req bxapiReq.CustomerHomeExploreReq) ([]
 // ListDestinations returns countries that have at least one active package, with package count
 // and the lowest display price available.
 func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResult, error) {
+	if global.GVA_DB == nil {
+		return nil, errors.New("db not init")
+	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), DestinationsKey(page, pageSize), sharedResponseTTL, func() (cachedPage[response.CustomerDestinationCard], error) {
+		paginateResult, err := s.listDestinationsUncached(page, pageSize)
+		if err != nil {
+			return cachedPage[response.CustomerDestinationCard]{}, err
+		}
+		items, ok := paginateResult.Data.([]response.CustomerDestinationCard)
+		if !ok {
+			return cachedPage[response.CustomerDestinationCard]{}, errors.New("unexpected destinations result type")
+		}
+		return cachedPage[response.CustomerDestinationCard]{
+			Items: items, Total: paginateResult.Total, Page: paginateResult.Page,
+			PageSize: paginateResult.PageSize, TotalPage: paginateResult.TotalPage,
+		}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.paginateResult(), nil
+}
+
+func (s *HomeServices) listDestinationsUncached(page, pageSize int) (*utils.PaginateResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
@@ -275,7 +330,21 @@ func (s *HomeServices) ListDestinations(page, pageSize int) (*utils.PaginateResu
 // ---------------------------------------------------------------------------
 
 // ListDeals returns a paginated list of discounted active packages.
-func (s *HomeServices) ListDeals(req bxapiReq.CustomerHomeDealsReq) ([]response.CustomerDealResult, int64, int64, error) {
+func (s *HomeServices) ListDeals(req bxapiReq.CustomerHomeDealsReq) (response.CustomerDealsResult, error) {
+	if global.GVA_DB == nil {
+		return response.CustomerDealsResult{}, errors.New("db not init")
+	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), DealsKey(req), sharedResponseTTL, func() (response.CustomerDealsResult, error) {
+		items, total, totalPage, err := s.listDealsUncached(req)
+		if err != nil {
+			return response.CustomerDealsResult{}, err
+		}
+		return response.CustomerDealsResult{Items: items, Total: total, TotalPage: totalPage}, nil
+	})
+	return result, err
+}
+
+func (s *HomeServices) listDealsUncached(req bxapiReq.CustomerHomeDealsReq) ([]response.CustomerDealResult, int64, int64, error) {
 	if global.GVA_DB == nil {
 		return nil, 0, 0, errors.New("db not init")
 	}
@@ -294,7 +363,11 @@ func (s *HomeServices) ListDeals(req bxapiReq.CustomerHomeDealsReq) ([]response.
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	return s.buildDealResults(packages), pr.Total, pr.TotalPage, nil
+	results, err := s.buildDealResults(packages)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return results, pr.Total, pr.TotalPage, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -303,6 +376,30 @@ func (s *HomeServices) ListDeals(req bxapiReq.CustomerHomeDealsReq) ([]response.
 
 // ListTopRatedAgents returns active agents ranked by average review rating.
 func (s *HomeServices) ListTopRatedAgents(page, pageSize int) (*utils.PaginateResult, error) {
+	if global.GVA_DB == nil {
+		return nil, errors.New("db not init")
+	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), TopRatedAgentsKey(page, pageSize), sharedResponseTTL, func() (cachedPage[response.CustomerAgentCard], error) {
+		paginateResult, err := s.listTopRatedAgentsUncached(page, pageSize)
+		if err != nil {
+			return cachedPage[response.CustomerAgentCard]{}, err
+		}
+		items, ok := paginateResult.Data.([]response.CustomerAgentCard)
+		if !ok {
+			return cachedPage[response.CustomerAgentCard]{}, errors.New("unexpected top-rated agents result type")
+		}
+		return cachedPage[response.CustomerAgentCard]{
+			Items: items, Total: paginateResult.Total, Page: paginateResult.Page,
+			PageSize: paginateResult.PageSize, TotalPage: paginateResult.TotalPage,
+		}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.paginateResult(), nil
+}
+
+func (s *HomeServices) listTopRatedAgentsUncached(page, pageSize int) (*utils.PaginateResult, error) {
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
@@ -363,105 +460,65 @@ func (s *HomeServices) RecommendedForYou(userID uint, limit int) ([]response.Cus
 	if global.GVA_DB == nil {
 		return nil, errors.New("db not init")
 	}
-
-	// 1) wishlisted packages (ordered by created_at desc)
-	var wishItems []engage.Wishlist
-	if err := global.GVA_DB.Where("user_id = ?", userID).
-		Order("created_at desc").Limit(limit).Find(&wishItems).Error; err != nil {
-		return nil, err
+	if limit <= 0 {
+		limit = 10
 	}
-
-	// Collect unique package IDs from wishlist, preserving order
-	seenPkg := make(map[uint]bool)
-	var pkgIDs []uint
-	for _, w := range wishItems {
-		if !seenPkg[w.PackageID] {
-			seenPkg[w.PackageID] = true
-			pkgIDs = append(pkgIDs, w.PackageID)
-		}
-	}
-
-	// 2) Batch load wishlisted packages (only active ones)
-	var wishPkgs []catalog.Package
-	if err := global.GVA_DB.Where("id IN ? AND status = ?", pkgIDs, constants.PackageStatusActive).
-		Find(&wishPkgs).Error; err != nil {
-		return nil, err
-	}
-	pkgByID := make(map[uint]catalog.Package, len(wishPkgs))
-	for _, p := range wishPkgs {
-		pkgByID[p.ID] = p
-	}
-
-	// 3) Batch load agent info and ratings for wishlisted packages
-	var wishAgentIDs []uint
-	wishAgentSet := make(map[uint]bool)
-	for _, p := range wishPkgs {
-		if !wishAgentSet[p.AgentID] {
-			wishAgentSet[p.AgentID] = true
-			wishAgentIDs = append(wishAgentIDs, p.AgentID)
-		}
-	}
-	wishAgentInfo := s.batchAgentNamesAndLogos(wishAgentIDs)
-	wishPkgRatings, wishPkgCounts := s.batchPackageRatings(pkgIDs)
-
-	// 4) Build wishlisted results (preserving wish order)
-	seen := make(map[uint]bool)
-	out := make([]response.CustomerRecommendedResult, 0, limit)
-	for _, w := range wishItems {
-		pkg, ok := pkgByID[w.PackageID]
-		if !ok {
-			continue // package not found or not active
-		}
-		seen[pkg.ID] = true
-		info, _ := wishAgentInfo[pkg.AgentID]
-		out = append(out, response.CustomerRecommendedResult{
-			Package:     pkg,
-			AgentName:   info.name,
-			AgentLogo:   info.logo,
-			Rating:      wishPkgRatings[pkg.ID],
-			ReviewCount: wishPkgCounts[pkg.ID],
-			Wishlisted:  true,
-		})
-	}
-
-	// 5) Fill remainder with top approved packages not in wishlist
-	//    Reuses pkgIDs from step 1 — no extra wishlist query needed.
-	if len(out) < limit {
-		var extra []catalog.Package
-		if err := global.GVA_DB.Where("status = ? AND id NOT IN ?", constants.PackageStatusActive, pkgIDs).
-			Order("approved_at desc").Limit(limit - len(out)).Find(&extra).Error; err != nil {
+	pool, _, err := cache.GetOrLoadJSON(context.Background(), RecommendedForYouKey(limit), sharedResponseTTL, func() ([]response.CustomerRecommendedResult, error) {
+		var packages []catalog.Package
+		if err := global.GVA_DB.Where("status = ?", constants.PackageStatusActive).
+			Order("approved_at desc").Limit(limit).Find(&packages).Error; err != nil {
 			return nil, err
 		}
-		// Batch load agent info and ratings for extras
-		var extraAgentIDs []uint
-		extraAgentSet := make(map[uint]bool)
-		for _, p := range extra {
-			if !extraAgentSet[p.AgentID] {
-				extraAgentSet[p.AgentID] = true
-				extraAgentIDs = append(extraAgentIDs, p.AgentID)
+		agentIDs := make([]uint, 0, len(packages))
+		agentSet := make(map[uint]struct{}, len(packages))
+		packageIDs := make([]uint, 0, len(packages))
+		for _, pkg := range packages {
+			packageIDs = append(packageIDs, pkg.ID)
+			if _, found := agentSet[pkg.AgentID]; !found {
+				agentSet[pkg.AgentID] = struct{}{}
+				agentIDs = append(agentIDs, pkg.AgentID)
 			}
 		}
-		extraAgentInfo := s.batchAgentNamesAndLogos(extraAgentIDs)
-		var extraPkgIDs []uint
-		for _, p := range extra {
-			extraPkgIDs = append(extraPkgIDs, p.ID)
+		agentInfo, err := s.batchAgentNamesAndLogos(agentIDs)
+		if err != nil {
+			return nil, err
 		}
-		extraPkgRatings, extraPkgCounts := s.batchPackageRatings(extraPkgIDs)
-
-		for _, p := range extra {
-			info, _ := extraAgentInfo[p.AgentID]
-			out = append(out, response.CustomerRecommendedResult{
-				Package:     p,
-				AgentName:   info.name,
-				AgentLogo:   info.logo,
-				Rating:      extraPkgRatings[p.ID],
-				ReviewCount: extraPkgCounts[p.ID],
-				Wishlisted:  seen[p.ID],
+		ratings, counts, err := s.batchPackageRatings(packageIDs)
+		if err != nil {
+			return nil, err
+		}
+		items := make([]response.CustomerRecommendedResult, 0, len(packages))
+		for _, pkg := range packages {
+			info := agentInfo[pkg.AgentID]
+			items = append(items, response.CustomerRecommendedResult{
+				Package: pkg, AgentName: info.Name, AgentLogo: info.Logo,
+				Rating: ratings[pkg.ID], ReviewCount: counts[pkg.ID],
 			})
 		}
+		return items, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	return out, nil
+	packageIDs := make([]uint, 0, len(pool))
+	for _, item := range pool {
+		packageIDs = append(packageIDs, item.Package.ID)
+	}
+	var wishlistedIDs []uint
+	if len(packageIDs) > 0 {
+		var wishlist []engage.Wishlist
+		if err := global.GVA_DB.Select("package_id").
+			Where("user_id = ? AND package_id IN ?", userID, packageIDs).
+			Find(&wishlist).Error; err != nil {
+			return nil, err
+		}
+		for _, item := range wishlist {
+			wishlistedIDs = append(wishlistedIDs, item.PackageID)
+		}
+	}
+	applyWishlistFlags(pool, wishlistedIDs)
+	return pool, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -469,9 +526,23 @@ func (s *HomeServices) RecommendedForYou(userID uint, limit int) ([]response.Cus
 // ---------------------------------------------------------------------------
 
 // ActiveHomeAds returns active ad creatives for the home top banner placement with pagination.
-func (s *HomeServices) ActiveHomeAds(page, pageSize int) ([]response.AdBannerResult, int64, error) {
+func (s *HomeServices) ActiveHomeAds(page, pageSize int) (response.ActiveHomeAdsResult, error) {
 	if global.GVA_DB == nil {
-		return nil, 0, errors.New("db not init")
+		return response.ActiveHomeAdsResult{}, errors.New("db not init")
+	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), HomeAdsKey(page, pageSize), sharedResponseTTL, func() (response.ActiveHomeAdsResult, error) {
+		items, total, totalPage, err := s.activeHomeAdsUncached(page, pageSize)
+		if err != nil {
+			return response.ActiveHomeAdsResult{}, err
+		}
+		return response.ActiveHomeAdsResult{Items: items, Total: total, TotalPage: totalPage}, nil
+	})
+	return result, err
+}
+
+func (s *HomeServices) activeHomeAdsUncached(page, pageSize int) ([]response.AdBannerResult, int64, int64, error) {
+	if global.GVA_DB == nil {
+		return nil, 0, 0, errors.New("db not init")
 	}
 	if page <= 0 {
 		page = 1
@@ -490,7 +561,7 @@ func (s *HomeServices) ActiveHomeAds(page, pageSize int) ([]response.AdBannerRes
 
 	paginateResult, err := utils.PaginateWithCustomQuery(countDB, queryDB, page, pageSize, &ads)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 	total = paginateResult.Total
 
@@ -510,7 +581,7 @@ func (s *HomeServices) ActiveHomeAds(page, pageSize int) ([]response.AdBannerRes
 			CreatedAt:       ad.CreatedAt,
 		})
 	}
-	return out, total, nil
+	return out, total, paginateResult.TotalPage, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -519,16 +590,16 @@ func (s *HomeServices) ActiveHomeAds(page, pageSize int) ([]response.AdBannerRes
 
 // agentInfo holds the name and logo loaded for a single agent.
 type agentInfo struct {
-	name string
-	logo string
+	Name string `json:"name"`
+	Logo string `json:"logo"`
 }
 
 // batchAgentRatings loads avg rating and review count for multiple agents in one query.
-func (s *HomeServices) batchAgentRatings(agentIDs []uint) (ratings map[uint]float64, counts map[uint]int) {
+func (s *HomeServices) batchAgentRatings(agentIDs []uint) (ratings map[uint]float64, counts map[uint]int, err error) {
 	ratings = make(map[uint]float64)
 	counts = make(map[uint]int)
 	if len(agentIDs) == 0 {
-		return
+		return ratings, counts, nil
 	}
 	type row struct {
 		AgentID uint    `gorm:"column:agent_id"`
@@ -542,43 +613,25 @@ func (s *HomeServices) batchAgentRatings(agentIDs []uint) (ratings map[uint]floa
 		Select("agent_id, ROUND(AVG(rating), 2) AS avg, COUNT(*) AS cnt").
 		Group("agent_id").
 		Scan(&rows).Error; err != nil {
-		return
+		return nil, nil, err
 	}
 	for _, r := range rows {
 		ratings[r.AgentID] = r.Avg
 		counts[r.AgentID] = int(r.Cnt)
 	}
-	return
+	return ratings, counts, nil
 }
 
 // batchPackageRatings loads avg rating and review count for multiple packages in one query.
-// Uses cache for individual package ratings, only queries DB for missing entries.
-func (s *HomeServices) batchPackageRatings(pkgIDs []uint) (ratings map[uint]float64, counts map[uint]int) {
+func (s *HomeServices) batchPackageRatings(pkgIDs []uint) (ratings map[uint]float64, counts map[uint]int, err error) {
 	ratings = make(map[uint]float64)
 	counts = make(map[uint]int)
 	if len(pkgIDs) == 0 {
-		return
+		return ratings, counts, nil
 	}
 
-	// Check cache for each package
-	var missingIDs []uint
-	for _, pkgID := range pkgIDs {
-		cacheKey := fmt.Sprintf("bxapi:pkg:rating:%d", pkgID)
-		if val, found, _ := cache.Get(cacheKey); found {
-			if cached, ok := val.(struct {
-				Avg float64
-				Cnt int
-			}); ok {
-				ratings[pkgID] = cached.Avg
-				counts[pkgID] = cached.Cnt
-				continue
-			}
-		}
-		missingIDs = append(missingIDs, pkgID)
-	}
-
-	// Query DB only for missing IDs
-	if len(missingIDs) > 0 {
+	// Load review aggregates for the packages in one query.
+	{
 		type row struct {
 			PackageID uint    `gorm:"column:package_id"`
 			Avg       float64 `gorm:"column:avg"`
@@ -586,50 +639,31 @@ func (s *HomeServices) batchPackageRatings(pkgIDs []uint) (ratings map[uint]floa
 		}
 		var rows []row
 		if err := global.GVA_DB.Model(&engage.Review{}).
-			Where("package_id IN ?", missingIDs).
+			Where("package_id IN ?", pkgIDs).
 			Where("review_status = ?", constants.ReviewStatusActive).
 			Select("package_id, ROUND(AVG(rating), 2) AS avg, COUNT(*) AS cnt").
 			Group("package_id").
-			Scan(&rows).Error; err == nil {
-			for _, r := range rows {
-				ratings[r.PackageID] = r.Avg
-				counts[r.PackageID] = int(r.Cnt)
-				// Cache the result
-				cacheKey := fmt.Sprintf("bxapi:pkg:rating:%d", r.PackageID)
-				cache.Set(cacheKey, struct {
-					Avg float64
-					Cnt int
-				}{Avg: r.Avg, Cnt: int(r.Cnt)}, 24, cache.AddJitter(10*time.Minute))
-			}
+			Scan(&rows).Error; err != nil {
+			return nil, nil, err
+		}
+		for _, r := range rows {
+			ratings[r.PackageID] = r.Avg
+			counts[r.PackageID] = int(r.Cnt)
 		}
 	}
 
-	return
+	return ratings, counts, nil
 }
 
 // batchAgentNamesAndLogos loads company name and header image for multiple agents in one query.
-// Uses cache for individual agent info, only queries DB for missing entries.
-func (s *HomeServices) batchAgentNamesAndLogos(agentIDs []uint) map[uint]agentInfo {
+func (s *HomeServices) batchAgentNamesAndLogos(agentIDs []uint) (map[uint]agentInfo, error) {
 	out := make(map[uint]agentInfo, len(agentIDs))
 	if len(agentIDs) == 0 {
-		return out
+		return out, nil
 	}
 
-	// Check cache for each agent
-	var missingIDs []uint
-	for _, agentID := range agentIDs {
-		cacheKey := fmt.Sprintf("bxapi:agent:info:%d", agentID)
-		if val, found, _ := cache.Get(cacheKey); found {
-			if info, ok := val.(agentInfo); ok {
-				out[agentID] = info
-				continue
-			}
-		}
-		missingIDs = append(missingIDs, agentID)
-	}
-
-	// Query DB only for missing IDs
-	if len(missingIDs) > 0 {
+	// Query all requested agents in one DB read.
+	{
 		type row struct {
 			ID          uint   `gorm:"column:id"`
 			CompanyName string `gorm:"column:company_name"`
@@ -637,32 +671,32 @@ func (s *HomeServices) batchAgentNamesAndLogos(agentIDs []uint) map[uint]agentIn
 		}
 		var rows []row
 		if err := global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
-			Where("id IN ?", missingIDs).
+			Where("id IN ?", agentIDs).
 			Select("id, company_name, header_img").
-			Scan(&rows).Error; err == nil {
-			for _, r := range rows {
-				info := agentInfo{name: r.CompanyName, logo: r.HeaderImg}
-				out[r.ID] = info
-				// Cache the result
-				cacheKey := fmt.Sprintf("bxapi:agent:info:%d", r.ID)
-				cache.Set(cacheKey, info, 64, cache.AddJitter(10*time.Minute))
-			}
+			Scan(&rows).Error; err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			out[r.ID] = agentInfo{Name: r.CompanyName, Logo: r.HeaderImg}
 		}
 	}
 
-	return out
+	return out, nil
 }
 
 // ---------------------------------------------------------------------------
 // Private helpers — result builders
 // ---------------------------------------------------------------------------
 
-func (s *HomeServices) buildAgentHits(agents []dxapi.DxAgentProfile) []response.CustomerAgentResult {
+func (s *HomeServices) buildAgentHits(agents []dxapi.DxAgentProfile) ([]response.CustomerAgentResult, error) {
 	var agentIDs []uint
 	for _, a := range agents {
 		agentIDs = append(agentIDs, a.ID)
 	}
-	ratings, counts := s.batchAgentRatings(agentIDs)
+	ratings, counts, err := s.batchAgentRatings(agentIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	out := make([]response.CustomerAgentResult, 0, len(agents))
 	for _, a := range agents {
@@ -675,10 +709,10 @@ func (s *HomeServices) buildAgentHits(agents []dxapi.DxAgentProfile) []response.
 			Status:      a.Status,
 		})
 	}
-	return out
+	return out, nil
 }
 
-func (s *HomeServices) buildExploreHits(packages []catalog.Package) []response.CustomerExploreResult {
+func (s *HomeServices) buildExploreHits(packages []catalog.Package) ([]response.CustomerExploreResult, error) {
 	var agentIDs []uint
 	var pkgIDs []uint
 	agentSet := make(map[uint]bool)
@@ -689,8 +723,14 @@ func (s *HomeServices) buildExploreHits(packages []catalog.Package) []response.C
 			agentIDs = append(agentIDs, p.AgentID)
 		}
 	}
-	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
-	pkgRatings, pkgCounts := s.batchPackageRatings(pkgIDs)
+	agentInfo, err := s.batchAgentNamesAndLogos(agentIDs)
+	if err != nil {
+		return nil, err
+	}
+	pkgRatings, pkgCounts, err := s.batchPackageRatings(pkgIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	out := make([]response.CustomerExploreResult, 0, len(packages))
 	for _, p := range packages {
@@ -699,7 +739,7 @@ func (s *HomeServices) buildExploreHits(packages []catalog.Package) []response.C
 			ID:              p.ID,
 			PackageCode:     p.PackageCode,
 			AgentID:         p.AgentID,
-			CompanyName:     info.name,
+			CompanyName:     info.Name,
 			Name:            p.Name,
 			CoverImageURL:   p.CoverImageURL,
 			Category:        p.Category,
@@ -712,10 +752,10 @@ func (s *HomeServices) buildExploreHits(packages []catalog.Package) []response.C
 			Status:          p.Status,
 		})
 	}
-	return out
+	return out, nil
 }
 
-func (s *HomeServices) buildExploreTripCards(packages []catalog.Package) []response.CustomerExploreTripCard {
+func (s *HomeServices) buildExploreTripCards(packages []catalog.Package) ([]response.CustomerExploreTripCard, error) {
 	var agentIDs []uint
 	var pkgIDs []uint
 	agentSet := make(map[uint]bool)
@@ -726,8 +766,14 @@ func (s *HomeServices) buildExploreTripCards(packages []catalog.Package) []respo
 			agentIDs = append(agentIDs, p.AgentID)
 		}
 	}
-	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
-	pkgRatings, pkgCounts := s.batchPackageRatings(pkgIDs)
+	agentInfo, err := s.batchAgentNamesAndLogos(agentIDs)
+	if err != nil {
+		return nil, err
+	}
+	pkgRatings, pkgCounts, err := s.batchPackageRatings(pkgIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	out := make([]response.CustomerExploreTripCard, 0, len(packages))
 	for _, p := range packages {
@@ -736,7 +782,7 @@ func (s *HomeServices) buildExploreTripCards(packages []catalog.Package) []respo
 			ID:              p.ID,
 			PackageCode:     p.PackageCode,
 			AgentID:         p.AgentID,
-			CompanyName:     info.name,
+			CompanyName:     info.Name,
 			Name:            p.Name,
 			CoverImageURL:   p.CoverImageURL,
 			Category:        p.Category,
@@ -748,10 +794,10 @@ func (s *HomeServices) buildExploreTripCards(packages []catalog.Package) []respo
 			Status:          p.Status,
 		})
 	}
-	return out
+	return out, nil
 }
 
-func (s *HomeServices) buildDealResults(packages []catalog.Package) []response.CustomerDealResult {
+func (s *HomeServices) buildDealResults(packages []catalog.Package) ([]response.CustomerDealResult, error) {
 	var agentIDs []uint
 	agentSet := make(map[uint]bool)
 	for _, p := range packages {
@@ -760,20 +806,23 @@ func (s *HomeServices) buildDealResults(packages []catalog.Package) []response.C
 			agentIDs = append(agentIDs, p.AgentID)
 		}
 	}
-	agentInfo := s.batchAgentNamesAndLogos(agentIDs)
+	agentInfo, err := s.batchAgentNamesAndLogos(agentIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	out := make([]response.CustomerDealResult, 0, len(packages))
 	for _, p := range packages {
 		info, _ := agentInfo[p.AgentID]
 		out = append(out, response.CustomerDealResult{
 			Package:         p,
-			AgentName:       info.name,
-			AgentLogo:       info.logo,
+			AgentName:       info.Name,
+			AgentLogo:       info.Logo,
 			DiscountPercent: p.DiscountPercent,
 			ViewCount:       0, // view count not tracked yet; field reserved
 		})
 	}
-	return out
+	return out, nil
 }
 
 func (s *HomeServices) truncateDesc(text string, max int) string {

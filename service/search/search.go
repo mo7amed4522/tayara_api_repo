@@ -1,8 +1,10 @@
 package search
 
 import (
+	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/model/booking"
@@ -10,6 +12,8 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/catalog"
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
 	searchResp "github.com/mo7amed4522/tayara_api/model/search/response"
+	bxapiSvc "github.com/mo7amed4522/tayara_api/service/bxapi"
+	"github.com/mo7amed4522/tayara_api/utils/cache"
 )
 
 // SearchServices implements the admin global search across entities.
@@ -28,6 +32,13 @@ func (s SearchServices) Global(keyword string) (*searchResp.SearchResult, error)
 	if kw == "" {
 		return nil, errors.New("keyword required")
 	}
+	result, _, err := cache.GetOrLoadJSON(context.Background(), bxapiSvc.GlobalSearchKey(kw), time.Hour, func() (*searchResp.SearchResult, error) {
+		return s.globalUncached(kw)
+	})
+	return result, err
+}
+
+func (s SearchServices) globalUncached(kw string) (*searchResp.SearchResult, error) {
 	like := "%" + kw + "%"
 	out := &searchResp.SearchResult{Keyword: kw}
 
@@ -36,24 +47,30 @@ func (s SearchServices) Global(keyword string) (*searchResp.SearchResult, error)
 	// end-users
 	{
 		var rows []bxapi.BxsUserProfile
-		_ = global.GVA_DB.Where("full_name LIKE ? OR username LIKE ? OR email LIKE ? OR phone LIKE ?",
-			like, like, like, like).Limit(pageLimit).Find(&rows).Error
+		if err := global.GVA_DB.Where("full_name LIKE ? OR username LIKE ? OR email LIKE ? OR phone LIKE ?",
+			like, like, like, like).Limit(pageLimit).Find(&rows).Error; err != nil {
+			return nil, err
+		}
 		for i := range rows {
 			out.Users = append(out.Users, searchResp.UserHit{
 				ID: rows[i].ID, Name: rows[i].FullName, Email: rows[i].Email,
 				Phone: rows[i].Phone, Status: rows[i].Status,
 			})
 		}
-		_ = global.GVA_DB.Model(&bxapi.BxsUserProfile{}).
+		if err := global.GVA_DB.Model(&bxapi.BxsUserProfile{}).
 			Where("full_name LIKE ? OR username LIKE ? OR email LIKE ? OR phone LIKE ?",
-				like, like, like, like).Count(&total).Error
+				like, like, like, like).Count(&total).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	// agents
 	{
 		var a []dxapi.DxAgentProfile
-		_ = global.GVA_DB.Where("company_name LIKE ? OR business_email LIKE ? OR license_number LIKE ?",
-			like, like, like).Limit(pageLimit).Find(&a).Error
+		if err := global.GVA_DB.Where("company_name LIKE ? OR business_email LIKE ? OR license_number LIKE ?",
+			like, like, like).Limit(pageLimit).Find(&a).Error; err != nil {
+			return nil, err
+		}
 		for i := range a {
 			out.Agents = append(out.Agents, searchResp.AgentHit{
 				ID: a[i].ID, CompanyName: a[i].CompanyName,
@@ -61,16 +78,20 @@ func (s SearchServices) Global(keyword string) (*searchResp.SearchResult, error)
 			})
 		}
 		var n int64
-		_ = global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
+		if err := global.GVA_DB.Model(&dxapi.DxAgentProfile{}).
 			Where("company_name LIKE ? OR business_email LIKE ? OR license_number LIKE ?",
-				like, like, like).Count(&n).Error
+				like, like, like).Count(&n).Error; err != nil {
+			return nil, err
+		}
 		total += n
 	}
 
 	// packages
 	{
 		var pkgs []catalog.Package
-		_ = global.GVA_DB.Where("name LIKE ?", like).Limit(pageLimit).Find(&pkgs).Error
+		if err := global.GVA_DB.Where("name LIKE ?", like).Limit(pageLimit).Find(&pkgs).Error; err != nil {
+			return nil, err
+		}
 		for i := range pkgs {
 			out.Packages = append(out.Packages, searchResp.PackageHit{
 				ID: pkgs[i].ID, AgentID: pkgs[i].AgentID, Name: pkgs[i].Name,
@@ -78,14 +99,18 @@ func (s SearchServices) Global(keyword string) (*searchResp.SearchResult, error)
 			})
 		}
 		var n int64
-		_ = global.GVA_DB.Model(&catalog.Package{}).Where("name LIKE ?", like).Count(&n).Error
+		if err := global.GVA_DB.Model(&catalog.Package{}).Where("name LIKE ?", like).Count(&n).Error; err != nil {
+			return nil, err
+		}
 		total += n
 	}
 
 	// bookings
 	{
 		var bks []booking.Booking
-		_ = global.GVA_DB.Where("booking_code LIKE ?", like).Limit(pageLimit).Find(&bks).Error
+		if err := global.GVA_DB.Where("booking_code LIKE ?", like).Limit(pageLimit).Find(&bks).Error; err != nil {
+			return nil, err
+		}
 		for i := range bks {
 			out.Bookings = append(out.Bookings, searchResp.BookingHit{
 				ID: bks[i].ID, BookingCode: bks[i].BookingCode,
@@ -93,7 +118,9 @@ func (s SearchServices) Global(keyword string) (*searchResp.SearchResult, error)
 			})
 		}
 		var n int64
-		_ = global.GVA_DB.Model(&booking.Booking{}).Where("booking_code LIKE ?", like).Count(&n).Error
+		if err := global.GVA_DB.Model(&booking.Booking{}).Where("booking_code LIKE ?", like).Count(&n).Error; err != nil {
+			return nil, err
+		}
 		total += n
 	}
 

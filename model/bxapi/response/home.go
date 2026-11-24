@@ -77,6 +77,12 @@ type CustomerExploreTripCard struct {
 	Status          string  `json:"status"`
 }
 
+type CustomerExploreTripsResult struct {
+	Items     []CustomerExploreTripCard `json:"items"`
+	Total     int64                     `json:"total"`
+	TotalPage int64                     `json:"totalPage"`
+}
+
 // CustomerDestinationCard a country card for Discover Destinations.
 type CustomerDestinationCard struct {
 	CountryID       uint   `json:"countryId"`
@@ -93,6 +99,12 @@ type CustomerDealResult struct {
 	AgentLogo       string `json:"agentLogo"`
 	DiscountPercent int64  `json:"discountPercent"` // basis points
 	ViewCount       int64  `json:"viewCount"`       // cumulative views
+}
+
+type CustomerDealsResult struct {
+	Items     []CustomerDealResult `json:"items"`
+	Total     int64                `json:"total"`
+	TotalPage int64                `json:"totalPage"`
 }
 
 // CustomerAgentCard a top-rated agency card for the home agents list.
@@ -126,6 +138,12 @@ type AdBannerResult struct {
 	TargetAgentID   *uint     `json:"targetAgentId"`
 	TargetPackageID *uint     `json:"targetPackageId"`
 	CreatedAt       time.Time `json:"createdAt"`
+}
+
+type ActiveHomeAdsResult struct {
+	Items     []AdBannerResult `json:"items"`
+	Total     int64            `json:"total"`
+	TotalPage int64            `json:"totalPage"`
 }
 
 // CustomerWishlistEntry a package currently wishlisted by the user.

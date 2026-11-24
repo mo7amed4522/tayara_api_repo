@@ -10,6 +10,7 @@ import (
 type PackageDetailApi struct{}
 
 // GetPackageDetail
+//
 //	@Tags		Customer
 //	@Summary	Public detail of an active package
 //	@Produce	application/json
@@ -31,6 +32,7 @@ func (PackageDetailApi) GetPackageDetail(c *gin.Context) {
 }
 
 // ListPackageReviews
+//
 //	@Tags		Customer
 //	@Summary	Public paginated reviews for an active package
 //	@Produce	application/json
@@ -53,10 +55,10 @@ func (PackageDetailApi) ListPackageReviews(c *gin.Context) {
 	if pageSize <= 0 {
 		pageSize = 10
 	}
-	rows, total, totalPage, err := bxapiSvc.ListPackageReviews(uint(idReq.ID), page, pageSize)
+	result, err := bxapiSvc.ListPackageReviews(uint(idReq.ID), page, pageSize)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	response.OkWithDetailed(response.PageResult{List: rows, Total: total, TotalPage: totalPage, Page: page, PageSize: pageSize}, "ok", c)
+	response.OkWithDetailed(response.PageResult{List: result.Items, Total: result.Total, TotalPage: result.TotalPage, Page: page, PageSize: pageSize}, "ok", c)
 }

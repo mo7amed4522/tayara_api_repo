@@ -115,6 +115,27 @@ cp config.yaml config-local.yaml   # then edit / export secrets
 go run .
 ```
 
+### Public response caching
+
+Public home, explore, package, agent-detail, and search responses use a shared Redis cache
+with a local Ristretto hot tier. The cache model is **“one loader per key per hour; everyone
+else reads Redis”**: a request loads a missing key once, and concurrent requests share that
+result. The nominal TTL is one hour, with the cache's existing jitter applied to avoid
+synchronized expiry. Request parameters are part of each key; user-specific wishlist flags
+are read fresh and are never cached with the public recommendation pool. Agent-scoped explore
+data uses a 60-second TTL.
+
+When admin changes require immediate invalidation, remove the key from both tiers:
+
+```go
+cache.Delete(key)
+if err := cache.DeleteRedis(ctx, key); err != nil {
+	// Log or report the invalidation failure.
+}
+```
+
+`cache.GetCacheStats()` exposes the existing L1 hit, miss, and eviction counters.
+
 Boot order (see `main.go`): config → logger → GVA_DB (MySQL) → `RegisterTables`/`InitializeData`
 (migrate + seed) → Redis → MongoDB (`initialize.Mongo.Initialization`) → routes → timer
 (SLA watchdog + ad scheduler). The app starts even if Mongo is down (payment will fail closed).
