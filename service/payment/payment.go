@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/mo7amed4522/tayara_api/constants"
@@ -56,6 +57,9 @@ func (p *PaymentServices) CreatePayment(ctx context.Context, userID uint, req re
 	if !prov.Enabled() {
 		return nil, errors.New(req.PaymentMethod + " provider is not enabled")
 	}
+	if !methodEnabled(req.PaymentMethod) {
+		return nil, errors.New(req.PaymentMethod + " is not an enabled payment method")
+	}
 	var bk bookingModel.Booking
 	if err := global.GVA_DB.Where("id = ? AND user_id = ?", req.BookingID, userID).First(&bk).Error; err != nil {
 		return nil, errors.New("booking not found")
@@ -89,11 +93,24 @@ func (p *PaymentServices) CreatePayment(ctx context.Context, userID uint, req re
 		req.PaymentMethod, amount, 0, bk.Currency, constants.TimelineActorUser, "payment created"); err != nil {
 		return nil, err
 	}
+	// Snapshot what the provider charges (PayPal may charge a settlement currency) so the
+	// webhook is verified against the exact amount we asked for, not a recomputed rate.
+	chargeAmount, chargeCurrency, fxRatePPM := result.ChargeAmount, result.ChargeCurrency, result.FXRatePPM
+	if chargeAmount <= 0 {
+		chargeAmount = amount
+	}
+	if chargeCurrency == "" {
+		chargeCurrency = bk.Currency
+	}
+	if fxRatePPM <= 0 {
+		fxRatePPM = 1_000_000
+	}
 	tx := &paymentModel.PaymentTransaction{
 		BookingID: bk.ID, UserID: userID, AgentID: bk.AgentID,
 		Provider: prov.Name(), PaymentMethod: req.PaymentMethod,
-		IntentID: result.IntentID, ClientSecret: result.ClientSecret,
+		IntentID: result.IntentID, ClientSecret: result.ClientSecret, RedirectURL: result.RedirectURL,
 		Amount: amount, CommissionPercent: bk.CommissionPercent, Currency: bk.Currency,
+		ChargeAmount: chargeAmount, ChargeCurrency: chargeCurrency, FXRatePPM: fxRatePPM,
 		Status: constants.PaymentLifecycleCreated,
 	}
 	if err := global.GVA_DB.Create(tx).Error; err != nil {
@@ -101,8 +118,9 @@ func (p *PaymentServices) CreatePayment(ctx context.Context, userID uint, req re
 	}
 	return &response.CreatePaymentResp{
 		PaymentID: result.IntentID, Provider: prov.Name(), Method: req.PaymentMethod,
-		IntentID: result.IntentID, ClientSecret: result.ClientSecret,
+		IntentID: result.IntentID, ClientSecret: result.ClientSecret, RedirectURL: result.RedirectURL,
 		Amount: amount, Currency: bk.Currency,
+		ChargeAmount: chargeAmount, ChargeCurrency: chargeCurrency, FXRatePPM: fxRatePPM,
 	}, nil
 }
 
@@ -243,7 +261,7 @@ func (p *PaymentServices) Refund(ctx context.Context, adminID uint, req request.
 	if prov == nil {
 		return nil, errors.New("unsupported payment method")
 	}
-	providerRefundID, err := prov.Refund(ctx, tx.IntentID, &refundAmount, req.Reason)
+	providerRefundID, err := prov.Refund(ctx, tx.IntentID, refundAmountForProvider(tx, refundAmount), req.Reason)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +338,43 @@ func (p *PaymentServices) ledger(ctx context.Context, intentID, evType, provider
 	return paymentRepoCopy.UpsertState(ctx, st)
 }
 
+// refundAmountForProvider converts a ledger-currency refund into the amount the provider was
+// asked to charge. When the charge currency differs (PayPal + AED settlement), the snapshotted
+// rate is applied; a full refund passes nil so the provider refunds the whole capture.
+func refundAmountForProvider(tx *paymentModel.PaymentTransaction, refundAmount int64) *int64 {
+	sameCurrency := tx.ChargeCurrency == "" || strings.EqualFold(tx.ChargeCurrency, tx.Currency)
+	if sameCurrency || tx.ChargeAmount <= 0 {
+		return &refundAmount
+	}
+	if refundAmount >= tx.Amount {
+		return nil
+	}
+	amt := refundAmount
+	if tx.FXRatePPM > 0 {
+		amt = (refundAmount*tx.FXRatePPM + 500_000) / 1_000_000
+	}
+	if amt <= 0 {
+		amt = 1
+	}
+	return &amt
+}
+
 // netAmount is the payable amount for a booking.
 func netAmount(bk bookingModel.Booking) int64 {
 	return bk.AmountGross - bk.DiscountAmount
+}
+
+// methodEnabled reports whether a payment method is offered by the deploy-time config. An empty
+// enabled-methods list means "no restriction", so existing deployments keep working unchanged.
+func methodEnabled(method string) bool {
+	list := global.GVA_CONFIG.Payment.EnabledMethods
+	if len(list) == 0 {
+		return true
+	}
+	for _, m := range list {
+		if strings.EqualFold(strings.TrimSpace(m), method) {
+			return true
+		}
+	}
+	return false
 }

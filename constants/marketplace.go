@@ -106,11 +106,12 @@ const (
 	PaymentStatusPending = "pending"
 )
 
-// Payment providers and methods (Stripe cards/wallets + Tabby/Tamara BNPL).
+// Payment providers and methods (Stripe cards/wallets + Tabby/Tamara BNPL + PayPal).
 const (
 	PaymentProviderStripe = "stripe"
 	PaymentProviderTabby  = "tabby"
 	PaymentProviderTamara = "tamara"
+	PaymentProviderPayPal = "paypal"
 )
 const (
 	PaymentMethodCard      = "card"
@@ -118,6 +119,7 @@ const (
 	PaymentMethodGooglePay = "google_pay"
 	PaymentMethodTabby     = "tabby"
 	PaymentMethodTamara    = "tamara"
+	PaymentMethodPayPal    = "paypal"
 )
 
 // Payment lifecycle statuses (Mongo state + MySQL payment_transactions.status).
