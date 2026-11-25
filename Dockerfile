@@ -16,7 +16,7 @@ RUN apk add --no-cache git ca-certificates tzdata \
     && go mod download \
     && go build -trimpath -ldflags "-s -w" -o /out/server main.go
 
-FROM alpine:3.20
+FROM alpine:3.24
 
 RUN apk add --no-cache ca-certificates tzdata \
     && addgroup -S tay && adduser -S -G tay tay \
