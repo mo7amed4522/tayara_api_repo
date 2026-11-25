@@ -19,11 +19,18 @@ type CreatePaymentResult struct {
 	Provider     string
 	IntentID     string // payment intent / checkout session id
 	ClientSecret string // Stripe client secret (never a card value)
-	Status       string
+	RedirectURL  string // provider-hosted approval page (PayPal); empty for other providers
+	// ChargeAmount/ChargeCurrency are what the provider charges (settlement currency),
+	// FXRatePPM the booking->charge rate snapshot (1e6 == 1:1).
+	ChargeAmount   int64
+	ChargeCurrency string
+	FXRatePPM      int64
+	Status         string
 }
 
 // Provider abstracts a payment processor. Stripe handles cards/wallets; Tabby and Tamara are
-// BNPL aggregators. Providers are interchangeable behind this interface.
+// BNPL aggregators; PayPal is an AUTHORIZE-then-capture wallet. Providers are interchangeable
+// behind this interface.
 type Provider interface {
 	Name() string
 	Enabled() bool
@@ -41,6 +48,8 @@ func Get(method string) Provider {
 		return TabbyProvider()
 	case constants.PaymentMethodTamara:
 		return TamaraProvider()
+	case constants.PaymentMethodPayPal:
+		return PayPalProvider{}
 	}
 	return nil
 }

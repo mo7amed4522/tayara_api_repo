@@ -5,7 +5,7 @@ import "github.com/gin-gonic/gin"
 type PaymentRouter struct{}
 
 // InitPaymentRouter registers payment endpoints:
-//   - public  : create payment (buyer) + Stripe webhook (provider callback, no auth)
+//   - public  : create payment (buyer) + Stripe/PayPal webhooks (provider callbacks, no auth)
 //   - manage  : agent payout + earnings views
 //   - system  : capture, refund, payout prepare/pay + admin payout list (admin)
 func (r PaymentRouter) InitPaymentRouter(publicGroup, manageGroup, systemGroup *gin.RouterGroup) {
@@ -17,6 +17,7 @@ func (r PaymentRouter) InitPaymentRouter(publicGroup, manageGroup, systemGroup *
 	{
 		public.POST("", paymentApi.CreatePayment)
 		public.POST("webhook/stripe", paymentApi.StripeWebhook)
+		public.POST("webhook/paypal", paymentApi.PayPalWebhook)
 	}
 	{
 		manage.GET("manage", payoutApi.ListAgentPayouts)

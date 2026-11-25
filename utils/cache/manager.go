@@ -174,7 +174,7 @@ func GetOrLoadJSON[T any](ctx context.Context, key string, ttl time.Duration, lo
 	return value, true, nil
 }
 
-func loaderValue[T any](ctx context.Context, loader func() (T, error)) (T, bool, error) {
+func loaderValue[T any](_ context.Context, loader func() (T, error)) (T, bool, error) {
 	value, err := loader()
 	if err != nil {
 		var zero T

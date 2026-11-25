@@ -4661,6 +4661,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/payment/webhook/paypal": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "PayPal webhook (verified order approval -\u003e payment authorized)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/payment/webhook/stripe": {
             "post": {
                 "produces": [

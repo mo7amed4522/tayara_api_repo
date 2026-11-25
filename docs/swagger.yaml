@@ -4082,6 +4082,18 @@ paths:
       summary: Admin refunds a captured payment (full/partial)
       tags:
       - Payment
+  /api/v1/payment/webhook/paypal:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: PayPal webhook (verified order approval -> payment authorized)
+      tags:
+      - Payment
   /api/v1/payment/webhook/stripe:
     post:
       produces:

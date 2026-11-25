@@ -202,9 +202,26 @@ stripe:
     payment-methods: [card, apple_pay, google_pay]
     fee-bps: 250                                     # Platform Stripe fee, basis points (2.5%)
 
-# payment (orchestrator): BNPL Buy-Now-Pay-Later providers + the methods offered to clients
+# payment (orchestrator): BNPL Buy-Now-Pay-Later providers, PayPal + the methods offered to clients
 payment:
-    enabled-methods: [card, apple_pay, google_pay, tabby, tamara]
+    enabled-methods: [card, apple_pay, google_pay, tabby, tamara, paypal]
+    paypal:
+        enabled: true
+        # sandbox: https://api-m.sandbox.paypal.com | live: https://api-m.paypal.com (https only)
+        base-url: ${PAYPAL_BASE_URL:-https://api-m.sandbox.paypal.com}
+        client-id: ${PAYPAL_CLIENT_ID:-}                       # REST app client id (from env, never committed)
+        client-secret: ${PAYPAL_CLIENT_SECRET:-}                # REST app secret (from env, never committed)
+        webhook-id: ${PAYPAL_WEBHOOK_ID:-}                      # webhook id used for signature verification
+        currency: USD                                           # fallback charge currency
+        # PayPal does not support AED. When a booking is in an unsupported currency it is charged
+        # in settlement-currency at the configured rate; the rate used is snapshotted per payment
+        # and the webhook is verified against that exact charged amount.
+        settlement-currency: USD
+        fx-rates:                                               # 1 unit of booking currency -> settlement units
+            AED: ${PAYPAL_FX_AED_USD:-0.272294}                 # 1 AED = 0.272294 USD (AED is pegged at 3.6725)
+        brand-name: ${PAYPAL_BRAND_NAME:-Tayara}
+        return-url: ${PAYPAL_RETURN_URL:-https://tayara.com/payment/paypal/return}
+        cancel-url: ${PAYPAL_CANCEL_URL:-https://tayara.com/payment/paypal/cancel}
     tabby:
         enabled: true
         base-url: ${TABBY_BASE_URL:-https://api.tabby.ai}       # sandbox: https://api.tabby.ai
