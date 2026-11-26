@@ -1,0 +1,12 @@
+$kind: kafka-request
+name: 05 Produce - presence.changed
+description: |-
+  Sends one presence transition to tayara.support.presence.v1.
+  Key = actor key, "customer:<id>" or "support:<id>". Only online/offline transitions are
+  published; heartbeats stay in Redis and never reach Kafka.
+url:
+  - localhost:9092
+mode: producer
+acknowledgements: all
+messages: .resources/05-produce-presence-changed.resources/messages
+order: 5000

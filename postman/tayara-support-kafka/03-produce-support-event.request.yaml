@@ -1,0 +1,11 @@
+$kind: kafka-request
+name: 03 Produce - ticket.assigned event
+description: |-
+  Sends one ticket lifecycle event to tayara.support.chat.events.v1.
+  Key = ticket id. event_type is one of ticket.opened, ticket.assigned, ticket.reviewed, faq.voted.
+url:
+  - localhost:9092
+mode: producer
+acknowledgements: all
+messages: .resources/03-produce-support-event.resources/messages
+order: 3000

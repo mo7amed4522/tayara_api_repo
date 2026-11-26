@@ -11,6 +11,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/api/v1/export"
 	"github.com/mo7amed4522/tayara_api/api/v1/payment"
 	"github.com/mo7amed4522/tayara_api/api/v1/search"
+	supportApi "github.com/mo7amed4522/tayara_api/api/v1/support"
 	"github.com/mo7amed4522/tayara_api/api/v1/system"
 	"github.com/mo7amed4522/tayara_api/api/v1/ticket"
 )
@@ -30,4 +31,5 @@ type ApiGroup struct {
 	SearchApiGroup    search.ApiGroup
 	ExportApiGroup    export.ApiGroup
 	TicketApiGroup    ticket.ApiGroup
+	SupportApiGroup   supportApi.ApiGroup
 }

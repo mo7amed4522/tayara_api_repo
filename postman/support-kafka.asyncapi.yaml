@@ -1,0 +1,373 @@
+# Import this file into Postman (Spec Hub -> Import -> File) to get the Kafka
+# requests for the support chat bus. Postman only imports collections, specs
+# (OpenAPI/AsyncAPI) and environments. Individual $kind: kafka-request YAML files
+# cannot be imported on their own - they are generated FROM this spec.
+#
+# AsyncAPI 3.0 uses explicit send/receive actions, so the mapping is unambiguous:
+#   action: send     -> Postman Kafka request in Producer mode
+#   action: receive  -> Postman Kafka request in Consumer mode
+#
+# The runtime contract is service/support/kafka/schema.go; keep this file in sync with it.
+asyncapi: 3.0.0
+id: urn:tayara:support:chat:kafka
+defaultContentType: application/json
+info:
+  title: Tayara support chat (Kafka bus)
+  version: 1.0.1
+  description: |
+    Wire contract for the real-time support chat transport.
+
+    The HTTP API persists first and never streams Kafka to clients directly:
+      POST /api/v1/support/conversations/:id/messages -> MySQL -> produce -> fanout consumer -> SSE
+    so these operations test the transport leg, not the HTTP endpoints.
+
+    Record key rules:
+      - chat messages / events: the conversation (or ticket) id, so one conversation always
+        hashes to one partition and keeps its order.
+      - presence: the actor key, "customer:7" or "support:9".
+
+    Topics must exist before producing (the app runs with auto-create disabled):
+      docker compose exec redpanda rpk topic create \
+        tayara.support.chat.messages.v1 tayara.support.chat.events.v1 \
+        tayara.support.chat.messages.dlq.v1 tayara.support.presence.v1
+
+    Records produced by hand are transport-only: they are not inserted into MySQL, so they never
+    appear in history or sinceSeq replay. Only the HTTP POST path also persists.
+
+servers:
+  local:
+    host: localhost:9092
+    protocol: kafka
+    description: Redpanda from docker-compose, plaintext listener published on the host (9092).
+  compose:
+    host: redpanda:29092
+    protocol: kafka
+    description: The same broker from another container on the compose network.
+
+channels:
+  chatMessages:
+    address: tayara.support.chat.messages.v1
+    title: Chat messages
+    description: One record per persisted message (message.created).
+    messages:
+      messageCreated:
+        $ref: '#/components/messages/MessageCreated'
+  chatEvents:
+    address: tayara.support.chat.events.v1
+    title: Support events
+    description: Ticket lifecycle and FAQ vote events (no message bodies).
+    messages:
+      supportEvent:
+        $ref: '#/components/messages/SupportEvent'
+  presence:
+    address: tayara.support.presence.v1
+    title: Presence transitions
+    description: Online/offline transitions only; heartbeats stay in Redis and never hit Kafka.
+    messages:
+      presenceChanged:
+        $ref: '#/components/messages/PresenceChanged'
+
+operations:
+  produceMessageCreated:
+    action: send
+    title: Produce a message.created envelope
+    summary: Send one chat record; key it by conversation id.
+    channel:
+      $ref: '#/channels/chatMessages'
+    messages:
+      - $ref: '#/channels/chatMessages/messages/messageCreated'
+  consumeChatMessages:
+    action: receive
+    title: Consume chat messages
+    summary: Read chat records; start from Earliest to replay, stop after N records.
+    channel:
+      $ref: '#/channels/chatMessages'
+    messages:
+      - $ref: '#/channels/chatMessages/messages/messageCreated'
+  produceSupportEvent:
+    action: send
+    title: Produce a ticket / FAQ event
+    summary: Send one ticket.opened, ticket.assigned, ticket.reviewed or faq.voted event.
+    channel:
+      $ref: '#/channels/chatEvents'
+    messages:
+      - $ref: '#/channels/chatEvents/messages/supportEvent'
+  consumeSupportEvents:
+    action: receive
+    title: Consume ticket / FAQ events
+    channel:
+      $ref: '#/channels/chatEvents'
+    messages:
+      - $ref: '#/channels/chatEvents/messages/supportEvent'
+  producePresenceChanged:
+    action: send
+    title: Produce a presence transition
+    summary: Send one online/offline transition; key it by actor, e.g. support:9.
+    channel:
+      $ref: '#/channels/presence'
+    messages:
+      - $ref: '#/channels/presence/messages/presenceChanged'
+  consumePresenceChanged:
+    action: receive
+    title: Consume presence transitions
+    channel:
+      $ref: '#/channels/presence'
+    messages:
+      - $ref: '#/channels/presence/messages/presenceChanged'
+
+components:
+  messages:
+    MessageCreated:
+      name: message.created
+      title: Chat message created
+      summary: Attachment metadata only - file bytes never travel on Kafka.
+      contentType: application/json
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: conversation id, e.g. "1". Same key => same partition => ordered per conversation.
+      payload:
+        $ref: '#/components/schemas/MessageCreatedEnvelope'
+      examples:
+        - name: supportReply
+          summary: A support reply on conversation 1, no attachments
+          payload:
+            schema_version: 1
+            event_id: 018f4c1e-8a3b-7c2d-9e41-2f6b7c8d9e01
+            event_type: message.created
+            occurred_at: '2026-11-26T10:00:00Z'
+            conversation_id: 1
+            ticket_id: 1
+            data:
+              message_uuid: 018f4c1e-8a3b-7c2d-9e41-2f6b7c8d9e02
+              seq: 2
+              sender_type: support
+              sender_id: 1
+              body: hello from Postman over Kafka
+              body_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+              prev_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+              created_at: '2026-11-26T10:00:00Z'
+              attachments: []
+    SupportEvent:
+      name: support.event
+      title: Ticket or FAQ event
+      contentType: application/json
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: ticket id (ticket.*) or conversation id (faq.voted).
+      payload:
+        $ref: '#/components/schemas/SupportEventEnvelope'
+      examples:
+        - name: ticketAssigned
+          summary: A ticket handed to a support employee
+          payload:
+            schema_version: 1
+            event_id: 018f4c1e-8a3b-7c2d-9e41-2f6b7c8d9e11
+            event_type: ticket.assigned
+            occurred_at: '2026-11-26T10:00:00Z'
+            conversation_id: 1
+            ticket_id: 1
+            data:
+              from_employee_id: null
+              to_employee_id: 1
+              reason: first assignment
+    PresenceChanged:
+      name: presence.changed
+      title: Presence transition
+      contentType: application/json
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: actor key, "customer:<id>" or "support:<id>".
+      payload:
+        $ref: '#/components/schemas/PresenceChangedEnvelope'
+      examples:
+        - name: supportOnline
+          summary: A support employee comes online
+          payload:
+            schema_version: 1
+            event_id: 018f4c1e-8a3b-7c2d-9e41-2f6b7c8d9e21
+            event_type: presence.changed
+            occurred_at: '2026-11-26T10:00:00Z'
+            data:
+              actor_type: support
+              actor_id: 9
+              state: online
+              previous_state: offline
+              last_seen_at: '2026-11-26T10:00:00Z'
+              last_seen_visible: true
+
+  schemas:
+    Uuid:
+      type: string
+      pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+    Sha256:
+      type: string
+      description: Lowercase hex SHA-256; 64 zeros for a hand-produced record.
+      pattern: '^[0-9a-f]{64}$'
+
+    EnvelopeBase:
+      type: object
+      required:
+        - schema_version
+        - event_id
+        - event_type
+        - occurred_at
+        - data
+      properties:
+        schema_version:
+          type: integer
+          const: 1
+          description: Only version 1 is accepted; higher versions are rejected by the consumer.
+        event_id:
+          $ref: '#/components/schemas/Uuid'
+        occurred_at:
+          type: string
+          format: date-time
+        conversation_id:
+          type: integer
+          minimum: 1
+        ticket_id:
+          type: integer
+          minimum: 1
+
+    MessageCreatedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required:
+            - conversation_id
+            - event_type
+            - data
+          properties:
+            event_type:
+              type: string
+              const: message.created
+            data:
+              type: object
+              additionalProperties: false
+              required:
+                - message_uuid
+                - seq
+                - sender_type
+                - sender_id
+                - body
+                - body_hash
+                - prev_hash
+                - created_at
+                - attachments
+              properties:
+                message_uuid:
+                  $ref: '#/components/schemas/Uuid'
+                seq:
+                  type: integer
+                  minimum: 1
+                sender_type:
+                  type: string
+                  enum: [customer, support, quality, admin, system]
+                sender_id:
+                  type: integer
+                  minimum: 0
+                body:
+                  type: string
+                  maxLength: 4000
+                body_hash:
+                  $ref: '#/components/schemas/Sha256'
+                prev_hash:
+                  $ref: '#/components/schemas/Sha256'
+                created_at:
+                  type: string
+                  format: date-time
+                attachments:
+                  type: array
+                  maxItems: 5
+                  items:
+                    $ref: '#/components/schemas/Attachment'
+
+    SupportEventEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required:
+            - event_type
+            - data
+          properties:
+            event_type:
+              type: string
+              enum: [ticket.opened, ticket.assigned, ticket.reviewed, faq.voted]
+            data:
+              type: object
+              description: Payload varies by event_type (assignment ids, review verdict, vote option).
+
+    PresenceChangedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required:
+            - event_type
+            - data
+          properties:
+            event_type:
+              type: string
+              const: presence.changed
+            data:
+              type: object
+              additionalProperties: false
+              required:
+                - actor_type
+                - actor_id
+                - state
+                - previous_state
+                - last_seen_at
+                - last_seen_visible
+              properties:
+                actor_type:
+                  type: string
+                  enum: [customer, support, quality, admin]
+                actor_id:
+                  type: integer
+                  minimum: 1
+                state:
+                  type: string
+                  enum: [online, offline]
+                previous_state:
+                  type: string
+                  enum: [online, offline]
+                last_seen_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                last_seen_visible:
+                  type: boolean
+
+    Attachment:
+      type: object
+      description: Attachment metadata only. File bytes never travel on Kafka.
+      additionalProperties: false
+      required: [attachment_uuid, kind, mime_type, size_bytes, original_name]
+      properties:
+        attachment_uuid:
+          $ref: '#/components/schemas/Uuid'
+        kind:
+          type: string
+          enum: [image, file]
+        mime_type:
+          type: string
+        size_bytes:
+          type: integer
+          minimum: 1
+        original_name:
+          type: string
+        width:
+          type: integer
+          minimum: 0
+        height:
+          type: integer
+          minimum: 0
+        thumbnail_uuid:
+          type: string
+          nullable: true

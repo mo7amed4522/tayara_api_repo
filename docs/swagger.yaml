@@ -235,6 +235,19 @@ definitions:
     required:
     - documentId
     type: object
+  request.AssignTicketReq:
+    properties:
+      authorityId:
+        description: 4=support (default), 5=quality
+        type: integer
+      employeeId:
+        type: integer
+      reason:
+        maxLength: 500
+        type: string
+    required:
+    - employeeId
+    type: object
   request.AvailabilityReq:
     properties:
       endDate:
@@ -334,6 +347,18 @@ definitions:
     required:
     - newPassword
     - oldPassword
+    type: object
+  request.ChatSettingsUpdateReq:
+    properties:
+      reason:
+        maxLength: 500
+        type: string
+      values:
+        additionalProperties:
+          type: string
+        type: object
+    required:
+    - values
     type: object
   request.CommissionOverrideReq:
     properties:
@@ -493,6 +518,42 @@ definitions:
     - code
     - name
     type: object
+  request.FaqReq:
+    properties:
+      answer:
+        type: string
+      answerAr:
+        type: string
+      code:
+        maxLength: 64
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      options:
+        $ref: '#/definitions/common.JSONMap'
+      question:
+        maxLength: 500
+        type: string
+      questionAr:
+        type: string
+      sortOrder:
+        type: integer
+    required:
+    - answer
+    - code
+    - question
+    type: object
+  request.FaqStatusReq:
+    properties:
+      id:
+        type: integer
+      isActive:
+        type: boolean
+    required:
+    - id
+    type: object
   request.FirebaseLoginReq:
     properties:
       device_id:
@@ -591,6 +652,20 @@ definitions:
     required:
     - channel
     - eventType
+    - subject
+    type: object
+  request.OpenTicketReq:
+    properties:
+      bookingId:
+        type: integer
+      disputeId:
+        type: integer
+      priority:
+        type: string
+      subject:
+        maxLength: 255
+        type: string
+    required:
     - subject
     type: object
   request.PackageAdminStatusReq:
@@ -851,6 +926,34 @@ definitions:
     - bookingId
     - rating
     type: object
+  request.ReviewTicketReq:
+    properties:
+      notes:
+        maxLength: 2000
+        type: string
+      verdict:
+        enum:
+        - solved
+        - not_solved
+        type: string
+    required:
+    - verdict
+    type: object
+  request.SendMessageReq:
+    properties:
+      attachmentUuids:
+        items:
+          type: string
+        type: array
+      body:
+        type: string
+      clientMsgId:
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - clientMsgId
+    type: object
   request.SetRequirementProfilesReq:
     properties:
       countryId:
@@ -1062,6 +1165,14 @@ definitions:
     - fullName
     - password
     - username
+    type: object
+  request.VoteReq:
+    properties:
+      optionKey:
+        maxLength: 64
+        type: string
+    required:
+    - optionKey
     type: object
   request.WishlistToggleReq:
     properties:
@@ -4125,6 +4236,492 @@ paths:
       summary: User registers or refreshes a push token for an app installation
       tags:
       - Engage
+  /api/v1/support/admin/chat-settings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Read runtime chat settings (admin)
+      tags:
+      - Support
+    put:
+      parameters:
+      - description: values
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChatSettingsUpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update runtime chat settings (admin; audited)
+      tags:
+      - Support
+  /api/v1/support/admin/faqs:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: All FAQ entries including inactive (admin)
+      tags:
+      - Support
+    post:
+      parameters:
+      - description: faq
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.FaqReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Create or update a FAQ entry (admin)
+      tags:
+      - Support
+  /api/v1/support/admin/faqs/status:
+    put:
+      parameters:
+      - description: status
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.FaqStatusReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Activate or deactivate a FAQ entry (admin)
+      tags:
+      - Support
+  /api/v1/support/admin/tickets:
+    get:
+      parameters:
+      - in: query
+        name: customerId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: priority
+        type: string
+      - in: query
+        name: query
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 'Staff inbox (support: assigned + unassigned, quality: all, admin:
+        all)'
+      tags:
+      - Support
+  /api/v1/support/admin/tickets/{id}:
+    get:
+      parameters:
+      - description: ticket id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Staff reads a ticket
+      tags:
+      - Support
+  /api/v1/support/admin/tickets/{id}/assign:
+    post:
+      parameters:
+      - description: ticket id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: assignment
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AssignTicketReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Assign or redirect a ticket to a staff member
+      tags:
+      - Support
+  /api/v1/support/admin/tickets/{id}/assignments:
+    get:
+      parameters:
+      - description: ticket id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Assignment history for a ticket
+      tags:
+      - Support
+  /api/v1/support/admin/tickets/{id}/review:
+    post:
+      parameters:
+      - description: ticket id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: verdict
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReviewTicketReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Quality review of a ticket (append-only verdict)
+      tags:
+      - Support
+  /api/v1/support/admin/tickets/{id}/reviews:
+    get:
+      parameters:
+      - description: ticket id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Review trail for a ticket
+      tags:
+      - Support
+  /api/v1/support/attachments:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: conversation id
+        in: formData
+        name: conversationId
+        required: true
+        type: integer
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Upload an attachment for a conversation (validated before storage)
+      tags:
+      - Support
+  /api/v1/support/attachments/{uuid}:
+    get:
+      parameters:
+      - description: attachment uuid
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Download an attachment the caller may read
+      tags:
+      - Support
+  /api/v1/support/conversations/{id}:
+    get:
+      parameters:
+      - description: conversation id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Read a conversation the caller may access
+      tags:
+      - Support
+  /api/v1/support/conversations/{id}/messages:
+    get:
+      parameters:
+      - description: conversation id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: sinceSeq
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Page a conversation's messages (supports sinceSeq replay)
+      tags:
+      - Support
+    post:
+      parameters:
+      - description: conversation id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: message payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.SendMessageReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Append a message (body optional only when at least one attachment is
+        claimed)
+      tags:
+      - Support
+  /api/v1/support/conversations/{id}/stream:
+    get:
+      parameters:
+      - description: conversation id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: replay messages after this seq
+        in: query
+        name: sinceSeq
+        type: integer
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: event stream
+          schema:
+            type: string
+      summary: Server-sent events for a conversation (message.created + presence.changed)
+      tags:
+      - Support
+  /api/v1/support/faqs/{id}/vote:
+    post:
+      parameters:
+      - description: faq id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: vote
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.VoteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Vote on a FAQ entry (change-of-mind appends a new record)
+      tags:
+      - Support
+  /api/v1/support/presence:
+    get:
+      parameters:
+      - description: comma separated actor keys, e.g. support:9,customer:51
+        in: query
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Presence + last seen for actors sharing a readable conversation
+      tags:
+      - Support
+  /api/v1/support/sse-client:
+    get:
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: SSE client page
+          schema:
+            type: string
+      summary: Browser page that opens a real SSE session for a conversation
+      tags:
+      - Support
+  /api/v1/support/tickets:
+    get:
+      parameters:
+      - in: query
+        name: customerId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: priority
+        type: string
+      - in: query
+        name: query
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Customer lists their own support tickets
+      tags:
+      - Support
+    post:
+      parameters:
+      - description: ticket payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.OpenTicketReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Customer opens a support ticket (creates conversation + welcome message)
+      tags:
+      - Support
+  /api/v1/support/tickets/{id}:
+    get:
+      parameters:
+      - description: ticket id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Read a ticket the caller may access
+      tags:
+      - Support
+  /api/v1/support/tickets/{id}/faq:
+    get:
+      parameters:
+      - description: ticket id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Pre-chat FAQ list with tallies and the caller's vote
+      tags:
+      - Support
   /api/v1/system/casbin/policies:
     get:
       parameters:

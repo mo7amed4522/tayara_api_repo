@@ -292,3 +292,93 @@ travel:
         manual-only: true
         require-admin-verification: true
         require-confirmation-file: true
+
+# Real-time support chat (Kafka transport). Chat itself works without Kafka:
+# messages are persisted first; Kafka only carries them to connected clients.
+support:
+    enabled: true                        # master switch for the whole support module
+    kafka:
+        enabled: true                    # release: enabled; brokers and credentials from env
+        brokers:                         # env-injected in release configs
+            - ${KAFKA_BROKERS:-localhost:9092}
+        client-id: tayara-api
+        required-acks: all               # all | leader | none
+        topics:
+            chat-messages: tayara.support.chat.messages.v1
+            chat-events: tayara.support.chat.events.v1        # assignment / review / vote
+            chat-messages-dlq: tayara.support.chat.messages.dlq.v1
+            presence: tayara.support.presence.v1              # transitions only
+        consumer-group: tayara-support-chat                   # audit consumers
+        fanout-group-prefix: tayara-support-fanout            # + instance id, one group per replica
+        auto-create-topics: false        # never let the app create topics implicitly
+        retry:
+            max-attempts: 5
+            initial-backoff-ms: 200
+            max-backoff-ms: 5000
+        producer:
+            linger-ms: 5
+            batch-bytes: 1048576
+            timeout-ms: 5000
+        consumer:
+            session-timeout-ms: 10000
+            max-poll-records: 200
+            start-from-oldest: false
+        tls:
+            enabled: false
+            ca-file: ${KAFKA_TLS_CA_FILE:-}
+            cert-file: ${KAFKA_TLS_CERT_FILE:-}
+            key-file: ${KAFKA_TLS_KEY_FILE:-}
+            insecure-skip-verify: false
+        sasl:
+            enabled: false
+            mechanism: scram-sha512      # plain | scram-sha256 | scram-sha512
+            username: ${KAFKA_SASL_USERNAME:-}
+            password: ${KAFKA_SASL_PASSWORD:-}
+    chat:
+        enabled: true
+        welcome-message: "Hello! Thanks for reaching out — a support specialist will reply shortly."
+        welcome-message-ar: "مرحباً! شكراً لتواصلك — سيرد عليك أحد مختصي الدعم قريباً."
+        max-message-bytes: 4000
+        page-size: 50
+        hash-chain-enabled: true         # false = still append-only, but no tamper-evidence chain
+        require-faq-before-chat: true    # customer sees the Q&A entry before entering chat
+        quality-can-read-all: true
+        vote-change-policy: append       # only supported value
+        rate-limit:
+            per-10s: 5
+            per-hour: 200
+        allowed-sender-types: [customer, support, quality, system]
+        assignment:
+            allow-redirect: true
+            require-reason: true
+            escalate-after-minutes-unanswered: 30
+        attachments:
+            enabled: true
+            max-file-bytes: 10485760     # MUST stay <= utils/upload/local.go's 10 MiB hard cap
+            max-files-per-message: 5
+            max-total-bytes-per-message: 20971520
+            allowed-mime:                # extension must agree with the sniffed type
+                - image/jpeg
+                - image/png
+                - image/webp
+                - image/gif
+                - application/pdf
+            orphan-cleanup-hours: 24     # 0 disables the sweeper
+            thumbnail-width: 0           # 0 = thumbnails disabled (v1 has no image processor)
+    presence:
+        enabled: true
+        heartbeat-interval-seconds: 15   # SSE comment frames + Redis refresh
+        ttl-seconds: 45                  # 3x heartbeat: two missed refreshes => offline
+        away-after-seconds: 0            # 0 = "away" not emitted in v1
+        last-seen-flush-seconds: 60      # batched append cadence
+        last-seen-display: true
+        hide-last-seen-for-roles: []     # e.g. [support]; applied server-side
+        batch-read-max-ids: 50
+    admin:
+        settings-section: support        # base_system_setting section holding runtime overrides
+        allow-welcome-text-edit: true
+        allow-chat-toggle: true
+        allow-allowed-roles-edit: true
+        allow-attachment-limits-edit: true   # size/mime limits only, never the storage backend
+        require-change-reason: false
+        max-welcome-message-bytes: 1000

@@ -1,0 +1,16 @@
+$kind: kafka-request
+name: 06 Consume - presence changes
+description: |-
+  Reads tayara.support.presence.v1 from the beginning of the log. Bounded: 10 records or
+  5 seconds idle.
+url:
+  - localhost:9092
+mode: consumer
+topics:
+  - name: tayara.support.presence.v1
+startPosition:
+  type: beginning
+stopAfter:
+  maxRecords: 10
+  idleMs: 5000
+order: 6000

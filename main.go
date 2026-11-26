@@ -16,13 +16,13 @@ import (
 //go:generate go mod tidy
 //go:generate go mod download
 
-//	@title						Tayara Swagger API Interface Documentation
-//	@version					v2.7.7
-//	@description				Full-stack development basic platform using gin for extremely fast development
-//	@securityDefinitions.apikey	ApiKeyAuth
-//	@in							header
-//	@name						x-token
-//	@BasePath					/
+// @title						Tayara Swagger API Interface Documentation
+// @version					v2.7.7
+// @description				Full-stack development basic platform using gin for extremely fast development
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						x-token
+// @BasePath					/
 func main() {
 	global.GVA_VP = core.Viper() // Initialize Viper
 	initialize.OtherInit()
@@ -41,6 +41,8 @@ func main() {
 	initialize.Timer()                // Initialize cron
 	utils.Init()
 	initialize.Redis()
+	initialize.Support() // Kafka transport + SSE fanout (non-fatal; boot continues without a broker)
+	defer initialize.ShutdownSupport()
 	initialize.DBList()
 	// MongoDB (qmgo) powers the payment ledger. Non-fatal: the app still boots if Mongo is
 	// not configured, but payment lifecycle relies on it, so it must be up in production.

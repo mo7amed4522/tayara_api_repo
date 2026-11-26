@@ -1,0 +1,21 @@
+$kind: collection
+id: 2f1d7c40-9a6b-4d31-8f52-0c6a5b9e4a11
+name: Tayara support chat (Kafka)
+description: |-
+  Kafka transport tests for the support chat bus (Postman Collection Format v3).
+
+  Import: Postman -> Import -> Folder -> pick this directory (postman/tayara-support-kafka).
+  Postman 12 stores collections as a folder of .request.yaml files, so drag the folder itself,
+  not an individual file.
+
+  Broker: Redpanda from docker-compose on localhost:9092 (plaintext, no auth).
+  Create the topics first (auto-create is disabled in the app):
+    docker compose up -d redpanda
+    docker compose exec redpanda rpk topic create \
+      tayara.support.chat.messages.v1 tayara.support.chat.events.v1 \
+      tayara.support.chat.messages.dlq.v1 tayara.support.presence.v1
+
+  Records produced by hand are transport-only: the HTTP API persists to MySQL first, so
+  hand-produced records never appear in message history, sinceSeq replay or SSE backfill.
+  To watch a produced record reach a client, produce "message.created" for a real
+  conversation and watch the SSE stream of that conversation (README: Kafka testing from Postman).

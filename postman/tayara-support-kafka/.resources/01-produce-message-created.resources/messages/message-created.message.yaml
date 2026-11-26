@@ -1,0 +1,36 @@
+$kind: kafka-message
+name: message.created conversation 1
+topic: tayara.support.chat.messages.v1
+key:
+  contentType: text
+  content: "1"
+value:
+  contentType: json
+  content: |-
+    {
+      "schema_version": 1,
+      "event_id": "0193f0aa-1c2b-7c11-8a01-9b1c2d3e4f01",
+      "event_type": "message.created",
+      "occurred_at": "2026-11-26T10:00:00Z",
+      "conversation_id": 1,
+      "ticket_id": 1,
+      "data": {
+        "message_uuid": "0193f0aa-1c2b-7c11-8a01-9b1c2d3e4f02",
+        "seq": 2,
+        "sender_type": "support",
+        "sender_id": 1,
+        "body": "hello from Postman over Kafka",
+        "body_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "created_at": "2026-11-26T10:00:00Z",
+        "attachments": []
+      }
+    }
+headers:
+  - key: content-type
+    value: application/json
+  - key: x-event-type
+    value: message.created
+  - key: schema-version
+    value: "1"
+order: 1000

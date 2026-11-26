@@ -1,0 +1,13 @@
+$kind: kafka-request
+name: 01 Produce - message.created
+description: |-
+  Sends one chat record to tayara.support.chat.messages.v1.
+
+  Key = conversation id ("1"), so every message of a conversation lands on one partition
+  and keeps its order. Ack is set so the response shows partition and offset.
+url:
+  - localhost:9092
+mode: producer
+acknowledgements: all
+messages: .resources/01-produce-message-created.resources/messages
+order: 1000

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Support chat — SSE session</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; font: 14px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+         background: #0f1115; color: #d7dce3; }
+  header { padding: 16px 20px; border-bottom: 1px solid #232833; }
+  h1 { font-size: 15px; margin: 0 0 4px; font-weight: 600; }
+  .hint { color: #7f8a9c; font-size: 12px; }
+  .wrap { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 18px; padding: 18px 20px; }
+  section { background: #151922; border: 1px solid #232833; border-radius: 8px; padding: 14px; }
+  label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+          color: #8b96a8; margin: 10px 0 4px; }
+  input, textarea { width: 100%; box-sizing: border-box; background: #0f131b; color: #e6eaf0;
+          border: 1px solid #2b3240; border-radius: 6px; padding: 7px 9px; font: inherit; }
+  button { margin-top: 10px; background: #2f6feb; color: #fff; border: 0; border-radius: 6px;
+           padding: 8px 14px; font: inherit; cursor: pointer; }
+  button.secondary { background: #2b3240; }
+  button:disabled { opacity: .5; cursor: default; }
+  .state { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+           background: #2b3240; }
+  .state.on { background: #1f7a4d; } .state.off { background: #7a2f2f; }
+  #messages { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow: auto; }
+  .msg { border: 1px solid #232833; border-radius: 6px; padding: 8px 10px; background: #10141c; }
+  .msg .meta { font-size: 11px; color: #7f8a9c; margin-bottom: 4px; }
+  .msg.presence { background: #101a16; border-color: #1f4d36; }
+  .att { font-size: 12px; color: #8fb4ff; }
+  #log { max-height: 30vh; overflow: auto; font-size: 12px; color: #9aa6b8; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Support chat — browser SSE session</h1>
+  <div class="hint">
+    Opens <code>GET /api/v1/support/conversations/:id/stream</code> with the browser's native
+    <code>EventSource</code>. The token is written to the <code>x-token</code> cookie for this
+    origin because EventSource cannot send headers. Same origin only.
+  </div>
+</header>
+
+<div class="wrap">
+  <section>
+    <label for="token">X-token (customer or staff)</label>
+    <input id="token" autocomplete="off" placeholder="paste a JWT" />
+
+    <label for="conv">Conversation id</label>
+    <input id="conv" type="number" min="1" placeholder="e.g. 1" />
+
+    <label for="since">sinceSeq (replay after)</label>
+    <input id="since" type="number" min="0" value="0" />
+
+    <button id="connect">Connect SSE</button>
+    <button id="disconnect" class="secondary" disabled>Disconnect</button>
+    <div style="margin-top:10px">stream: <span id="state" class="state">idle</span></div>
+
+    <label for="body">Send a message (POST /messages)</label>
+    <textarea id="body" rows="3" placeholder="type and send..."></textarea>
+    <button id="send" class="secondary">Send</button>
+    <div class="hint" style="margin-top:8px">clientMsgId is generated per send; retries reuse it.</div>
+  </section>
+
+  <section>
+    <label style="margin-top:0">Frames</label>
+    <div id="messages"></div>
+    <label>Raw event log</label>
+    <div id="log"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var base = window.location.origin;
+  var es = null;
+  var seq = 0;
+  var seen = {};
+
+  var $ = function (id) { return document.getElementById(id); };
+  function log(line) {
+    var el = $("log");
+    el.textContent += line + "\n";
+    el.scrollTop = el.scrollHeight;
+  }
+  function setState(text, cls) {
+    var el = $("state");
+    el.textContent = text;
+    el.className = "state" + (cls ? " " + cls : "");
+  }
+  function cookie(name, value) {
+    document.cookie = name + "=" + value + "; path=/; SameSite=Lax";
+  }
+
+  function addFrame(kind, payload) {
+    var box = document.createElement("div");
+    box.className = "msg" + (kind === "presence.changed" ? " presence" : "");
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    if (kind === "presence.changed") {
+      meta.textContent = "presence " + payload.actor_type + ":" + payload.actor_id +
+        " → " + payload.state +
+        (payload.last_seen_at ? " · last seen " + payload.last_seen_at : "");
+    } else {
+      seq = Math.max(seq, payload.seq || 0);
+      meta.textContent = "#" + payload.seq + " " + payload.sender_type + ":" + payload.sender_id +
+        " · " + (payload.created_at || "");
+    }
+    box.appendChild(meta);
+    if (payload.body) {
+      var t = document.createElement("div");
+      t.textContent = payload.body;
+      box.appendChild(t);
+    }
+    (payload.attachments || []).forEach(function (a) {
+      var link = document.createElement("a");
+      link.className = "att";
+      link.href = base + "/api/v1/support/attachments/" + a.attachment_uuid;
+      link.textContent = "📎 " + a.original_name + " (" + a.mime_type + ")";
+      link.target = "_blank";
+      box.appendChild(link);
+    });
+    var list = $("messages");
+    list.appendChild(box);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  function handle(names) {
+    names.forEach(function (name) {
+      es.addEventListener(name, function (evt) {
+        var payload = {};
+        try { payload = JSON.parse(evt.data); } catch (e) { log("non-json " + name); return; }
+        if (name === "message.created") {
+          var data = payload.data || payload;
+          if (data.message_uuid && seen[data.message_uuid]) { return; }
+          if (data.message_uuid) { seen[data.message_uuid] = true; }
+          addFrame(name, data);
+        } else if (name === "presence.changed") {
+          addFrame(name, payload.data || payload);
+        }
+        log("event " + name + " " + JSON.stringify(payload).slice(0, 400));
+      });
+    });
+  }
+
+  $("connect").onclick = function () {
+    var token = $("token").value.trim();
+    var conv = $("conv").value.trim();
+    if (!token || !conv) { alert("token and conversation id are required"); return; }
+    cookie("x-token", token);
+    var since = $("since").value.trim() || "0";
+    var url = base + "/api/v1/support/conversations/" + conv + "/stream?sinceSeq=" + encodeURIComponent(since);
+    if (es) { es.close(); }
+    es = new EventSource(url, { withCredentials: true });
+    setState("connecting", "");
+    es.onopen = function () { setState("open", "on"); log("open " + url); };
+    es.onerror = function () { setState("reconnecting / closed", "off"); log("stream error"); };
+    handle(["message.created", "presence.changed", "closing"]);
+    $("disconnect").disabled = false;
+  };
+
+  $("disconnect").onclick = function () {
+    if (es) { es.close(); es = null; }
+    setState("closed", "off");
+    $("disconnect").disabled = true;
+  };
+
+  $("send").onclick = function () {
+    var token = $("token").value.trim();
+    var conv = $("conv").value.trim();
+    var body = $("body").value;
+    if (!token || !conv || !body.trim()) { alert("token, conversation id and body are required"); return; }
+    var clientMsgId = "web-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    fetch(base + "/api/v1/support/conversations/" + conv + "/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-token": token },
+      body: JSON.stringify({ body: body, clientMsgId: clientMsgId })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      log("send → " + JSON.stringify(j).slice(0, 300));
+      if (j.code !== 0) { alert(j.msg || "send failed"); }
+      $("body").value = "";
+    }).catch(function (e) { log("send error " + e); });
+  };
+})();
+</script>
+</body>
+</html>

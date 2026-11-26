@@ -4729,6 +4729,764 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/support/admin/chat-settings": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Read runtime chat settings (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Update runtime chat settings (admin; audited)",
+                "parameters": [
+                    {
+                        "description": "values",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ChatSettingsUpdateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/admin/faqs": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "All FAQ entries including inactive (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Create or update a FAQ entry (admin)",
+                "parameters": [
+                    {
+                        "description": "faq",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.FaqReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/admin/faqs/status": {
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Activate or deactivate a FAQ entry (admin)",
+                "parameters": [
+                    {
+                        "description": "status",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.FaqStatusReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/admin/tickets": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Staff inbox (support: assigned + unassigned, quality: all, admin: all)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "customerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "priority",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/admin/tickets/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Staff reads a ticket",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ticket id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/admin/tickets/{id}/assign": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Assign or redirect a ticket to a staff member",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ticket id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "assignment",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.AssignTicketReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/admin/tickets/{id}/assignments": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Assignment history for a ticket",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ticket id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/admin/tickets/{id}/review": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Quality review of a ticket (append-only verdict)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ticket id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "verdict",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ReviewTicketReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/admin/tickets/{id}/reviews": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Review trail for a ticket",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ticket id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/attachments": {
+            "post": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Upload an attachment for a conversation (validated before storage)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "conversation id",
+                        "name": "conversationId",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/attachments/{uuid}": {
+            "get": {
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Download an attachment the caller may read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "attachment uuid",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/conversations/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Read a conversation the caller may access",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "conversation id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/conversations/{id}/messages": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Page a conversation's messages (supports sinceSeq replay)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "conversation id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "sinceSeq",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Append a message (body optional only when at least one attachment is claimed)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "conversation id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "message payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.SendMessageReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/conversations/{id}/stream": {
+            "get": {
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Server-sent events for a conversation (message.created + presence.changed)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "conversation id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "replay messages after this seq",
+                        "name": "sinceSeq",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "event stream",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/faqs/{id}/vote": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Vote on a FAQ entry (change-of-mind appends a new record)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "faq id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "vote",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.VoteReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/presence": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Presence + last seen for actors sharing a readable conversation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "comma separated actor keys, e.g. support:9,customer:51",
+                        "name": "ids",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/sse-client": {
+            "get": {
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Browser page that opens a real SSE session for a conversation",
+                "responses": {
+                    "200": {
+                        "description": "SSE client page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/tickets": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Customer lists their own support tickets",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "customerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "priority",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Customer opens a support ticket (creates conversation + welcome message)",
+                "parameters": [
+                    {
+                        "description": "ticket payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.OpenTicketReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/tickets/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Read a ticket the caller may access",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ticket id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/tickets/{id}/faq": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Pre-chat FAQ list with tallies and the caller's vote",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ticket id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/system/casbin/policies": {
             "get": {
                 "produces": [
@@ -6130,6 +6888,25 @@ const docTemplate = `{
                 }
             }
         },
+        "request.AssignTicketReq": {
+            "type": "object",
+            "required": [
+                "employeeId"
+            ],
+            "properties": {
+                "authorityId": {
+                    "description": "4=support (default), 5=quality",
+                    "type": "integer"
+                },
+                "employeeId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string",
+                    "maxLength": 500
+                }
+            }
+        },
         "request.AvailabilityReq": {
             "type": "object",
             "properties": {
@@ -6275,6 +7052,24 @@ const docTemplate = `{
                 },
                 "oldPassword": {
                     "type": "string"
+                }
+            }
+        },
+        "request.ChatSettingsUpdateReq": {
+            "type": "object",
+            "required": [
+                "values"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "values": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -6512,6 +7307,59 @@ const docTemplate = `{
                 }
             }
         },
+        "request.FaqReq": {
+            "type": "object",
+            "required": [
+                "answer",
+                "code",
+                "question"
+            ],
+            "properties": {
+                "answer": {
+                    "type": "string"
+                },
+                "answerAr": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "options": {
+                    "$ref": "#/definitions/common.JSONMap"
+                },
+                "question": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "questionAr": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                }
+            }
+        },
+        "request.FaqStatusReq": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                }
+            }
+        },
         "request.FirebaseLoginReq": {
             "type": "object",
             "required": [
@@ -6660,6 +7508,27 @@ const docTemplate = `{
                 },
                 "subject": {
                     "type": "string"
+                }
+            }
+        },
+        "request.OpenTicketReq": {
+            "type": "object",
+            "required": [
+                "subject"
+            ],
+            "properties": {
+                "bookingId": {
+                    "type": "integer"
+                },
+                "disputeId": {
+                    "type": "integer"
+                },
+                "priority": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string",
+                    "maxLength": 255
                 }
             }
         },
@@ -7048,6 +7917,47 @@ const docTemplate = `{
                 }
             }
         },
+        "request.ReviewTicketReq": {
+            "type": "object",
+            "required": [
+                "verdict"
+            ],
+            "properties": {
+                "notes": {
+                    "type": "string",
+                    "maxLength": 2000
+                },
+                "verdict": {
+                    "type": "string",
+                    "enum": [
+                        "solved",
+                        "not_solved"
+                    ]
+                }
+            }
+        },
+        "request.SendMessageReq": {
+            "type": "object",
+            "required": [
+                "clientMsgId"
+            ],
+            "properties": {
+                "attachmentUuids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "body": {
+                    "type": "string"
+                },
+                "clientMsgId": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 8
+                }
+            }
+        },
         "request.SetRequirementProfilesReq": {
             "type": "object",
             "required": [
@@ -7364,6 +8274,18 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "request.VoteReq": {
+            "type": "object",
+            "required": [
+                "optionKey"
+            ],
+            "properties": {
+                "optionKey": {
+                    "type": "string",
+                    "maxLength": 64
                 }
             }
         },

@@ -1,0 +1,16 @@
+$kind: kafka-request
+name: 02 Consume - chat messages
+description: |-
+  Reads tayara.support.chat.messages.v1 from the beginning of the log and stops after
+  10 records or 5 seconds without a record. Partitions and offsets are shown per record.
+url:
+  - localhost:9092
+mode: consumer
+topics:
+  - name: tayara.support.chat.messages.v1
+startPosition:
+  type: beginning
+stopAfter:
+  maxRecords: 10
+  idleMs: 5000
+order: 2000

@@ -1,0 +1,2262 @@
+{
+  "info": {
+    "_postman_id": "tayara-support-0004-0004-0004-000000000004",
+    "name": "Tayara - Support chat (real-time Kafka/SSE, presence, attachments)",
+    "description": "End-to-end collection for the support chat module (`/api/v1/support`).\n\nCovers: ticket + conversation bootstrap (welcome message), message append with dense `seq` and `client_msg_id` idempotency, hash chain, message history/replay, attachment upload + one-time link + gated download, presence/last-seen batch read, authorization negatives, and the staff inbox / assignment / quality review / runtime settings surface.\n\n**Run order matters.** Run folders top to bottom (Collection Runner). `Auth` stores tokens, `1. Ticket & conversation` stores `ticketId` / `conversationId`, and later folders reuse them.\n\nPrerequisites:\n- API running on `{{baseUrl}}` against the seeded demo DB (`ahmed.ali` / `fatima.z` / `admin@tayara.test`, password `123456`).\n- `X-token` = customer JWT, `S-token` = staff JWT (the collection sends `x-token` for both, which the guard groups accept).\n- Attachments use the existing `utils/upload` local OSS (`oss-type: local`), so files land in `local.store-path` and are served only through `GET /attachments/:uuid`.\n\n**SSE:** Postman renders a streamed response, but its test scripts only run when the request finishes, so the stream request stays open on purpose. For an interactive browser session open `{{baseUrl}}/api/v1/support/sse-client` (served by the API), or run the live checks:\n`SUPPORT_REDIS_ADDR=localhost:6379 go test ./service/support/... -run LiveRedis -v` and `KAFKA_BROKERS=localhost:9092 go test ./service/support/... -run LiveKafka -v`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8888"
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "otherToken",
+      "value": ""
+    },
+    {
+      "key": "staffToken",
+      "value": ""
+    },
+    {
+      "key": "customerId",
+      "value": ""
+    },
+    {
+      "key": "ticketId",
+      "value": ""
+    },
+    {
+      "key": "conversationId",
+      "value": ""
+    },
+    {
+      "key": "clientMsgId",
+      "value": ""
+    },
+    {
+      "key": "messageUuid",
+      "value": ""
+    },
+    {
+      "key": "seq",
+      "value": ""
+    },
+    {
+      "key": "attachmentUuid",
+      "value": ""
+    },
+    {
+      "key": "faqId",
+      "value": ""
+    },
+    {
+      "key": "staffEmployeeId",
+      "value": "1"
+    },
+    {
+      "key": "attachmentFile",
+      "value": "sample.png"
+    },
+    {
+      "key": "badAttachmentFile",
+      "value": "payload.zip"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Log in the three identities used by the collection. Tokens are stored as collection variables.",
+      "item": [
+        {
+          "name": "Customer login (X-token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "login"
+              ]
+            },
+            "description": "Seeded demo customer. Stores `customerToken` and `customerId`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ahmed.ali\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('login ok', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.token).to.be.a('string'); });",
+                  "pm.collectionVariables.set('customerToken', json.data.token);",
+                  "const user = json.data.user || json.data.profile || json.data.bxUser || {};",
+                  "if (user.id) { pm.collectionVariables.set('customerId', String(user.id)); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Second customer login (foreign access)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "login"
+              ]
+            },
+            "description": "A different customer, used to prove cross-customer reads are rejected.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"fatima.z\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('login ok', () => pm.expect(json.code).to.eql(0));",
+                  "pm.collectionVariables.set('otherToken', json.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Staff login (S-token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/system/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system",
+                "login"
+              ]
+            },
+            "description": "Platform admin (authority 1). Used for the staff inbox, assignment, review and settings.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@tayara.test\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('login ok', () => pm.expect(json.code).to.eql(0));",
+                  "pm.collectionVariables.set('staffToken', json.data.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Ticket & conversation",
+      "description": "Opening a ticket creates the conversation and the single `system` welcome message in one transaction.",
+      "item": [
+        {
+          "name": "Open ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "tickets"
+              ]
+            },
+            "description": "Free-standing ticket (no bookingId/disputeId). Stores `ticketId`, `conversationId`, `customerId`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Postman: real-time support chat\",\n  \"priority\": \"normal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('ticket created', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.ticket.ticketCode).to.match(/^ST-/); });",
+                  "const d = json.data;",
+                  "pm.collectionVariables.set('ticketId', String(d.ticket.id));",
+                  "pm.collectionVariables.set('conversationId', String(d.conversation.id));",
+                  "pm.collectionVariables.set('customerId', String(d.ticket.customerId));",
+                  "pm.collectionVariables.set('seq', String(d.conversation.lastSeq));",
+                  "pm.test('conversation starts with exactly one welcome message', () => {",
+                  "  pm.expect(d.conversation.messageCount).to.eql(1);",
+                  "  pm.expect(d.conversation.lastSeq).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/tickets?page=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Own tickets only; the SQL is scoped by `customer_id`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('list returned', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.list).to.be.an('array'); });",
+                  "const own = json.data.list.find(t => String(t.id) === pm.collectionVariables.get('ticketId'));",
+                  "pm.test('new ticket is in the caller list', () => pm.expect(own).to.not.be.undefined);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ticket detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/tickets/{{ticketId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "tickets",
+                "{{ticketId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('owner can read', () => { pm.expect(json.code).to.eql(0); pm.expect(String(json.data.ticket.id)).to.eql(pm.collectionVariables.get('ticketId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conversation detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('conversation is active', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.status).to.eql('active'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FAQ list (pre-chat Q&A)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/tickets/{{ticketId}}/faq",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "tickets",
+                "{{ticketId}}",
+                "faq"
+              ]
+            },
+            "description": "Stores the id of the first FAQ that defines poll options (`faqId`), which the vote request needs."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('faq array', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data).to.be.an('array'); });",
+                  "const withOptions = json.data.find(f => f.options && f.options.options && f.options.options.length);",
+                  "pm.test('at least one votable FAQ is seeded', () => pm.expect(withOptions).to.not.be.undefined);",
+                  "if (withOptions) { pm.collectionVariables.set('faqId', String(withOptions.id)); }",
+                  "pm.test('tallies are an object', () => pm.expect(json.data[0].tally).to.be.an('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vote on FAQ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/faqs/{{faqId}}/vote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "faqs",
+                "{{faqId}}",
+                "vote"
+              ]
+            },
+            "description": "Append-only vote: repeating the same option is a no-op; choosing another appends a new row.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"optionKey\": \"helpful\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('vote accepted', () => pm.expect(json.code).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vote again with the same option (idempotent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/faqs/{{faqId}}/vote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "faqs",
+                "{{faqId}}",
+                "vote"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"optionKey\": \"helpful\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('repeat vote is a no-op success', () => pm.expect(json.code).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vote change-of-mind (appends)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/faqs/{{faqId}}/vote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "faqs",
+                "{{faqId}}",
+                "vote"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"optionKey\": \"not_helpful\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('changed vote accepted', () => pm.expect(json.code).to.eql(0));",
+                  "const list = pm.sendRequest({ url: pm.collectionVariables.get('baseUrl') + '/api/v1/support/tickets/' + pm.collectionVariables.get('ticketId') + '/faq', header: { 'x-token': pm.collectionVariables.get('customerToken') } }, (err, res) => {",
+                  "  pm.test('tally counts only the latest vote', () => {",
+                  "    const faq = res.json().data.find(f => String(f.id) === pm.collectionVariables.get('faqId'));",
+                  "    pm.expect(faq.myVote).to.eql('not_helpful');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid vote option rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/faqs/{{faqId}}/vote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "faqs",
+                "{{faqId}}",
+                "vote"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"optionKey\": \"does-not-exist\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 for an unknown option', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Messages (append, ordering, idempotency)",
+      "description": "Every message persists first, gets a dense `seq` under a lock, links into a SHA-256 hash chain, and publishes to Kafka when the bus is enabled. `clientMsgId` makes retries safe.",
+      "item": [
+        {
+          "name": "Send message (customer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "description": "A fresh `clientMsgId` is generated in the pre-request script. Stores `messageUuid` and `seq`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Hello support, my refund has not arrived yet.\",\n  \"clientMsgId\": \"{{clientMsgId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('clientMsgId')) {",
+                  "  pm.collectionVariables.set('clientMsgId', 'pm-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('message persisted', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.messageUuid).to.be.a('string'); });",
+                  "pm.collectionVariables.set('messageUuid', json.data.messageUuid);",
+                  "pm.collectionVariables.set('seq', String(json.data.seq));",
+                  "pm.test('seq follows the welcome message', () => pm.expect(json.data.seq).to.be.above(1));",
+                  "pm.test('hash chain linked', () => { pm.expect(json.data.bodyHash).to.have.lengthOf(64); pm.expect(json.data.prevHash).to.have.lengthOf(64); });",
+                  "pm.test('sanitized body is plain text', () => pm.expect(json.data.body).to.not.include('<'));",
+                  "pm.test('attachments list is never null', () => pm.expect(json.data.attachments).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retry with the same clientMsgId (idempotent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "description": "The unique `(conversation_id, client_msg_id)` index plus a pre-check returns the original row, never a duplicate.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"this body must be ignored on retry\",\n  \"clientMsgId\": \"{{clientMsgId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('same message returned', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.messageUuid).to.eql(pm.collectionVariables.get('messageUuid')); });",
+                  "pm.test('original body preserved', () => pm.expect(json.data.body).to.include('refund'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Message history + replay (sinceSeq)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages?sinceSeq=0&pageSize=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "sinceSeq",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "Ordered by `seq`. Clients replay from `sinceSeq` after reconnecting the SSE stream."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const list = json.data.list;",
+                  "pm.test('history returned', () => { pm.expect(json.code).to.eql(0); pm.expect(list).to.be.an('array'); });",
+                  "pm.test('contains the sent message', () => pm.expect(list.some(m => m.messageUuid === pm.collectionVariables.get('messageUuid'))).to.be.true);",
+                  "pm.test('seq strictly increasing and dense', () => {",
+                  "  for (let i = 1; i < list.length; i++) { pm.expect(list[i].seq).to.eql(list[i-1].seq + 1); }",
+                  "});",
+                  "pm.test('hash chain verifies link-by-link', () => {",
+                  "  for (let i = 1; i < list.length; i++) { pm.expect(list[i].prevHash).to.eql(list[i-1].bodyHash); }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Empty message without attachment rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"   \",\n  \"clientMsgId\": \"pm-empty-0001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 validation error', () => pm.response.to.have.status(422));",
+                  "pm.test('code is validation', () => pm.expect(pm.response.json().code).to.eql(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid clientMsgId rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"short id\",\n  \"clientMsgId\": \"abc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 for a clientMsgId that is too short', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Foreign customer cannot read the conversation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{otherToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Foreign customer cannot write to the conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{otherToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"intrusion attempt\",\n  \"clientMsgId\": \"pm-foreign-0001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthenticated send is rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"no token\",\n  \"clientMsgId\": \"pm-notoken-0001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Attachments",
+      "description": "Attachments go through the existing `utils/upload` OSS layer (`UploadFileWithPath(file, \"support-chat\")`). Validation (size, extension, sniffed MIME) happens **before** a byte is written; a message claims an attachment exactly once (`uploaded -> attached`).",
+      "item": [
+        {
+          "name": "Upload attachment (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/attachments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "attachments"
+              ]
+            },
+            "description": "Pick a real `.png`/`.jpg`/`.webp`/`.gif`/`.pdf` file for the `file` field (or set the `attachmentFile` variable to its path). Allowed MIME defaults: jpeg/png/webp/gif/pdf, max 10 MiB.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{attachmentFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('uploaded', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.attachmentUuid).to.be.a('string'); });",
+                  "pm.collectionVariables.set('attachmentUuid', json.data.attachmentUuid);",
+                  "pm.test('sniffed type and size recorded', () => { pm.expect(json.data.sizeBytes).to.be.above(0); pm.expect(json.data.mimeType).to.be.a('string'); });",
+                  "pm.test('filename sanitized', () => pm.expect(json.data.originalName).to.not.include('..'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send message carrying the attachment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "description": "Body may be empty when at least one attachment is claimed. The claim and the message insert commit in one transaction.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"\",\n  \"clientMsgId\": \"pm-attach-{{$timestamp}}\",\n  \"attachmentUuids\": [\n    \"{{attachmentUuid}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('attachment-linked message created', () => { pm.expect(json.code).to.eql(0); });",
+                  "pm.test('payload carries metadata only', () => {",
+                  "  const a = json.data.attachments[0];",
+                  "  pm.expect(a.attachmentUuid).to.eql(pm.collectionVariables.get('attachmentUuid'));",
+                  "  pm.expect(a).to.not.have.property('storageKey');",
+                  "  pm.expect(a).to.not.have.property('bytes');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reuse an already-linked attachment is rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"second claim\",\n  \"clientMsgId\": \"pm-attach-again-{{$timestamp}}\",\n  \"attachmentUuids\": [\n    \"{{attachmentUuid}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422: attachment is no longer uploaded', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download attachment (gated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/attachments/{{attachmentUuid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "attachments",
+                "{{attachmentUuid}}"
+              ]
+            },
+            "description": "Authorization is by UUID + `CanRead`, never by a caller-supplied path. Local OSS serves the file; remote backends 302 to the stored URL."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('download ok', () => pm.response.to.have.status(200));",
+                  "pm.test('non-empty body', () => pm.expect(pm.response.responseSize).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Foreign customer cannot download",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{otherToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/attachments/{{attachmentUuid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "attachments",
+                "{{attachmentUuid}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown attachment uuid is 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/attachments/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "attachments",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 not found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Disallowed file type rejected before storage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/attachments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "attachments"
+              ]
+            },
+            "description": "Set the `badAttachmentFile` variable to a real file named `.zip`/`.txt`/`.exe` (or select one for the `file` field). `utils/upload`'s extension allowlist and the runtime MIME allowlist both reject it, so the upload must fail with 422 **before** anything is written to disk.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{badAttachmentFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 for a disallowed extension', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload into a foreign conversation is rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{otherToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/attachments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "attachments"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{attachmentFile}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 before any byte is stored', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Real-time (SSE + presence + last seen)",
+      "description": "The stream is fed by the per-instance Kafka fanout (or the local hub when `support.kafka.enabled=false`). Frames: `message.created`, `presence.changed`, `closing`; a `: ping` comment every 15s. Presence is Redis-only and refcounted; transitions publish once per 0->1 / 1->0.",
+      "item": [
+        {
+          "name": "SSE stream (open, streams frames)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "text/event-stream"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/stream?sinceSeq=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "stream"
+              ],
+              "query": [
+                {
+                  "key": "sinceSeq",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Postman shows the live stream in the response pane. Because a stream never completes, Postman runs this request's test script only when you press Cancel — the script therefore asserts conditionally. For an interactive session use `{{baseUrl}}/api/v1/support/sse-client` (browser `EventSource`), and for automated real-time checks use the Go live tests (`LiveRedis` / `LiveKafka`)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('stream opened with event-stream content type', () => {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('text/event-stream');",
+                  "  pm.expect(pm.response.headers.get('X-Accel-Buffering')).to.eql('no');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Browser SSE client page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/sse-client",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "sse-client"
+              ]
+            },
+            "description": "Self-contained `EventSource` client: paste a token, set the conversation id, connect, and send a message to watch `message.created` and `presence.changed` arrive live."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('page served', () => { pm.expect(pm.response.code).to.eql(200); pm.expect(pm.response.headers.get('Content-Type') || '').to.include('text/html'); });",
+                  "pm.test('page wires EventSource to the stream', () => pm.expect(pm.response.text()).to.include('new EventSource('));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Presence + last seen (batch read)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/presence?ids=customer:{{customerId}},support:{{staffEmployeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "presence"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "customer:{{customerId}},support:{{staffEmployeeId}}"
+                }
+              ]
+            },
+            "description": "Only actors the caller shares a readable ticket with are returned. `state` is `online|offline|unknown` — `unknown` when Redis is unavailable, which is never an error."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('batch read ok', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data).to.be.an('array'); });",
+                  "pm.test('caller presence is visible to itself', () => {",
+                  "  const self = json.data.find(p => p.actorType === 'customer' && String(p.actorId) === pm.collectionVariables.get('customerId'));",
+                  "  pm.expect(self).to.not.be.undefined;",
+                  "  pm.expect(['online','offline','unknown']).to.include(self.state);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Presence hides unrelated actors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/presence?ids=support:999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "presence"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "support:999999"
+                }
+              ]
+            },
+            "description": "An actor the caller shares no ticket with is omitted entirely — no state and no last-seen leak."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('unrelated actor filtered out', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Presence rejects a malformed ids list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/presence?ids=not-a-key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "presence"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "not-a-key"
+                }
+              ]
+            },
+            "description": "Unknown actor keys are dropped rather than erroring, so this returns 200 with an empty list."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('malformed keys are dropped', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Presence requires ids",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/presence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "presence"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 without ids', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Staff: inbox, assignment, review, settings",
+      "description": "Staff endpoints use the S-token guard; authorization is re-checked in the service (assigned employee / quality / admin).",
+      "item": [
+        {
+          "name": "Staff inbox",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/tickets?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('inbox returned', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.list).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Staff ticket detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/tickets/{{ticketId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "tickets",
+                "{{ticketId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('staff can read', () => pm.expect(json.code).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Assign ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/tickets/{{ticketId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "tickets",
+                "{{ticketId}}",
+                "assign"
+              ]
+            },
+            "description": "`authorityId` is 4 (support) or 5 (quality); defaults to 4. Reason is required by `support.chat.assignment.require-reason`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{staffEmployeeId}}\",\n  \"authorityId\": 4,\n  \"reason\": \"Postman assignment check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('assignment appended', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.id).to.be.a('number'); });",
+                  "pm.test('history row is append-only by shape', () => pm.expect(json.data.toEmployeeId).to.eql(Number(pm.collectionVariables.get('staffEmployeeId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Assignment history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/tickets/{{ticketId}}/assignments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "tickets",
+                "{{ticketId}}",
+                "assignments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('history returned', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Staff reply in the conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "description": "Admins may post into any conversation; a support employee must be the assignee (checked in `authorization.CanWrite`).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Support here \\u2014 checking your refund now.\",\n  \"clientMsgId\": \"pm-staff-{{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('staff message persisted', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.senderType).to.be.oneOf(['support','admin','quality']); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quality review (not_solved)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/tickets/{{ticketId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "tickets",
+                "{{ticketId}}",
+                "review"
+              ]
+            },
+            "description": "Appends a review with `message_count_at_review`; the ticket status flips to the verdict.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verdict\": \"not_solved\",\n  \"notes\": \"Postman smoke: refund not resolved yet\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('review appended', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.verdict).to.eql('not_solved'); });",
+                  "pm.test('message count snapshot present', () => pm.expect(json.data.messageCountAtReview).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Review trail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/tickets/{{ticketId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "tickets",
+                "{{ticketId}}",
+                "reviews"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('reviews returned', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read chat settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/chat-settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "chat-settings"
+              ]
+            },
+            "description": "Runtime settings from `base_system_setting` (section `support`); the DB value wins over YAML."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('settings map', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data).to.have.property('support.chat_enabled'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update chat settings (audited)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/chat-settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "chat-settings"
+              ]
+            },
+            "description": "Only the `support.*` allowlist is editable; each change writes a `base_setting_change_history` row. Safe to repeat.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"values\": {\n    \"support.last_seen_display\": \"true\"\n  },\n  \"reason\": \"Postman smoke\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('settings updated', () => pm.expect(json.code).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Non-allowlisted setting rejected",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/chat-settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "chat-settings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"values\": {\n    \"system.oss-type\": \"local\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected: storage backend is not runtime-editable', () => pm.expect(pm.response.json().code).to.not.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin FAQ list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/faqs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "faqs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('faq rows', () => { pm.expect(json.code).to.eql(0); pm.expect(json.data).to.be.an('array').that.is.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer token cannot open the staff inbox",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-token",
+                "value": "{{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/support/admin/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "support",
+                "admin",
+                "tickets"
+              ]
+            },
+            "description": "The customer group does not mount `/admin/*`; the staff guard also rejects a customer token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('blocked for a customer token', () => pm.expect(pm.response.code).to.be.oneOf([401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
