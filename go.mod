@@ -17,7 +17,7 @@ require (
 	golang.org/x/sync v0.24.0
 	golang.org/x/text v0.41.0
 	google.golang.org/api v0.279.0
-	gorm.io/datatypes v1.2.4
+	gorm.io/datatypes v1.2.7
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/driver/sqlserver v1.6.3
