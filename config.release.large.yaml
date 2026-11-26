@@ -382,3 +382,14 @@ support:
         allow-attachment-limits-edit: true   # size/mime limits only, never the storage backend
         require-change-reason: false
         max-welcome-message-bytes: 1000
+    push:
+        enabled: true                    # release: offline delivery on
+        collapse-window-seconds: 60     # larger deployment: collapse longer to survive fan-out bursts
+        max-preview-bytes: 140
+        max-title-bytes: 60
+        silent-for-roles: [support, quality]   # data-only push when presence is unknown
+        retry:
+            max-attempts: 3              # reuses the support.kafka.retry backoff shape
+        fcm:
+            credentials-file: ${FCM_CREDENTIALS_FILE:-}
+            project-id: ${FCM_PROJECT_ID:-}

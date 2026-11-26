@@ -1,5 +1,7 @@
 package support
 
+import "github.com/mo7amed4522/tayara_api/service/support/push"
+
 // ServiceGroup groups the support services; embedded into service.ServiceGroupApp.
 type ServiceGroup struct {
 	TicketServices
@@ -13,4 +15,5 @@ type ServiceGroup struct {
 	ReviewServices
 	FaqServices
 	OutboxServices
+	push.ServiceGroup
 }

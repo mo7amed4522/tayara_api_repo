@@ -89,6 +89,8 @@ func bizModel() error {
 		&supportModel.FaqVote{},
 		&supportModel.Presence{},
 		&supportModel.Attachment{},
+		&supportModel.PushToken{},
+		&supportModel.PushDispatch{},
 		// system
 		&system.SysAdminProfile{},
 		&system.JwtBlacklist{},

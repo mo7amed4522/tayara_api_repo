@@ -862,6 +862,25 @@ definitions:
     - reason
     - refundType
     type: object
+  request.RegisterPushTokenReq:
+    properties:
+      appVersion:
+        maxLength: 32
+        type: string
+      platform:
+        enum:
+        - ios
+        - android
+        - web
+        type: string
+      token:
+        maxLength: 512
+        minLength: 16
+        type: string
+    required:
+    - platform
+    - token
+    type: object
   request.RejectBookingReq:
     properties:
       alternativeDatesSuggested:
@@ -4607,6 +4626,18 @@ paths:
       summary: Vote on a FAQ entry (change-of-mind appends a new record)
       tags:
       - Support
+  /api/v1/support/notifications/stream:
+    get:
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: event stream
+          schema:
+            type: string
+      summary: Server-sent events for the caller's own support notifications (notification.created)
+      tags:
+      - Support
   /api/v1/support/presence:
     get:
       parameters:
@@ -4623,6 +4654,43 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Presence + last seen for actors sharing a readable conversation
+      tags:
+      - Support
+  /api/v1/support/push-tokens:
+    post:
+      parameters:
+      - description: platform, token, appVersion
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.RegisterPushTokenReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Register (or refresh) a device push token for the caller
+      tags:
+      - Support
+  /api/v1/support/push-tokens/{platform}:
+    delete:
+      parameters:
+      - description: ios|android|web
+        in: path
+        name: platform
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Revoke the caller's active push tokens on one platform
       tags:
       - Support
   /api/v1/support/sse-client:

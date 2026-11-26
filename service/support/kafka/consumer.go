@@ -53,6 +53,46 @@ func Consume(ctx context.Context, cfg config.SupportKafka, topic, groupID string
 	}
 }
 
+// NewPushReader builds the reader for the shared push consumer group. It is a separate group
+// from the per-instance SSE fanout groups: exactly one push per recipient is wanted, not one per
+// replica.
+func NewPushReader(cfg config.SupportKafka, topic, groupID string) (*kafka.Reader, error) {
+	if len(cfg.Brokers) == 0 {
+		return nil, errors.New("no kafka brokers configured")
+	}
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers:        cfg.Brokers,
+		GroupID:        groupID,
+		Topic:          topic,
+		MinBytes:       1,
+		MaxBytes:       10 << 20,
+		MaxWait:        500 * time.Millisecond,
+		StartOffset:    startOffset(cfg.Consumer.StartFromOldest),
+		CommitInterval: time.Second,
+	}), nil
+}
+
+// ConsumeWithReader runs the same commit-per-record loop as Consume over a supplied reader, so
+// tests can inject a fake fetcher.
+func ConsumeWithReader(ctx context.Context, r *kafka.Reader, handler func(ctx context.Context, key string, payload []byte) error) error {
+	for {
+		if ctx.Err() != nil {
+			return nil
+		}
+		msg, err := r.FetchMessage(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return nil
+			}
+			return err
+		}
+		_ = handler(ctx, string(msg.Key), msg.Value)
+		if err := r.CommitMessages(ctx, msg); err != nil && ctx.Err() == nil {
+			return err
+		}
+	}
+}
+
 func startOffset(oldest bool) int64 {
 	if oldest {
 		return kafka.FirstOffset

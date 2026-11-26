@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/middleware"
 )
 
@@ -44,6 +45,9 @@ func (r SupportRouter) InitSupportRouter(publicGroup, bxGroup, systemGroup *gin.
 		shared.GET("/attachments/:uuid", middleware.SupportRateLimit("attachment-read", 120, time.Minute), attachmentApi.Download)
 	}
 
+	// push token registration (X-token or S-token): both sides own devices
+	r.InitSupportPushRouter(shared)
+
 	// staff (S-token): support employees, quality reviewers and admins
 	{
 		staff.GET("/admin/tickets", ticketApi.AdminList)
@@ -59,4 +63,16 @@ func (r SupportRouter) InitSupportRouter(publicGroup, bxGroup, systemGroup *gin.
 		staff.PUT("/admin/faqs", middleware.SupportRateLimit("faq-admin", 60, time.Minute), adminApi.UpsertFaq)
 		staff.PUT("/admin/faqs/status", middleware.SupportRateLimit("faq-admin", 60, time.Minute), adminApi.FaqStatus)
 	}
+}
+
+// InitSupportPushRouter mounts the device token endpoints on the shared (X-token or S-token)
+// group. It must be called exactly once: gin panics on a duplicate method+path across groups.
+func (r SupportRouter) InitSupportPushRouter(shared *gin.RouterGroup) {
+	shared.POST("/push-tokens",
+		middleware.SupportRateLimit(constants.SupportRateLimitPushTokenRegister, 20, time.Minute), pushApi.Register)
+	shared.DELETE("/push-tokens/:platform",
+		middleware.SupportRateLimit(constants.SupportRateLimitPushTokenRevoke, 20, time.Minute), pushApi.Revoke)
+	// Real-time notification stream (the in-app half of the push pipeline).
+	shared.GET("/notifications/stream",
+		middleware.SupportRateLimit(constants.SupportRateLimitNotificationStream, 30, time.Minute), pushApi.NotificationStream)
 }

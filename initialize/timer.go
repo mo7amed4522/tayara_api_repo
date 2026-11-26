@@ -7,6 +7,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/service/booking"
 	"github.com/mo7amed4522/tayara_api/service/engage"
 	supportService "github.com/mo7amed4522/tayara_api/service/support"
+	supportPush "github.com/mo7amed4522/tayara_api/service/support/push"
 	"go.uber.org/zap"
 )
 
@@ -60,6 +61,20 @@ func Timer() {
 			}
 			if err := outbox.Sweep(); err != nil {
 				global.GVA_LOG.Warn("support outbox sweep failed", zap.Error(err))
+			}
+		}
+	}()
+	// Support push retry: re-attempt failed dispatches until the attempt cap (append-only).
+	go func() {
+		if global.GVA_DB == nil || !global.GVA_CONFIG.Support.Push.Enabled {
+			return
+		}
+		ticker := time.NewTicker(2 * time.Minute)
+		defer ticker.Stop()
+		var svc supportPush.PushServices
+		for range ticker.C {
+			if err := svc.RetryFailed(); err != nil {
+				global.GVA_LOG.Warn("support push retry sweep failed", zap.Error(err))
 			}
 		}
 	}()

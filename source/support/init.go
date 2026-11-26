@@ -100,6 +100,8 @@ func seedSettings(db *gorm.DB) error {
 			Value: strconv.FormatBool(cfg.Presence.LastSeenDisplay), Description: "Show last seen"},
 		{Section: constants.SupportSettingSection, Key: constants.SupportSettingHideLastSeenForRoles,
 			Value: strings.Join(cfg.Presence.HideLastSeenForRoles, ","), Description: "Roles whose last seen is hidden (CSV)"},
+		{Section: constants.SupportSettingSection, Key: constants.SupportSettingPushEnabled,
+			Value: strconv.FormatBool(cfg.Push.Enabled), Description: "Support push notifications enabled"},
 	}
 	for i := range rows {
 		rows[i].IsActive = true
@@ -160,6 +162,8 @@ func installTriggers(db *gorm.DB) {
 		{"support_assignment_history", "support_assignment_history is append-only"},
 		{"support_review", "support_review is append-only"},
 		{"support_presence", "support_presence is append-only"},
+		{"support_push_token", "support_push_token is append-only"},
+		{"support_push_dispatch", "support_push_dispatch is append-only"},
 	}
 	for _, t := range appendOnly {
 		stmts = append(stmts,

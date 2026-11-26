@@ -418,3 +418,14 @@ support:
         allow-attachment-limits-edit: true   # size/mime limits only, never the storage backend
         require-change-reason: false
         max-welcome-message-bytes: 1000
+    push:
+        enabled: false                   # offline FCM delivery; the SSE stream stays the primary path
+        collapse-window-seconds: 30      # at most one OS notification per recipient+conversation
+        max-preview-bytes: 140
+        max-title-bytes: 60
+        silent-for-roles: [support, quality]   # data-only push when presence is unknown
+        retry:
+            max-attempts: 3              # reuses the support.kafka.retry backoff shape
+        fcm:
+            credentials-file: ${FCM_CREDENTIALS_FILE:-}
+            project-id: ${FCM_PROJECT_ID:-}

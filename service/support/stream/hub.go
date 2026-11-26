@@ -11,12 +11,13 @@ type Event struct {
 	Data []byte
 }
 
-// Hub keeps a bounded subscriber set per conversation. Slow consumers are dropped rather than
-// allowed to block the fan-out goroutine.
+// Hub keeps a bounded subscriber set per conversation and per actor. Slow consumers are dropped
+// rather than allowed to block the fan-out goroutine.
 type Hub struct {
-	mu   sync.RWMutex
-	subs map[uint]map[*Subscription]struct{}
-	done bool
+	mu     sync.RWMutex
+	subs   map[uint]map[*Subscription]struct{}
+	actors map[string]map[*Subscription]struct{}
+	done   bool
 }
 
 // Subscription is one SSE client's channel plus its cancel function.
@@ -29,7 +30,10 @@ type Subscription struct {
 
 // NewHub builds an empty hub.
 func NewHub() *Hub {
-	return &Hub{subs: map[uint]map[*Subscription]struct{}{}}
+	return &Hub{
+		subs:   map[uint]map[*Subscription]struct{}{},
+		actors: map[string]map[*Subscription]struct{}{},
+	}
 }
 
 // Default is the process-wide hub used by the HTTP handler and the Kafka relay.
@@ -90,6 +94,69 @@ func (h *Hub) Broadcast(conversationID uint, e Event) {
 	}
 }
 
+// SubscribeActor registers a client for one actor key (`support:9`), used by the per-user
+// notification stream. Call cancel when the client disconnects.
+func (h *Hub) SubscribeActor(actorKey string) (*Subscription, func()) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.done || actorKey == "" {
+		ch := make(chan Event)
+		close(ch)
+		return &Subscription{C: ch, ch: ch, h: h}, func() {}
+	}
+	ch := make(chan Event, 32)
+	s := &Subscription{C: ch, ch: ch, h: h}
+	if h.actors[actorKey] == nil {
+		h.actors[actorKey] = map[*Subscription]struct{}{}
+	}
+	h.actors[actorKey][s] = struct{}{}
+	var once sync.Once
+	cancel := func() {
+		once.Do(func() { h.removeActor(actorKey, s) })
+	}
+	return s, cancel
+}
+
+func (h *Hub) removeActor(actorKey string, s *Subscription) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if set, ok := h.actors[actorKey]; ok {
+		if _, exists := set[s]; exists {
+			delete(set, s)
+			close(s.ch)
+		}
+		if len(set) == 0 {
+			delete(h.actors, actorKey)
+		}
+	}
+}
+
+// BroadcastActor delivers an event to every connection of one actor, dropping a client whose
+// buffer is full (it will reconnect and read the notification list from the database).
+func (h *Hub) BroadcastActor(actorKey string, e Event) {
+	h.mu.RLock()
+	set := h.actors[actorKey]
+	targets := make([]*Subscription, 0, len(set))
+	for s := range set {
+		targets = append(targets, s)
+	}
+	h.mu.RUnlock()
+	for _, s := range targets {
+		select {
+		case s.ch <- e:
+		default:
+			h.removeActor(actorKey, s)
+		}
+	}
+}
+
+// CountActor reports the current subscriber count for one actor.
+func (h *Hub) CountActor(actorKey string) int {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return len(h.actors[actorKey])
+}
+
 // Count reports the current subscriber count (tests and metrics).
 func (h *Hub) Count(conversationID uint) int {
 	h.mu.RLock()
@@ -107,5 +174,11 @@ func (h *Hub) CloseAll() {
 			close(s.ch)
 		}
 		delete(h.subs, id)
+	}
+	for key, set := range h.actors {
+		for s := range set {
+			close(s.ch)
+		}
+		delete(h.actors, key)
 	}
 }
