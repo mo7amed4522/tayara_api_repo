@@ -6,6 +6,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/service/booking"
 	"github.com/mo7amed4522/tayara_api/service/engage"
+	supportService "github.com/mo7amed4522/tayara_api/service/support"
 	"go.uber.org/zap"
 )
 
@@ -26,6 +27,39 @@ func Timer() {
 			// release reservation holds that outlived their pay window
 			if err := svc.ReleaseExpiredHolds(); err != nil {
 				global.GVA_LOG.Warn("hold release sweep failed", zap.Error(err))
+			}
+		}
+	}()
+	// Support presence expiry: repair state left behind by a killed process (TTL sweep).
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		var svc supportService.PresenceServices
+		for range ticker.C {
+			if err := svc.SweepExpired(); err != nil {
+				global.GVA_LOG.Warn("support presence sweep failed", zap.Error(err))
+			}
+		}
+	}()
+	// Support last-seen flush + orphan attachment sweep.
+	go func() {
+		if global.GVA_DB == nil {
+			return
+		}
+		ticker := time.NewTicker(time.Minute)
+		defer ticker.Stop()
+		var lastSeen supportService.LastSeenServices
+		var attachments supportService.AttachmentServices
+		var outbox supportService.OutboxServices
+		for range ticker.C {
+			if err := lastSeen.Flush(); err != nil {
+				global.GVA_LOG.Warn("support last seen flush failed", zap.Error(err))
+			}
+			if err := attachments.OrphanCleanup(); err != nil {
+				global.GVA_LOG.Warn("support orphan attachment sweep failed", zap.Error(err))
+			}
+			if err := outbox.Sweep(); err != nil {
+				global.GVA_LOG.Warn("support outbox sweep failed", zap.Error(err))
 			}
 		}
 	}()

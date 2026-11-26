@@ -9,6 +9,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
 	"github.com/mo7amed4522/tayara_api/model/engage"
 	paymentModel "github.com/mo7amed4522/tayara_api/model/payment"
+	supportModel "github.com/mo7amed4522/tayara_api/model/support"
 	"github.com/mo7amed4522/tayara_api/model/system"
 )
 
@@ -78,6 +79,16 @@ func bizModel() error {
 		&paymentModel.Refund{},
 		&paymentModel.Payout{},
 		&paymentModel.CommissionRecord{},
+		// support (tickets, chat, presence, attachments)
+		&supportModel.Ticket{},
+		&supportModel.Conversation{},
+		&supportModel.Message{},
+		&supportModel.AssignmentHistory{},
+		&supportModel.Review{},
+		&supportModel.Faq{},
+		&supportModel.FaqVote{},
+		&supportModel.Presence{},
+		&supportModel.Attachment{},
 		// system
 		&system.SysAdminProfile{},
 		&system.JwtBlacklist{},

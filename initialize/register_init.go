@@ -12,6 +12,7 @@ import (
 	_ "github.com/mo7amed4522/tayara_api/source/dxapi"
 	_ "github.com/mo7amed4522/tayara_api/source/engage"
 	_ "github.com/mo7amed4522/tayara_api/source/payment"
+	_ "github.com/mo7amed4522/tayara_api/source/support"
 	_ "github.com/mo7amed4522/tayara_api/source/system"
 )
 

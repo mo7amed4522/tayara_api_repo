@@ -55,6 +55,9 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// analytics (admin aggregate cards + agent dashboard card)
 	router.RouterGroupApp.Analytics.InitAnalyticsRouter(managePrivate, systemPrivate)
 
+	// support chat (customer tickets + staff inbox, presence, attachments)
+	router.RouterGroupApp.Support.InitSupportRouter(publicGroup, bxPrivate, systemPrivate)
+
 	// base lookups (shared categories + settings change history)
 	router.RouterGroupApp.Base.InitLookupRouter(publicGroup, systemPrivate)
 

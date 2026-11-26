@@ -1,0 +1,30 @@
+$kind: kafka-message
+name: ticket.assigned ticket 1
+topic: tayara.support.chat.events.v1
+key:
+  contentType: text
+  content: "1"
+value:
+  contentType: json
+  content: |-
+    {
+      "schema_version": 1,
+      "event_id": "0193f0aa-1c2b-7c11-8a01-9b1c2d3e4f11",
+      "event_type": "ticket.assigned",
+      "occurred_at": "2026-11-26T10:00:00Z",
+      "conversation_id": 1,
+      "ticket_id": 1,
+      "data": {
+        "from_employee_id": null,
+        "to_employee_id": 1,
+        "reason": "first assignment"
+      }
+    }
+headers:
+  - key: content-type
+    value: application/json
+  - key: x-event-type
+    value: ticket.assigned
+  - key: schema-version
+    value: "1"
+order: 1000

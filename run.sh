@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
-# run.sh — local dev bootstrap for the Tayara API.
+# run.sh — local dev bootstrap for the Tayara API, no Docker.
 #
-# 1. Reads config.yaml (mysql/redis/mongo section) for ports, credentials, db names.
-# 2. Asks which infra containers to create/start via docker compose
-#    (mysql / redis / mongo / all / none — choose none if you already run them locally).
-# 3. Asks whether to start the API server with `go run main.go`.
+# Starts, in order, whatever is not already listening:
+#   1. MySQL   (local tarball install, mysqld on :3306)
+#   2. Redis   (local install, redis-server on :6379)
+#   3. Kafka   (local install, broker on :9092) + the four support topics
+# then runs the API with `go run main.go` (HTTP on :8888).
 #
-# Usage: ./run.sh            (interactive)
-#        ./run.sh all        (non-interactive: all infra + no server prompt is skipped)
+# Every service is skipped when its port is already open, so re-running is safe.
+# Paths can be overridden: MYSQL_HOME=… MYSQL_DATA=… REDIS_HOME=… KAFKA_HOME=… ./run.sh
+#
+# Usage: ./run.sh
 set -euo pipefail
 cd "$(dirname "$0")"
 
 CONFIG_FILE="config.yaml"
-COMPOSE_FILE="docker-compose.yml"
+LOG_DIR="log"
+mkdir -p "$LOG_DIR"
 
 # ---------------------------------------------------------------- helpers ----
 # yq-free yaml getter: reads `section:` then `key:` (2-space indented, comments stripped).
@@ -22,93 +26,140 @@ yaml_get() { # yaml_get <section> <key>
         /^[a-zA-Z]/                   { insec=0 }
         insec && $0 ~ "^[[:space:]]+"key":" {
             sub("^[^:]*:[[:space:]]*", "")
-            sub(/[[:space:]]+#.*$/, "")        # strip trailing comment
-            gsub(/^"|"$/, "")                  # strip surrounding quotes
+            sub(/[[:space:]]+#.*$/, "")
+            gsub(/^"|"$/, "")
             print; exit
         }
     ' "$CONFIG_FILE"
 }
 
-confirm() { # confirm <prompt> <default y|n>
-    local prompt="$1" default="${2:-y}" reply
-    if [[ "$default" == "y" ]]; then prompt="$prompt [Y/n] "; else prompt="$prompt [y/N] "; fi
-    read -r -p "$prompt" reply
-    reply="${reply:-$default}"
-    [[ "$reply" =~ ^[Yy]$ ]]
+# Resolve a yaml value that may be written as ${VAR}, ${VAR:-default} or ${VAR-default}.
+env_value() {
+    local raw="$1" name
+    if [[ "$raw" =~ ^\$\{([A-Za-z_][A-Za-z0-9_]*):-(.*)\}$ ]]; then
+        name="${BASH_REMATCH[1]}"; printf '%s' "${!name:-${BASH_REMATCH[2]}}"
+    elif [[ "$raw" =~ ^\$\{([A-Za-z_][A-Za-z0-9_]*)-(.*)\}$ ]]; then
+        name="${BASH_REMATCH[1]}"; printf '%s' "${!name-${BASH_REMATCH[2]}}"
+    elif [[ "$raw" =~ ^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$ ]]; then
+        printf '%s' "${!BASH_REMATCH[1]:-}"
+    else
+        printf '%s' "$raw"
+    fi
+}
+
+port_open() { nc -z 127.0.0.1 "$1" >/dev/null 2>&1; }
+
+# Start a long-running process detached: ignores Ctrl+C / hangup so stopping the API
+# (the last line of this script) leaves MySQL, Redis and Kafka running.
+spawn() { # spawn <logfile> <command...>
+    local logfile="$1"; shift
+    ( trap '' HUP INT; exec "$@" ) >>"$logfile" 2>&1 &
+    disown || true
+}
+
+wait_port() { # wait_port <port> <label> [tries]
+    local port="$1" label="$2" tries="${3:-60}" i
+    for ((i = 0; i < tries; i++)); do
+        if port_open "$port"; then echo "   $label ready on :$port"; return 0; fi
+        sleep 1
+    done
+    return 1
 }
 
 die() { echo "error: $*" >&2; exit 1; }
 
 # ------------------------------------------------------------ read config ----
-[[ -f "$CONFIG_FILE" ]]   || die "$CONFIG_FILE not found"
-[[ -f "$COMPOSE_FILE" ]]  || die "$COMPOSE_FILE not found"
+[[ -f "$CONFIG_FILE" ]] || die "$CONFIG_FILE not found"
 
-MYSQL_PORT=$(yaml_get mysql port);            MYSQL_PORT=${MYSQL_PORT:-3306}
-MYSQL_DB=$(yaml_get mysql db-name);           MYSQL_DB=${MYSQL_DB:-tayara}
-MYSQL_USER=$(yaml_get mysql username);        MYSQL_USER=${MYSQL_USER:-root}
-MYSQL_PASS=$(yaml_get mysql password);        MYSQL_PASS=${MYSQL_PASS:-tayara_2026}
-
-REDIS_ADDR=$(yaml_get redis addr)             # host:port
+MYSQL_PORT=$(env_value "$(yaml_get mysql port)"); MYSQL_PORT=${MYSQL_PORT:-3306}
+REDIS_ADDR=$(env_value "$(yaml_get redis addr)")
 REDIS_PORT=${REDIS_ADDR##*:}; REDIS_PORT=${REDIS_PORT:-6379}
-REDIS_PASS=$(yaml_get redis password)
 
-MONGO_PORT=$(yaml_get mongo hosts)            # hosts has its own key — fallback below
-MONGO_PORT=$(awk '/^mongo:/{f=1} f&&/port:/{gsub(/[ "]/,"",$2); print $2; exit}' "$CONFIG_FILE")
-MONGO_PORT=${MONGO_PORT:-27017}
-MONGO_DB=$(yaml_get mongo database);          MONGO_DB=${MONGO_DB:-tayara}
-MONGO_USER=$(yaml_get mongo username);        MONGO_USER=${MONGO_USER:-admin}
-MONGO_PASS=$(yaml_get mongo password);        MONGO_PASS=${MONGO_PASS:-tayara_2026}
+# Paths from this machine (override with env vars).
+MYSQL_HOME="${MYSQL_HOME:-/Volumes/Untitled/mysql/mysql-26.7.0-macos15-arm64}"
+MYSQL_DATA="${MYSQL_DATA:-/Volumes/Untitled/mysql/data}"
+MYSQL_SOCKET="${MYSQL_SOCKET:-/tmp/mysql.sock}"
+REDIS_HOME="${REDIS_HOME:-/Volumes/Untitled/redis}"
+REDIS_CONF="${REDIS_CONF:-$REDIS_HOME/redis-7.4.6/redis.conf}"
+KAFKA_HOME="${KAFKA_HOME:-}"
 
-# map config.yaml values onto the env vars docker-compose.yml understands
-export MYSQL_PORT MYSQL_DATABASE="$MYSQL_DB" MYSQL_USER MYSQL_PASSWORD="$MYSQL_PASS" \
-       MYSQL_ROOT_PASSWORD="$MYSQL_PASS" \
-       REDIS_PORT MONGO_PORT MONGO_DATABASE="$MONGO_DB" MONGO_USER="$MONGO_USER" MONGO_PASSWORD="$MONGO_PASS"
+echo "local bootstrap → mysql:$MYSQL_PORT | redis:$REDIS_PORT | kafka:9092 | api:8888"
 
-echo "config.yaml → mysql:$MYSQL_PORT db=$MYSQL_DB | redis:$REDIS_PORT | mongo:$MONGO_PORT db=$MONGO_DB"
-
-# ------------------------------------------------------- pick infra services --
-CHOICE="${1:-}"
-if [[ -z "$CHOICE" ]]; then
-    echo
-    echo "Which infrastructure containers do you want to create/start?"
-    echo "  1) mysql   2) redis   3) mongo   4) all   5) none (already installed locally)"
-    read -r -p "Choice [4]: " CHOICE
-    CHOICE=${CHOICE:-4}
-fi
-
-SERVICES=()
-case "$CHOICE" in
-    1|mysql)        SERVICES=(mysql) ;;
-    2|redis)        SERVICES=(redis) ;;
-    3|mongo)        SERVICES=(mongo) ;;
-    4|all|"")       SERVICES=(mysql redis mongo) ;;
-    5|none|skip)    SERVICES=() ;;
-    *)              die "unknown choice: $CHOICE (use mysql|redis|mongo|all|none)" ;;
-esac
-
-if [[ ${#SERVICES[@]} -gt 0 ]]; then
-    command -v docker >/dev/null || die "docker not found — install Docker Desktop or pick 'none'"
-    echo "→ docker compose up -d ${SERVICES[*]}"
-    docker compose -f "$COMPOSE_FILE" up -d "${SERVICES[@]}"
-
-    echo "→ waiting for containers to become healthy…"
-    for svc in "${SERVICES[@]}"; do
-        for _ in $(seq 1 30); do
-            status=$(docker inspect -f '{{.State.Health.Status}}' "tayara-$svc" 2>/dev/null || echo "missing")
-            [[ "$status" == "healthy" ]] && break
-            sleep 2
-        done
-        echo "   $svc: $status"
-        [[ "$status" == "healthy" ]] || die "$svc did not become healthy — check: docker compose logs $svc"
-    done
+# ----------------------------------------------------------------- MySQL -----
+if port_open "$MYSQL_PORT"; then
+    echo "→ MySQL already running on :$MYSQL_PORT"
 else
-    echo "→ skipping containers (using your locally installed mysql/redis/mongo)"
+    [[ -x "$MYSQL_HOME/bin/mysqld" ]] || die "mysqld not found at $MYSQL_HOME/bin/mysqld (set MYSQL_HOME)"
+    echo "→ starting MySQL from $MYSQL_HOME (log: $LOG_DIR/mysqld.log)"
+    spawn "$LOG_DIR/mysqld.log" "$MYSQL_HOME/bin/mysqld" \
+        --basedir="$MYSQL_HOME" \
+        --datadir="$MYSQL_DATA" \
+        --port="$MYSQL_PORT" \
+        --socket="$MYSQL_SOCKET" \
+        --console
+    wait_port "$MYSQL_PORT" "MySQL" 60 || die "MySQL did not open :$MYSQL_PORT — check $LOG_DIR/mysqld.log"
 fi
 
-# ------------------------------------------------------------- run server? ---
-echo
-if confirm "Start the API server now (go run main.go)?" "y"; then
-    exec go run main.go
+# ----------------------------------------------------------------- Redis -----
+if port_open "$REDIS_PORT"; then
+    echo "→ Redis already running on :$REDIS_PORT"
+else
+    [[ -x "$REDIS_HOME/bin/redis-server" ]] || die "redis-server not found at $REDIS_HOME/bin/redis-server (set REDIS_HOME)"
+    [[ -f "$REDIS_CONF" ]] || die "redis config not found at $REDIS_CONF (set REDIS_CONF)"
+    echo "→ starting Redis from $REDIS_HOME (log: $LOG_DIR/redis.log)"
+    ROOT_DIR=$(pwd -P)
+    ( cd "$REDIS_HOME" && spawn "$ROOT_DIR/$LOG_DIR/redis.log" ./bin/redis-server "$REDIS_CONF" )
+    wait_port "$REDIS_PORT" "Redis" 45 || die "Redis did not open :$REDIS_PORT — check $LOG_DIR/redis.log"
 fi
 
-echo "Done. Start later with: go run main.go"
+# ----------------------------------------------------------------- Kafka -----
+# Find a local Kafka install: explicit KAFKA_HOME, then the usual spots.
+if [[ -z "$KAFKA_HOME" ]]; then
+    for candidate in /Volumes/Untitled/kafka* /Volumes/Untitled/kafka_[0-9]* "$HOME"/kafka* "$HOME"/Downloads/kafka* \
+                     /opt/homebrew/opt/kafka/libexec /usr/local/opt/kafka/libexec /opt/kafka; do
+        if [[ -x "${candidate%/}/bin/kafka-server-start.sh" ]]; then KAFKA_HOME="${candidate%/}"; break; fi
+    done
+fi
+
+if port_open 9092; then
+    echo "→ Kafka already running on :9092"
+elif [[ -n "$KAFKA_HOME" && -x "$KAFKA_HOME/bin/kafka-server-start.sh" ]]; then
+    KAFKA_CONFIG="$KAFKA_HOME/config/kraft/server.properties"
+    [[ -f "$KAFKA_CONFIG" ]] || die "KRaft config not found: $KAFKA_CONFIG"
+    KAFKA_LOG_DIRS=$(awk -F= '/^[[:space:]]*log\.dirs[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2}' "$KAFKA_CONFIG")
+    KAFKA_LOG_DIRS=${KAFKA_LOG_DIRS%%,*}
+    if [[ ! -f "${KAFKA_LOG_DIRS}/meta.properties" ]]; then
+        echo "→ formatting Kafka KRaft storage in $KAFKA_LOG_DIRS"
+        CLUSTER_ID=$("$KAFKA_HOME/bin/kafka-storage.sh" random-uuid)
+        "$KAFKA_HOME/bin/kafka-storage.sh" format -t "$CLUSTER_ID" -c "$KAFKA_CONFIG" >/dev/null
+    fi
+    echo "→ starting Kafka from $KAFKA_HOME (log: $LOG_DIR/kafka.log)"
+    spawn "$LOG_DIR/kafka.log" "$KAFKA_HOME/bin/kafka-server-start.sh" "$KAFKA_CONFIG"
+    wait_port 9092 "Kafka" 90 || die "Kafka did not open :9092 — check $LOG_DIR/kafka.log"
+else
+    # Nothing on :9092 and no install to launch: run this session without the bus so the
+    # fanout consumers do not retry-dial a dead port forever. Chat still works (DB + local hub).
+    export KAFKA_ENABLED=false
+    echo "warning: no local Kafka found (looked for bin/kafka-server-start.sh in KAFKA_HOME, /Volumes/Untitled/kafka*, \$HOME/kafka*, Homebrew, /opt/kafka)."
+    echo "         Starting the API with the bus disabled for this run; messages persist and fan out locally."
+    echo "         Point the script at your install with: KAFKA_HOME=/path/to/kafka ./run.sh"
+fi
+
+# Create the support topics (auto-create is disabled in config.yaml).
+if port_open 9092; then
+    if [[ -n "$KAFKA_HOME" && -x "$KAFKA_HOME/bin/kafka-topics.sh" ]]; then
+        echo "→ ensuring support topics exist"
+        for topic in tayara.support.chat.messages.v1 tayara.support.chat.events.v1 \
+                     tayara.support.chat.messages.dlq.v1 tayara.support.presence.v1; do
+            "$KAFKA_HOME/bin/kafka-topics.sh" --bootstrap-server localhost:9092 \
+                --create --if-not-exists --topic "$topic" --partitions 3 --replication-factor 1 \
+                >/dev/null 2>&1 || echo "   could not create $topic"
+        done
+    else
+        echo "warning: Kafka is up but kafka-topics.sh was not found; create the four tayara.support.* topics manually."
+    fi
+fi
+
+# ------------------------------------------------------------------ API -----
+echo "→ starting API (go run main.go) on :8888"
+exec go run main.go

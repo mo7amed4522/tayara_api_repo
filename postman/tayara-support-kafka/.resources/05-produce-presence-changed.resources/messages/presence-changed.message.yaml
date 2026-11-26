@@ -1,0 +1,31 @@
+$kind: kafka-message
+name: support 9 online
+topic: tayara.support.presence.v1
+key:
+  contentType: text
+  content: support:9
+value:
+  contentType: json
+  content: |-
+    {
+      "schema_version": 1,
+      "event_id": "0193f0aa-1c2b-7c11-8a01-9b1c2d3e4f21",
+      "event_type": "presence.changed",
+      "occurred_at": "2026-11-26T10:00:00Z",
+      "data": {
+        "actor_type": "support",
+        "actor_id": 9,
+        "state": "online",
+        "previous_state": "offline",
+        "last_seen_at": "2026-11-26T10:00:00Z",
+        "last_seen_visible": true
+      }
+    }
+headers:
+  - key: content-type
+    value: application/json
+  - key: x-event-type
+    value: presence.changed
+  - key: schema-version
+    value: "1"
+order: 1000

@@ -41,6 +41,9 @@ func NotFoundErr(msg string) *AppError { return WithCode(constants.CodeNotFound,
 // ConflictErr is a shorthand for state/duplicate conflicts (HTTP 409).
 func ConflictErr(msg string) *AppError { return WithCode(constants.CodeConflict, msg) }
 
+// ForbiddenErr is a shorthand for authenticated-but-not-allowed failures (HTTP 403).
+func ForbiddenErr(msg string) *AppError { return WithCode(constants.CodeForbidden, msg) }
+
 // InternalErr is a shorthand for unexpected failures (HTTP 500).
 func InternalErr(msg string) *AppError { return WithCode(constants.CodeInternal, msg) }
 

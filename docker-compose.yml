@@ -49,6 +49,50 @@ services:
       timeout: 3s
       retries: 10
 
+  # Kafka-compatible broker (Redpanda, single node, KRaft — no ZooKeeper).
+  # Kafka API on localhost:9092, admin API on localhost:9644.
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: tayara-redpanda
+    restart: unless-stopped
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --smp=1
+      - --memory=1G
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      - --rpc-addr=0.0.0.0:33145
+      - --advertise-rpc-addr=redpanda:33145
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_ADMIN_PORT:-9644}:9644"
+    volumes:
+      - redpanda-data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+
+  # Browser UI for topics / records / consumer groups.
+  redpanda-console:
+    image: redpandadata/console:latest
+    container_name: tayara-redpanda-console
+    restart: unless-stopped
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKERS: redpanda:29092
+    ports:
+      - "${KAFKA_GUI_PORT:-8083}:8080"
+
   mongo:
     image: mongo:latest
     container_name: tayara-mongo
@@ -132,7 +176,15 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
+      redpanda:
+        condition: service_healthy
     environment:
+      # Real Kafka broker for support chat. The config reader expands ${KAFKA_BROKERS}
+      # so the container resolves the compose service name, not localhost.
+      KAFKA_ENABLED: "true"
+      KAFKA_BROKERS: ${KAFKA_BROKERS:-redpanda:29092}
+      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
+      INSTANCE_ID: ${INSTANCE_ID:-tayara-app}
       # The config reader expands ${...} references (core/viper.go + expandEnv), so these
       # inject Stripe / BNPL secrets from the host without baking them into the image.
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
@@ -152,4 +204,5 @@ volumes:
   mysql-data:
   redis-data:
   mongo-data:
+  redpanda-data:
   app-uploads:

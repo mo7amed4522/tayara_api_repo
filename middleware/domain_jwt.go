@@ -31,6 +31,25 @@ func SystemJWTAuth() gin.HandlerFunc {
 	return domainJWTAuth(SystemTokenHeader, "claims", "systemUserID")
 }
 
+// SupportJWTAuth accepts either a customer X-token or a staff S-token. Routes that both sides
+// share must be registered once, because gin rejects the same method+path a second time on the
+// same engine even when the guards differ.
+func SupportJWTAuth() gin.HandlerFunc {
+	customer := BxDomainJWTAuth()
+	staff := SystemJWTAuth()
+	return func(c *gin.Context) {
+		token := c.GetHeader(BxTokenHeader)
+		if token == "" {
+			token = c.GetHeader(strings.ToLower(BxTokenHeader))
+		}
+		if token != "" {
+			customer(c)
+			return
+		}
+		staff(c)
+	}
+}
+
 func domainJWTAuth(headerName, claimsKey, userIDKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader(headerName)

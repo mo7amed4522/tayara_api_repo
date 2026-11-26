@@ -51,6 +51,8 @@ type Server struct {
 	Travel Travel `mapstructure:"travel" json:"travel" yaml:"travel"`
 	// Payment orchestrator config (BNPL providers + enabled payment methods)
 	Payment Payment `mapstructure:"payment" json:"payment" yaml:"payment"`
+	// Real-time support chat (Kafka transport, presence, last seen, attachments)
+	Support SupportConfig `mapstructure:"support" json:"support" yaml:"support"`
 }
 type OrderPay struct {
 	PayHost string `mapstructure:"payHost" json:"payHost" yaml:"payHost"`

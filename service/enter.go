@@ -10,6 +10,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/service/export"
 	"github.com/mo7amed4522/tayara_api/service/payment"
 	"github.com/mo7amed4522/tayara_api/service/search"
+	"github.com/mo7amed4522/tayara_api/service/support"
 	"github.com/mo7amed4522/tayara_api/service/system"
 	"github.com/mo7amed4522/tayara_api/service/ticket"
 )
@@ -28,4 +29,5 @@ type ServiceGroup struct {
 	SearchServiceGroup    search.ServiceGroup
 	ExportServiceGroup    export.ServiceGroup
 	TicketServiceGroup    ticket.ServiceGroup
+	SupportServiceGroup   support.ServiceGroup
 }

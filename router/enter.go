@@ -11,6 +11,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/router/export"
 	"github.com/mo7amed4522/tayara_api/router/payment"
 	"github.com/mo7amed4522/tayara_api/router/search"
+	supportRouter "github.com/mo7amed4522/tayara_api/router/support"
 	"github.com/mo7amed4522/tayara_api/router/system"
 	"github.com/mo7amed4522/tayara_api/router/ticket"
 )
@@ -30,4 +31,5 @@ type RouterGroup struct {
 	Search    search.RouterGroup
 	Export    export.RouterGroup
 	Ticket    ticket.RouterGroup
+	Support   supportRouter.RouterGroup
 }
