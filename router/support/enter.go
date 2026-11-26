@@ -15,4 +15,5 @@ var (
 	faqApi        = api.ApiGroupApp.SupportApiGroup.FaqApi
 	adminApi      = api.ApiGroupApp.SupportApiGroup.AdminApi
 	sseClientApi  = api.ApiGroupApp.SupportApiGroup.SseClientApi
+	pushApi       = api.ApiGroupApp.SupportApiGroup.PushApi
 )

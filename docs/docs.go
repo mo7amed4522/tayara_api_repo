@@ -5305,6 +5305,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/support/notifications/stream": {
+            "get": {
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Server-sent events for the caller's own support notifications (notification.created)",
+                "responses": {
+                    "200": {
+                        "description": "event stream",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/support/presence": {
             "get": {
                 "produces": [
@@ -5320,6 +5339,64 @@ const docTemplate = `{
                         "description": "comma separated actor keys, e.g. support:9,customer:51",
                         "name": "ids",
                         "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/push-tokens": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Register (or refresh) a device push token for the caller",
+                "parameters": [
+                    {
+                        "description": "platform, token, appVersion",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.RegisterPushTokenReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/support/push-tokens/{platform}": {
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Revoke the caller's active push tokens on one platform",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ios|android|web",
+                        "name": "platform",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -7818,6 +7895,32 @@ const docTemplate = `{
                 "refundType": {
                     "description": "full|partial",
                     "type": "string"
+                }
+            }
+        },
+        "request.RegisterPushTokenReq": {
+            "type": "object",
+            "required": [
+                "platform",
+                "token"
+            ],
+            "properties": {
+                "appVersion": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "platform": {
+                    "type": "string",
+                    "enum": [
+                        "ios",
+                        "android",
+                        "web"
+                    ]
+                },
+                "token": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "minLength": 16
                 }
             }
         },

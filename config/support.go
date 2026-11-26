@@ -8,6 +8,7 @@ type SupportConfig struct {
 	Chat     SupportChat       `mapstructure:"chat" json:"chat" yaml:"chat"`
 	Presence SupportPresence   `mapstructure:"presence" json:"presence" yaml:"presence"`
 	Admin    SupportAdminBlock `mapstructure:"admin" json:"admin" yaml:"admin"`
+	Push     SupportPush       `mapstructure:"push" json:"push" yaml:"push"`
 }
 
 // SupportKafka is the broker transport configuration. Disabled by default so an existing

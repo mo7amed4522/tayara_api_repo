@@ -10,6 +10,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/config"
 	"github.com/mo7amed4522/tayara_api/global"
 	supportKafka "github.com/mo7amed4522/tayara_api/service/support/kafka"
+	"github.com/mo7amed4522/tayara_api/service/support/push"
 	"github.com/mo7amed4522/tayara_api/service/support/stream"
 	"go.uber.org/zap"
 )
@@ -55,6 +56,11 @@ func Support() {
 
 		go consumeFanout(ctx, cfg, supportKafka.MessagesTopic(), group)
 		go consumeFanout(ctx, cfg, supportKafka.PresenceTopic(), group+"-presence")
+		// Offline delivery runs after the SSE fanout: presence is only refreshed by the stream, so
+		// the push decision must never be able to pre-empt it.
+		if global.GVA_CONFIG.Support.Push.Enabled {
+			go consumePush(ctx, cfg)
+		}
 	})
 }
 
@@ -79,6 +85,24 @@ func consumeFanout(ctx context.Context, cfg config.SupportKafka, topic, group st
 		}
 		if global.GVA_LOG != nil {
 			global.GVA_LOG.Warn("support fanout consumer stopped; retrying", zap.Error(err))
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(5 * time.Second):
+		}
+	}
+}
+
+// consumePush keeps the shared push consumer group running until ctx is cancelled.
+func consumePush(ctx context.Context, cfg config.SupportKafka) {
+	for {
+		err := push.Consume(ctx, cfg, push.DispatcherInstance())
+		if ctx.Err() != nil {
+			return
+		}
+		if global.GVA_LOG != nil {
+			global.GVA_LOG.Warn("support push consumer stopped; retrying", zap.Error(err))
 		}
 		select {
 		case <-ctx.Done():

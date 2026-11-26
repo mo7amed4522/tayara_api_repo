@@ -3,6 +3,7 @@ package engage
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/mo7amed4522/tayara_api/constants"
 	"github.com/mo7amed4522/tayara_api/global"
@@ -11,6 +12,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/service/engage/dispatch"
 	"github.com/mo7amed4522/tayara_api/utils"
 	"go.uber.org/zap"
+	"gorm.io/gorm/clause"
 )
 
 // NotificationServices records and delivers notifications. Templates drive the message body; the
@@ -134,6 +136,83 @@ func (n NotificationServices) deviceTokens(userID uint) ([]string, error) {
 		out = append(out, r.Token)
 	}
 	return out, nil
+}
+
+// Render applies the active admin template for (eventType, channel) to a generated title/body. A
+// template may reference the generated values with {{title}} and {{body}}, so a wrapper such as
+// "Support: {{title}}" keeps the chat preview. A missing template or an empty field keeps the
+// caller's value.
+func (n NotificationServices) Render(eventType, channel, title, body string) (string, string) {
+	if global.GVA_DB == nil {
+		return title, body
+	}
+	var tpl engage.NotificationTemplate
+	if err := global.GVA_DB.Where("event_type = ? AND channel = ? AND is_active = ?", eventType, channel, true).
+		First(&tpl).Error; err != nil {
+		return title, body
+	}
+	generatedTitle, generatedBody := title, body
+	if tpl.Subject != "" {
+		title = expandNotificationTemplate(tpl.Subject, generatedTitle, generatedBody)
+	}
+	if tpl.Body != "" {
+		body = expandNotificationTemplate(tpl.Body, generatedTitle, generatedBody)
+	}
+	return title, body
+}
+
+// Record persists a notification without delivering it, for callers that own delivery. The code is
+// the idempotency key: when a row with that code already exists nothing is written and created is
+// false. The caller marks the delivery outcome with SetStatusByCode.
+func (n NotificationServices) Record(code, eventType, recipientType string, recipientID uint, channel, title, body, imageURL string) (uint, bool, error) {
+	if global.GVA_DB == nil {
+		return 0, false, errors.New("db not init")
+	}
+	if code == "" {
+		code = utils.NextCode(constants.CodePrefixNotification)
+	}
+	rec := &engage.Notification{
+		NotificationCode: code,
+		EventType:        eventType,
+		RecipientType:    recipientType,
+		RecipientID:      recipientID,
+		Channel:          channel,
+		Status:           constants.NotificationStatusPending,
+		Title:            title,
+		Body:             body,
+		ImageURL:         imageURL,
+	}
+	res := global.GVA_DB.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "notification_code"}},
+		DoNothing: true,
+	}).Create(rec)
+	if res.Error != nil {
+		return 0, false, res.Error
+	}
+	if res.RowsAffected == 0 {
+		var existing engage.Notification
+		_ = global.GVA_DB.Select("id").Where("notification_code = ?", code).First(&existing).Error
+		return existing.ID, false, nil
+	}
+	return rec.ID, true, nil
+}
+
+// SetStatusByCode updates a recorded notification's delivery status. A failure never overwrites a
+// notification that another device token already delivered.
+func (n NotificationServices) SetStatusByCode(code, status string) {
+	if global.GVA_DB == nil || code == "" || status == "" {
+		return
+	}
+	q := global.GVA_DB.Model(&engage.Notification{}).Where("notification_code = ?", code)
+	if status == constants.NotificationStatusFailed {
+		q = q.Where("status = ?", constants.NotificationStatusPending)
+	}
+	_ = q.Update("status", status).Error
+}
+
+func expandNotificationTemplate(s, title, body string) string {
+	s = strings.ReplaceAll(s, "{{title}}", title)
+	return strings.ReplaceAll(s, "{{body}}", body)
 }
 
 // recipientEmail resolves a recipient's email address. For email delivery the recipient id is a

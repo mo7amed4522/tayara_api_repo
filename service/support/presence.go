@@ -326,6 +326,45 @@ func (s PresenceServices) BatchRead(ctx context.Context, caller Actor, keys []st
 	return out, nil
 }
 
+// IsOnline reports whether the actor has at least one live connection. known is false when the
+// presence system cannot answer (disabled or Redis down) so callers treat it as "unknown"
+// instead of "offline". This is the only presence query the push dispatcher uses.
+func (s PresenceServices) IsOnline(actorType string, actorID uint) (online bool, known bool) {
+	if !s.Enabled() || actorID == 0 || actorType == "" {
+		return false, false
+	}
+	store := Store()
+	if store == nil {
+		return false, false
+	}
+	members, err := store.OnlineActors(context.Background())
+	if err != nil {
+		return false, false
+	}
+	for _, m := range members {
+		if m.ActorType == actorType && m.ActorID == actorID {
+			return true, true
+		}
+	}
+	return false, true
+}
+
+// ClaimPushWindow is the best-effort collapse gate for push notifications: the first push for a
+// (recipient, conversation) pair inside the window wins. ok=false means Redis is unavailable, in
+// which case the caller must NOT collapse (better two pushes than a silent chat).
+func (s PresenceServices) ClaimPushWindow(recipient string, conversationID uint, window time.Duration) (collapsed bool, ok bool) {
+	if global.GVA_REDIS == nil || window <= 0 || recipient == "" {
+		return false, false
+	}
+	key := constants.SupportPushCollapseKeyPrefix + recipient + ":" + uintString(conversationID)
+	set, err := global.GVA_REDIS.SetNX(context.Background(), key,
+		strconv.FormatInt(time.Now().UTC().UnixNano(), 10), window).Result()
+	if err != nil {
+		return false, false
+	}
+	return !set, true
+}
+
 func parseActorKey(key string) (string, uint, bool) {
 	parts := strings.SplitN(key, ":", 2)
 	if len(parts) != 2 {

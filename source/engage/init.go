@@ -110,6 +110,9 @@ func seedNotificationTemplates() []engmodel.NotificationTemplate {
 		{EventType: "offer_expiring", Channel: "email", Subject: "Offer expiring soon", Body: "Your price offer expires soon.", IsActive: true},
 		{EventType: "payout", Channel: "push", Subject: "Payout released", Body: "Your payout has been processed.", IsActive: true},
 		{EventType: "refund", Channel: "email", Subject: "Refund processed", Body: "Your refund has been issued.", IsActive: true},
+		// Support chat pushes: the placeholders keep the generated ticket subject and message
+		// preview, so admins can wrap them without losing the content.
+		{EventType: "support.chat.message", Channel: "push", Subject: "{{title}}", Body: "{{body}}", IsActive: true},
 	}
 }
 

@@ -195,6 +195,7 @@ var editableKeys = map[string]bool{
 	constants.SupportSettingAttachmentsAllowedMime:  true,
 	constants.SupportSettingLastSeenDisplay:         true,
 	constants.SupportSettingHideLastSeenForRoles:    true,
+	constants.SupportSettingPushEnabled:             true,
 }
 
 // List returns every support setting with its effective value.

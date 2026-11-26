@@ -17,6 +17,7 @@ type ApiGroup struct {
 	FaqApi
 	AdminApi
 	SseClientApi
+	PushApi
 }
 
 // supportService reaches the support services via the service group var.
