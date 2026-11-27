@@ -6,6 +6,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/global"
 	"github.com/mo7amed4522/tayara_api/service/booking"
 	"github.com/mo7amed4522/tayara_api/service/engage"
+	recommendationService "github.com/mo7amed4522/tayara_api/service/recommendation"
 	supportService "github.com/mo7amed4522/tayara_api/service/support"
 	supportPush "github.com/mo7amed4522/tayara_api/service/support/push"
 	"go.uber.org/zap"
@@ -75,6 +76,21 @@ func Timer() {
 		for range ticker.C {
 			if err := svc.RetryFailed(); err != nil {
 				global.GVA_LOG.Warn("support push retry sweep failed", zap.Error(err))
+			}
+		}
+	}()
+	// Recommendation engine: refresh each enabled placement when its RefreshCron interval elapsed.
+	// The engine itself takes a per-placement lock so only one instance runs a placement.
+	go func() {
+		if global.GVA_DB == nil {
+			return
+		}
+		ticker := time.NewTicker(10 * time.Minute)
+		defer ticker.Stop()
+		var svc recommendationService.RecommendationServices
+		for range ticker.C {
+			if err := svc.GenerateDue(); err != nil {
+				global.GVA_LOG.Warn("recommendation refresh sweep failed", zap.Error(err))
 			}
 		}
 	}()

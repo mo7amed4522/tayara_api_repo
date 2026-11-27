@@ -264,6 +264,21 @@ definitions:
         description: layout 2006-01-02
         type: string
     type: object
+  request.BatchReviewReq:
+    properties:
+      action:
+        enum:
+        - approve
+        - reject
+        type: string
+      ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - action
+    - ids
+    type: object
   request.BookingDocumentReq:
     properties:
       bookingId:
@@ -435,6 +450,39 @@ definitions:
     - bookingId
     - paymentMethod
     type: object
+  request.CreateRecommendationReq:
+    properties:
+      audience:
+        type: string
+      endsAt:
+        type: string
+      isPinned:
+        type: boolean
+      placement:
+        type: string
+      priority:
+        type: integer
+      reason:
+        type: string
+      reasonAr:
+        type: string
+      score:
+        type: number
+      startsAt:
+        type: string
+      targetId:
+        type: integer
+      targetType:
+        enum:
+        - package
+        - trip
+        - agency
+        type: string
+    required:
+    - placement
+    - targetId
+    - targetType
+    type: object
   request.CustomTripTemplateReq:
     properties:
       activities:
@@ -567,6 +615,15 @@ definitions:
     required:
     - idToken
     type: object
+  request.GenerateReq:
+    properties:
+      audience:
+        type: string
+      placement:
+        type: string
+    required:
+    - placement
+    type: object
   request.GetById:
     properties:
       id:
@@ -591,6 +648,13 @@ definitions:
         type: string
       sortOrder:
         type: integer
+    type: object
+  request.IdsReq:
+    properties:
+      ids:
+        items:
+          type: integer
+        type: array
     type: object
   request.ItineraryDayReq:
     properties:
@@ -845,6 +909,22 @@ definitions:
     - platform
     - token
     type: object
+  request.RecommendationEventReq:
+    properties:
+      eventType:
+        enum:
+        - impression
+        - click
+        - booking
+        type: string
+      placement:
+        type: string
+      recommendationId:
+        type: integer
+    required:
+    - eventType
+    - recommendationId
+    type: object
   request.RefundReq:
     properties:
       amount:
@@ -930,6 +1010,19 @@ definitions:
         type: string
     required:
     - disputeId
+    type: object
+  request.ReviewRecommendationReq:
+    properties:
+      action:
+        enum:
+        - approve
+        - reject
+        type: string
+      id:
+        type: integer
+    required:
+    - action
+    - id
     type: object
   request.ReviewReq:
     properties:
@@ -1140,6 +1233,55 @@ definitions:
         type: string
       passportNumber:
         type: string
+    type: object
+  request.UpdateRecommendationReq:
+    properties:
+      audience:
+        type: string
+      endsAt:
+        type: string
+      id:
+        type: integer
+      isPinned:
+        type: boolean
+      placement:
+        type: string
+      priority:
+        type: integer
+      reason:
+        type: string
+      reasonAr:
+        type: string
+      startsAt:
+        type: string
+    required:
+    - id
+    type: object
+  request.UpdateSettingReq:
+    properties:
+      autoApprove:
+        type: boolean
+      autoApproveThreshold:
+        type: number
+      candidateLimit:
+        type: integer
+      enabled:
+        type: boolean
+      expireAfterHours:
+        type: integer
+      maxItems:
+        type: integer
+      placement:
+        type: string
+      promptTemplate:
+        type: string
+      promptVersion:
+        type: string
+      refreshCron:
+        type: string
+      targetTypes: {}
+    required:
+    - placement
     type: object
   request.UserBlockReq:
     properties:
@@ -4255,6 +4397,394 @@ paths:
       summary: User registers or refreshes a push token for an app installation
       tags:
       - Engage
+  /api/v1/recommendation/batchReview:
+    post:
+      parameters:
+      - description: batch review
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.BatchReviewReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Approve or reject several recommendations (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/createRecommendation:
+    post:
+      parameters:
+      - description: recommendation
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateRecommendationReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a manual recommendation (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/deleteRecommendation:
+    delete:
+      parameters:
+      - description: recommendation id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete one recommendation (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/deleteRecommendationByIds:
+    delete:
+      parameters:
+      - description: ids
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.IdsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete several recommendations (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/findRecommendation:
+    get:
+      parameters:
+      - description: recommendation id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get one recommendation (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/findRun:
+    get:
+      parameters:
+      - description: run id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get one generation run with its prompt snapshot (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/generate:
+    post:
+      parameters:
+      - description: placement + audience
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.GenerateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Trigger an LLM recommendation run for a placement (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/getRecommendationList:
+    get:
+      parameters:
+      - default: 1
+        description: page
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: package | trip | agency
+        in: query
+        name: targetType
+        type: string
+      - description: placement
+        in: query
+        name: placement
+        type: string
+      - description: audience
+        in: query
+        name: audience
+        type: string
+      - description: pending | approved | rejected | expired
+        in: query
+        name: status
+        type: string
+      - description: llm | rules | admin
+        in: query
+        name: source
+        type: string
+      - description: reason keyword
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Paginated recommendation list with filters (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/getRunList:
+    get:
+      parameters:
+      - default: 1
+        description: page
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: placement
+        in: query
+        name: placement
+        type: string
+      - description: running | success | failed | fallback
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Paginated audit list of generation runs (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/getSetting:
+    get:
+      parameters:
+      - description: placement
+        in: query
+        name: placement
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Read the engine setting for a placement (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/getStats:
+    get:
+      parameters:
+      - description: placement
+        in: query
+        name: placement
+        type: string
+      - description: YYYY-MM-DD
+        in: query
+        name: startTime
+        type: string
+      - description: YYYY-MM-DD
+        in: query
+        name: endTime
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Impressions, clicks, CTR and bookings per recommendation (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/public/event:
+    post:
+      parameters:
+      - description: event
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.RecommendationEventReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Record an impression, click or booking for a recommendation
+      tags:
+      - Recommendation
+  /api/v1/recommendation/public/list:
+    get:
+      parameters:
+      - description: placement e.g. home_top
+        in: query
+        name: placement
+        required: true
+        type: string
+      - default: all
+        description: audience segment
+        in: query
+        name: audience
+        type: string
+      - default: 1
+        description: page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Approved recommendations for a placement
+      tags:
+      - Recommendation
+  /api/v1/recommendation/review:
+    post:
+      parameters:
+      - description: review
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReviewRecommendationReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Approve or reject one recommendation (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/updateRecommendation:
+    put:
+      parameters:
+      - description: recommendation
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateRecommendationReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Update the editable fields of a recommendation (admin)
+      tags:
+      - Recommendation
+  /api/v1/recommendation/updateSetting:
+    put:
+      parameters:
+      - description: setting
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateSettingReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Update the engine setting for a placement (admin)
+      tags:
+      - Recommendation
   /api/v1/support/admin/chat-settings:
     get:
       produces:

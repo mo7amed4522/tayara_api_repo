@@ -9,6 +9,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/model/dxapi"
 	"github.com/mo7amed4522/tayara_api/model/engage"
 	paymentModel "github.com/mo7amed4522/tayara_api/model/payment"
+	recommendationModel "github.com/mo7amed4522/tayara_api/model/recommendation"
 	supportModel "github.com/mo7amed4522/tayara_api/model/support"
 	"github.com/mo7amed4522/tayara_api/model/system"
 )
@@ -91,6 +92,11 @@ func bizModel() error {
 		&supportModel.Attachment{},
 		&supportModel.PushToken{},
 		&supportModel.PushDispatch{},
+		// recommendation (stored picks, engine runs, settings, engagement signals)
+		&recommendationModel.Recommendation{},
+		&recommendationModel.RecommendationRun{},
+		&recommendationModel.RecommendationSetting{},
+		&recommendationModel.RecommendationEvent{},
 		// system
 		&system.SysAdminProfile{},
 		&system.JwtBlacklist{},

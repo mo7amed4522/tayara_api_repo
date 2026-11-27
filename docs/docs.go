@@ -4729,6 +4729,634 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/recommendation/batchReview": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Approve or reject several recommendations (admin)",
+                "parameters": [
+                    {
+                        "description": "batch review",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.BatchReviewReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/createRecommendation": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Create a manual recommendation (admin)",
+                "parameters": [
+                    {
+                        "description": "recommendation",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateRecommendationReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/deleteRecommendation": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Delete one recommendation (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "recommendation id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/deleteRecommendationByIds": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Delete several recommendations (admin)",
+                "parameters": [
+                    {
+                        "description": "ids",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.IdsReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/findRecommendation": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Get one recommendation (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "recommendation id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/findRun": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Get one generation run with its prompt snapshot (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "run id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/generate": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Trigger an LLM recommendation run for a placement (admin)",
+                "parameters": [
+                    {
+                        "description": "placement + audience",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.GenerateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/getRecommendationList": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Paginated recommendation list with filters (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "package | trip | agency",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "placement",
+                        "name": "placement",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "audience",
+                        "name": "audience",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "pending | approved | rejected | expired",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "llm | rules | admin",
+                        "name": "source",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "reason keyword",
+                        "name": "keyword",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/getRunList": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Paginated audit list of generation runs (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "placement",
+                        "name": "placement",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "running | success | failed | fallback",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/getSetting": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Read the engine setting for a placement (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "placement",
+                        "name": "placement",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/getStats": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Impressions, clicks, CTR and bookings per recommendation (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "placement",
+                        "name": "placement",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM-DD",
+                        "name": "startTime",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM-DD",
+                        "name": "endTime",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/public/event": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Record an impression, click or booking for a recommendation",
+                "parameters": [
+                    {
+                        "description": "event",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.RecommendationEventReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/public/list": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Approved recommendations for a placement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "placement e.g. home_top",
+                        "name": "placement",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "all",
+                        "description": "audience segment",
+                        "name": "audience",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/review": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Approve or reject one recommendation (admin)",
+                "parameters": [
+                    {
+                        "description": "review",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ReviewRecommendationReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/updateRecommendation": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Update the editable fields of a recommendation (admin)",
+                "parameters": [
+                    {
+                        "description": "recommendation",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdateRecommendationReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recommendation/updateSetting": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Update the engine setting for a placement (admin)",
+                "parameters": [
+                    {
+                        "description": "setting",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdateSettingReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/support/admin/chat-settings": {
             "get": {
                 "produces": [
@@ -7008,6 +7636,28 @@ const docTemplate = `{
                 }
             }
         },
+        "request.BatchReviewReq": {
+            "type": "object",
+            "required": [
+                "action",
+                "ids"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "approve",
+                        "reject"
+                    ]
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "request.BookingDocumentReq": {
             "type": "object",
             "required": [
@@ -7262,6 +7912,54 @@ const docTemplate = `{
                 }
             }
         },
+        "request.CreateRecommendationReq": {
+            "type": "object",
+            "required": [
+                "placement",
+                "targetId",
+                "targetType"
+            ],
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "endsAt": {
+                    "type": "string"
+                },
+                "isPinned": {
+                    "type": "boolean"
+                },
+                "placement": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "reasonAr": {
+                    "type": "string"
+                },
+                "score": {
+                    "type": "number"
+                },
+                "startsAt": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "string",
+                    "enum": [
+                        "package",
+                        "trip",
+                        "agency"
+                    ]
+                }
+            }
+        },
         "request.CustomTripTemplateReq": {
             "type": "object",
             "properties": {
@@ -7457,6 +8155,20 @@ const docTemplate = `{
                 }
             }
         },
+        "request.GenerateReq": {
+            "type": "object",
+            "required": [
+                "placement"
+            ],
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "placement": {
+                    "type": "string"
+                }
+            }
+        },
         "request.GetById": {
             "type": "object",
             "properties": {
@@ -7492,6 +8204,17 @@ const docTemplate = `{
                 },
                 "sortOrder": {
                     "type": "integer"
+                }
+            }
+        },
+        "request.IdsReq": {
+            "type": "object",
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -7874,6 +8597,29 @@ const docTemplate = `{
                 }
             }
         },
+        "request.RecommendationEventReq": {
+            "type": "object",
+            "required": [
+                "eventType",
+                "recommendationId"
+            ],
+            "properties": {
+                "eventType": {
+                    "type": "string",
+                    "enum": [
+                        "impression",
+                        "click",
+                        "booking"
+                    ]
+                },
+                "placement": {
+                    "type": "string"
+                },
+                "recommendationId": {
+                    "type": "integer"
+                }
+            }
+        },
         "request.RefundReq": {
             "type": "object",
             "required": [
@@ -7997,6 +8743,25 @@ const docTemplate = `{
                 "status": {
                     "description": "resolved | closed",
                     "type": "string"
+                }
+            }
+        },
+        "request.ReviewRecommendationReq": {
+            "type": "object",
+            "required": [
+                "action",
+                "id"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "approve",
+                        "reject"
+                    ]
+                },
+                "id": {
+                    "type": "integer"
                 }
             }
         },
@@ -8313,6 +9078,80 @@ const docTemplate = `{
                 "passportNumber": {
                     "type": "string"
                 }
+            }
+        },
+        "request.UpdateRecommendationReq": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "endsAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isPinned": {
+                    "type": "boolean"
+                },
+                "placement": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "reasonAr": {
+                    "type": "string"
+                },
+                "startsAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UpdateSettingReq": {
+            "type": "object",
+            "required": [
+                "placement"
+            ],
+            "properties": {
+                "autoApprove": {
+                    "type": "boolean"
+                },
+                "autoApproveThreshold": {
+                    "type": "number"
+                },
+                "candidateLimit": {
+                    "type": "integer"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "expireAfterHours": {
+                    "type": "integer"
+                },
+                "maxItems": {
+                    "type": "integer"
+                },
+                "placement": {
+                    "type": "string"
+                },
+                "promptTemplate": {
+                    "type": "string"
+                },
+                "promptVersion": {
+                    "type": "string"
+                },
+                "refreshCron": {
+                    "type": "string"
+                },
+                "targetTypes": {}
             }
         },
         "request.UserBlockReq": {

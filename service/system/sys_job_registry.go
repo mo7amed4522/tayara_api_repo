@@ -26,6 +26,12 @@ func (sysConfigService SystemConfigService) JobRegistry() []ScheduledJob {
 			AutoAction: "move awaiting-payment bookings past their hold window to price_expired",
 		},
 		{
+			Name:       "Recommendation engine",
+			Schedule:   "every 10 minutes (per-placement RefreshCron gate)",
+			Enabled:    true,
+			AutoAction: "rebuild approved recommendations from DB candidates via the LLM, rules fallback on failure",
+		},
+		{
 			Name:       "Ad creative scheduler",
 			Schedule:   "every 1 minute",
 			Enabled:    true,
