@@ -35,6 +35,11 @@ func SupportRateLimit(bucket string, limit int, duration time.Duration) gin.Hand
 		if actor == "0" {
 			actor = "s" + strconv.FormatUint(uint64(utils.GetUserID(c)), 10)
 		}
+		if actor == "s0" {
+			// Unauthenticated callers share no identity, so fall back to the client IP instead of
+			// letting every anonymous request exhaust one global bucket.
+			actor = "ip:" + c.ClientIP()
+		}
 		key := bucket + ":" + actor
 		if !supportLimits.allow(key, limit, duration) {
 			response.FailWithError(response.WithCode(429, "too many requests"), c)

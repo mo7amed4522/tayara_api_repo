@@ -9,6 +9,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/service/engage"
 	"github.com/mo7amed4522/tayara_api/service/export"
 	"github.com/mo7amed4522/tayara_api/service/payment"
+	recommendationService "github.com/mo7amed4522/tayara_api/service/recommendation"
 	"github.com/mo7amed4522/tayara_api/service/search"
 	"github.com/mo7amed4522/tayara_api/service/support"
 	"github.com/mo7amed4522/tayara_api/service/system"
@@ -30,4 +31,5 @@ type ServiceGroup struct {
 	ExportServiceGroup    export.ServiceGroup
 	TicketServiceGroup    ticket.ServiceGroup
 	SupportServiceGroup   support.ServiceGroup
+	RecommendationServiceGroup recommendationService.ServiceGroup
 }

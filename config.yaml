@@ -329,6 +329,16 @@ travel:
         manual-only: true                 # MVP: payouts are a manual admin action
         require-admin-verification: true  # Admin must verify before release
         require-confirmation-file: true   # Agent confirmation file required for eligibility
+# AI recommendation engine. The engine only runs on cron/admin trigger; customers read stored rows.
+# Keep the key in the environment (LLM_API_KEY) — never commit a real key here.
+llm:
+    provider: ${LLM_PROVIDER:-openai}     # openai | azure-openai | openrouter | groq | together | ollama | custom
+    model: ${LLM_MODEL:-gpt-4o-mini}
+    api-key: ${LLM_API_KEY:-}
+    base-url: ${LLM_BASE_URL:-https://api.openai.com/v1}
+    timeout-seconds: 20                   # per-call deadline; failures fall back to rules
+    max-retries: 2                        # retries on 429/5xx only
+    temperature: 0.2
 # Real-time support chat (Kafka transport). Chat itself works without Kafka:
 # messages are persisted first; Kafka only carries them to connected clients.
 support:

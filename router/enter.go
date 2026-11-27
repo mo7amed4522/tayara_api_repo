@@ -10,6 +10,7 @@ import (
 	"github.com/mo7amed4522/tayara_api/router/engage"
 	"github.com/mo7amed4522/tayara_api/router/export"
 	"github.com/mo7amed4522/tayara_api/router/payment"
+	recommendationRouter "github.com/mo7amed4522/tayara_api/router/recommendation"
 	"github.com/mo7amed4522/tayara_api/router/search"
 	supportRouter "github.com/mo7amed4522/tayara_api/router/support"
 	"github.com/mo7amed4522/tayara_api/router/system"
@@ -32,4 +33,5 @@ type RouterGroup struct {
 	Export    export.RouterGroup
 	Ticket    ticket.RouterGroup
 	Support   supportRouter.RouterGroup
+	Recommendation recommendationRouter.RouterGroup
 }

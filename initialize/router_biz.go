@@ -61,6 +61,9 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 	// base lookups (shared categories + settings change history)
 	router.RouterGroupApp.Base.InitLookupRouter(publicGroup, systemPrivate)
 
+	// recommendations (admin review/engine run + public approved list)
+	router.RouterGroupApp.Recommendation.InitRecommendationRouter(publicGroup, systemPrivate)
+
 	// nice-to-have / v2: admin global search, CSV export, e-ticket PDF.
 	router.RouterGroupApp.Search.InitSearchRouter(systemPrivate)
 	router.RouterGroupApp.Export.InitExportRouter(systemPrivate)

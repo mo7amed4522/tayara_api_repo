@@ -53,6 +53,8 @@ type Server struct {
 	Payment Payment `mapstructure:"payment" json:"payment" yaml:"payment"`
 	// Real-time support chat (Kafka transport, presence, last seen, attachments)
 	Support SupportConfig `mapstructure:"support" json:"support" yaml:"support"`
+	// AI recommendation engine (LLM provider for offline/admin-generated picks)
+	LLM LLM `mapstructure:"llm" json:"llm" yaml:"llm"`
 }
 type OrderPay struct {
 	PayHost string `mapstructure:"payHost" json:"payHost" yaml:"payHost"`
